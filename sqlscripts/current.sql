@@ -1,0 +1,1 @@
+SELECT userID, count(userID) AS cnt FROM trajectory.gowalla GROUP BY userID ORDER BY cnt;
