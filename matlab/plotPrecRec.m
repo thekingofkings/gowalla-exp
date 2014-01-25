@@ -1,5 +1,5 @@
 labelFriendship;
-c = importdata('feature-vectors.txt');
+c = importdata('../feature-vectors.txt');
 
 prec_rec( c(1,:), friendLabel );
 title('Co-location diversity features');
@@ -23,19 +23,24 @@ print('mutualInfo.eps', '-dpsc');
 system('epstopdf mutualInfo.eps');
 
 
-d = importdata('feature-vectors-interestingness.txt');
-prec_rec( d, friendLabel );
+prec_rec( c(4,:), friendLabel );
 title('Interesting Score (PAKDD) features');
 set(gcf, 'PaperUnits', 'inches', 'PaperPosition', [0 0 8 3]);
 print('interestingness.eps', '-dpsc');
 system('epstopdf interestingness.eps');
 
 
-e = importdata('feature-vectors-freq.txt');
-prec_rec( e(2,:), friendLabel );
+prec_rec( c(5,:), friendLabel );
 title('Frequency features');
 set(gcf, 'PaperUnits', 'inches', 'PaperPosition', [0 0 8 3]);
 print('freq.eps', '-dpsc');
 system('epstopdf freq.eps');
+
+
+prec_rec( c(6,:), friendLabel );
+title('Mutual information over co-location set');
+set(gcf, 'PaperUnits', 'inches', 'PaperPosition', [0 0 8 3]);
+print('miocl.eps', '-dpsc');
+system('epstopdf miocl.eps');
 
 

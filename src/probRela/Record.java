@@ -20,8 +20,12 @@ import java.util.LinkedList;
  * 		196514  2010-07-24T13:44:58Z    53.360511233    -2.276369017    1275991
  */
 public class Record {
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	private static Calendar myCal = new GregorianCalendar();
+	
 	int userID;
 	String time;
+	long timestamp;
 	double latitude;
 	double longitude;
 	long locID;
@@ -31,6 +35,7 @@ public class Record {
 		try {
 			userID = Integer.parseInt(ls[0]);
 			time = ls[1];
+			timestamp = getTimestamp();
 			latitude = Double.parseDouble(ls[2]);
 			longitude = Double.parseDouble(ls[3]);
 			locID = Long.parseLong(ls[4]);
@@ -43,11 +48,9 @@ public class Record {
 	/*
 	 * Parse the time String. Return timestamp in seconds.
 	 */
-	public long getTimestamp() {
+	private long getTimestamp() {
 		long timestamp;
 		// parse the time string
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-		Calendar myCal = new GregorianCalendar();
 		try {
 			myCal.setTime( sdf.parse( time ) );
 		} catch (ParseException e) {
@@ -71,7 +74,7 @@ public class Record {
 	// TDD
 	private static void TDD_entryParse() {
 		BufferedReader fin = null;
-		String filepath = "C:\\dataset\\Gowalla_totalCheckins.txt";
+		String filepath = "../../pip/Gowalla_totalCheckins.txt";
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {

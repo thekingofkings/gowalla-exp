@@ -10,13 +10,8 @@ friendLabel(ib) = 1;
 
 
 % import the different measure as features
-% the 6 features are:
-%   Renyi Diversity of co-locations
-%   frequency weighted by location entropy
-%   mutual information over complete location set
-%   interestingness score from PAKDD
-%   frequency
-%   mutual entropy over co-location set
+% the 5 features are:
+%   
 features = importdata('../feature-vectors.txt');
 features = features';
 nan_index = find(isnan(features));

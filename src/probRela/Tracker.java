@@ -38,6 +38,8 @@ public class Tracker {
 	public static LinkedList<Integer> shareLocationCount() {
 		long t_start = System.currentTimeMillis();
 		User.addAllUser();
+		long t_mid = System.currentTimeMillis();
+		System.out.println(String.format("Initialize all users in %d seconds", (t_mid - t_start)/1000));
 		User.findFrequentUsers(1500);
 		HashMap<Integer, User> users = User.frequentUserSet;
 		int cnt = 0;
@@ -129,12 +131,15 @@ public class Tracker {
 			// 2. calculate the probability of co-occurrence
 			double[] prob = new double[coloc_num];
 			for (int j = 0; j < coloc_num; j++) {
-				prob[j] = (double) cnt[j] / (double) sum;
+				if (sum > 0)
+					prob[j] = (double) cnt[j] / sum;
+				//else
+					//System.out.println("Sum is 0");
 			}
 			// 3. calculate the Renyi Entropy (q = 0.1)
 			double renyiEntropy = 0;
 			for (int j = 0; j < coloc_num; j++) {
-				renyiEntropy += Math.pow(prob[j], 0.1);
+					renyiEntropy += Math.pow(prob[j], 0.1);
 			}
 			renyiEntropy = - Math.log(renyiEntropy) / (-0.9);
 			// 4. calculate diversity
@@ -171,7 +176,7 @@ public class Tracker {
 		for (Record r1 : raco) {
 			for (Record r2 : rbco) {
 				// We identify the colocating event with a 30 minutes time window
-				if (r1.getTimestamp() - r2.getTimestamp() <= 60 * 30)
+				if (Math.abs(r1.timestamp - r2.timestamp) <= 60 * 30)
 					cnt ++;
 			}
 		}
@@ -192,6 +197,13 @@ public class Tracker {
 	 */
 	public static LinkedList<Double> weightedFrequency() {
 		long t_start = System.currentTimeMillis();
+		/*
+		 * The calculation of location entropy is not efficient.
+		 * The original execution time in HP laptop is 470s.
+		 * After we factor out the location entropy calculation, 
+		 * now the execution time in HP is 4s.
+		 */
+		HashMap<Long, Double> locsEntro = locationEntropy();
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -209,18 +221,11 @@ public class Tracker {
 			frequency.add(frequen);
 			
 			// 2. calculate location entropy
-			double locentro = 0;
 			double weightedFrequency = 0;
-			HashMap<Long, Double> locsEntro = new HashMap<Long, Double>();
+			
 			for (int j = 0; j < clarray.length; j++) {
-				long loc_id = (long) clarray[j];
-				if (locsEntro.containsKey(loc_id)) {
-					locentro = locsEntro.get(loc_id);
-				} else {
-					locentro = locationEntropy( loc_id );
-					locsEntro.put(loc_id, locentro);
-				}
-				weightedFrequency += freq[j] * Math.exp(- locentro);
+				long locid = (long) clarray[j];
+				weightedFrequency += freq[j] * Math.exp(- locsEntro.get(locid));
 			}
 			weightedFreq.add(weightedFrequency);
 			
@@ -239,31 +244,51 @@ public class Tracker {
 	 * Assistant function
 	 * -- calculate location entropy for one specific location (Shannon Entropy)
 	 */
-	private static double locationEntropy(long locid) {
-		double[] prob = new double[User.frequentUserSet.size()];
-		int total_visit = 0;
-		int[] user_visit = new int[User.frequentUserSet.size()];
-		double locEntropy = 0;
+	private static HashMap<Long, Double> locationEntropy() {
+		HashMap<Long, Double> loc_entro = new HashMap<Long, Double>();
+		HashMap<Long, HashMap<Integer, Integer>> loc_user_visit = new HashMap<Long, HashMap<Integer, Integer>>();
+		HashMap<Long, Integer> loc_total_visit = new HashMap<Long, Integer>();
 		
-		// 1. get the probability
-		for (int i = 0; i < prob.length; i++) {
-			Object[] users = User.frequentUserSet.values().toArray();
-			
-			for (Record r : ((User)users[i]).records) {
-				if (r.locID == locid)
-					user_visit[i] ++;
+		// 1. get the location visiting frequency
+		for (User u : User.frequentUserSet.values()) {
+			for (Record r : u.records) {
+				// count individual user visiting
+				if (loc_user_visit.containsKey(r.locID)) {
+					if (loc_user_visit.get(r.locID).containsKey(u.userID)) {
+						int freq = loc_user_visit.get(r.locID).get(u.userID);
+						loc_user_visit.get(r.locID).put(u.userID, freq + 1);
+					} else {
+						loc_user_visit.get(r.locID).put(u.userID, 1);
+					}
+				} else {
+					loc_user_visit.put(r.locID, new HashMap<Integer, Integer>());
+					loc_user_visit.get(r.locID).put(u.userID, 1);
+				}
+				// count total visiting for one location
+				if (loc_total_visit.containsKey(r.locID)) {
+					int f = loc_total_visit.get(r.locID);
+					loc_total_visit.put(r.locID, f+1);
+				} else {
+					loc_total_visit.put(r.locID, 1);
+				}
 			}
-			total_visit += user_visit[i];
 		}
 		// 2. calculate the per user probability
-		for (int i = 0; i < prob.length; i++) {
-			if (user_visit[i] > 0) {
-				prob[i] = (double) user_visit[i] / total_visit;
-				locEntropy += - prob[i] * Math.log(prob[i]);
+		for (Long locid : loc_user_visit.keySet()) {
+			double locEntropy = 0;
+			for (int uid : loc_user_visit.get(locid).keySet()) {
+				if (loc_user_visit.get(locid).get(uid) > 0) {
+					if (loc_total_visit.get(locid) > 0) {
+						double prob = (double) loc_user_visit.get(locid).get(uid) / loc_total_visit.get(locid);
+						locEntropy += - prob * Math.log(prob);
+					}
+				}
 			}
+			loc_entro.put(locid, locEntropy);
 		}
 		// 3. return the entropy
-		return locEntropy;
+		System.out.println("Size of loc_entropy" + Integer.toString(loc_entro.size()));
+		return loc_entro;
 	}
 
 	
@@ -356,26 +381,35 @@ public class Tracker {
 		User a = User.allUserSet.get(uaid);
 		User b = User.allUserSet.get(ubid);
 		HashMap<Long, HashMap<Long, Integer>> locFreq = new HashMap<>();
-		// 1. count frequency
+		
+		// 1. count frequency of multi-variables distribution
+		int totalCase = 0;
 		for (Record ar : a.records) {
 			for (Record br : b.records) {
-				if (locFreq.containsKey(ar.locID) && locFreq.get(ar.locID).containsKey(br.locID)) {
-					int f = locFreq.get(ar.locID).get(br.locID) + 1;
-					locFreq.get(ar.locID).put(br.locID, f);
-				}
-				else if (locFreq.containsKey(ar.locID) && ! locFreq.get(ar.locID).containsKey(br.locID)) {
-					locFreq.get(ar.locID).put(br.locID, 1);
-				}
-				else if (!locFreq.containsKey(ar.locID)) {
-					locFreq.put(ar.locID, new HashMap<Long, Integer>());
-					locFreq.get(ar.locID).put(br.locID, 1);
+				// ar and br are in the same time slots
+				if (Math.abs(ar.timestamp - br.timestamp) <= 4 * 3600) {
+					// put that observation at the same timeslot into the two level maps
+					if (locFreq.containsKey(ar.locID) && locFreq.get(ar.locID).containsKey(br.locID)) {
+						int f = locFreq.get(ar.locID).get(br.locID) + 1;
+						locFreq.get(ar.locID).put(br.locID, f);
+						totalCase ++;
+					}
+					else if (locFreq.containsKey(ar.locID) && ! locFreq.get(ar.locID).containsKey(br.locID)) {
+						locFreq.get(ar.locID).put(br.locID, 1);
+						totalCase ++;
+					}
+					else if (!locFreq.containsKey(ar.locID)) {
+						locFreq.put(ar.locID, new HashMap<Long, Integer>());
+						locFreq.get(ar.locID).put(br.locID, 1);
+						totalCase ++;
+					}
 				}
 			}
 		}
+		//System.out.println(String.format("Total case of joint entropy %d", totalCase));
 		// 2. probability and entropy
 		double prob = 0;
 		double entro = 0;
-		int totalCase = a.records.size() * b.records.size();
 		for (Long i : locFreq.keySet()) {
 			for (Long j : locFreq.get(i).keySet()) {
 				prob = (double) locFreq.get(i).get(j) / totalCase;
@@ -405,8 +439,8 @@ public class Tracker {
 			double Finterest = coLocationScore(uaid, ubid, colocs);
 			interestingness.add(Finterest);
 			// monitor the process
-			if (i % (FrequentPair.size()/20) == 0)
-				System.out.println(String.format("Process - interestingnessPAKDD finished %d%%", 5 * i/(FrequentPair.size()/20)));	
+			if (i % (FrequentPair.size()/10) == 0)
+				System.out.println(String.format("Process - interestingnessPAKDD finished %d%%", i/(FrequentPair.size()/10)));	
 		}
 		long t_end = System.currentTimeMillis();
 		System.out.println(String.format("Interestingness score found in %d seconds", (t_end - t_start)/1000));
@@ -445,7 +479,7 @@ public class Tracker {
 			for (Record r1 : raco.get(loc_id)) {
 				for (Record r2 : rbco.get(loc_id)) {
 					// We identify the colocating event with a 30 minutes time window
-					if (r1.getTimestamp() - r2.getTimestamp() <= 60 * 30)
+					if (r1.timestamp - r2.timestamp <= 60 * 30)
 						interest += - Math.log( (double) raco.get(loc_id).size() / ra.size()) 
 							- Math.log( (double) rbco.get(loc_id).size() / rb.size() );
 				}
@@ -553,20 +587,24 @@ public class Tracker {
 		int totalCase = 0;
 		for (Record ar : a.records) {
 			for (Record br : b.records) {
-				if (locs.contains(ar.locID) && locs.contains(br.locID)) {
-					if (locFreq.containsKey(ar.locID) && locFreq.get(ar.locID).containsKey(br.locID)) {
-						int f = locFreq.get(ar.locID).get(br.locID) + 1;
-						locFreq.get(ar.locID).put(br.locID, f);
-						totalCase ++;
-					}
-					else if (locFreq.containsKey(ar.locID) && ! locFreq.get(ar.locID).containsKey(br.locID)) {
-						locFreq.get(ar.locID).put(br.locID, 1);
-						totalCase ++;
-					}
-					else if (!locFreq.containsKey(ar.locID)) {
-						locFreq.put(ar.locID, new HashMap<Long, Integer>());
-						locFreq.get(ar.locID).put(br.locID, 1);
-						totalCase ++;
+				// Two records in same timeslot
+				if (Math.abs(ar.timestamp-br.timestamp) <= 4 * 3600) {
+					// count frequency only on the target set
+					if (locs.contains(ar.locID) && locs.contains(br.locID)) {
+						if (locFreq.containsKey(ar.locID) && locFreq.get(ar.locID).containsKey(br.locID)) {
+							int f = locFreq.get(ar.locID).get(br.locID) + 1;
+							locFreq.get(ar.locID).put(br.locID, f);
+							totalCase ++;
+						}
+						else if (locFreq.containsKey(ar.locID) && ! locFreq.get(ar.locID).containsKey(br.locID)) {
+							locFreq.get(ar.locID).put(br.locID, 1);
+							totalCase ++;
+						}
+						else if (!locFreq.containsKey(ar.locID)) {
+							locFreq.put(ar.locID, new HashMap<Long, Integer>());
+							locFreq.get(ar.locID).put(br.locID, 1);
+							totalCase ++;
+						}
 					}
 				}
 			}
