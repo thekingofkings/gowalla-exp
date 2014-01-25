@@ -3,6 +3,7 @@ package probRela;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -12,9 +13,13 @@ public class Tracker {
 	// overall measure
 	static LinkedList<Integer> numOfColocations = new LinkedList<Integer>();
 	
-	// frequent measure, filtered from above
-	static LinkedList<int[]> FrequentPair = new LinkedList<int[]>();
-	static LinkedList<HashSet<Long>> FrequentPair_CoLocations = new LinkedList<HashSet<Long>>();
+	/// frequent measure, filtered from above
+	/*
+	 * FrequentPair has three integer fields:
+	 * 		user_a_id, user_b_id, colocation_size
+	 */
+	static ArrayList<int[]> FrequentPair = new ArrayList<int[]>();
+	static ArrayList<HashSet<Long>> FrequentPair_CoLocations = new ArrayList<HashSet<Long>>();
 
 	// results on three features
 	static LinkedList<Double> renyiDiversity = new LinkedList<Double>();
@@ -22,6 +27,7 @@ public class Tracker {
 	static LinkedList<Double> mutualInfo = new LinkedList<Double>();
 	static LinkedList<Double> interestingness = new LinkedList<Double>();
 	static LinkedList<Integer> frequency = new LinkedList<Integer>();
+	static LinkedList<Double> mutualEntroColoc = new LinkedList<Double>();
 	
 	/*
 	 * Count the number of co-locations for each pair.
@@ -30,7 +36,7 @@ public class Tracker {
 	 * 			FrequentPair_Colocation
 	 */
 	public static LinkedList<Integer> shareLocationCount() {
-		
+		long t_start = System.currentTimeMillis();
 		User.addAllUser();
 		User.findFrequentUsers(1500);
 		HashMap<Integer, User> users = User.frequentUserSet;
@@ -89,7 +95,8 @@ public class Tracker {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 		}
-		System.out.println(String.format("%d frequent pairs are found!", FrequentPair.size()));
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("%d frequent pairs are found in %d seconds", FrequentPair.size(), (t_end - t_start)/1000));
 		return numOfColocations;
 	}
 	
@@ -105,6 +112,7 @@ public class Tracker {
 	 * The Renyi Entropy based diversity.
 	 */
 	public static LinkedList<Double> RenyiEntropyDiversity() {
+		long t_start = System.currentTimeMillis();
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -134,7 +142,8 @@ public class Tracker {
 			renyiDiversity.add(divs);
 			// System.out.println(divs);
 		}
-		System.out.println("Renyi entropy based diversity found!");
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Renyi entropy based diversity found in %d seconds!", (t_end - t_start)/1000));
 		return renyiDiversity;
 	}
 	
@@ -182,6 +191,7 @@ public class Tracker {
 	 * The weighted frequency (weight by location entropy)
 	 */
 	public static LinkedList<Double> weightedFrequency() {
+		long t_start = System.currentTimeMillis();
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -199,11 +209,18 @@ public class Tracker {
 			frequency.add(frequen);
 			
 			// 2. calculate location entropy
-			double locentry = 0;
+			double locentro = 0;
 			double weightedFrequency = 0;
+			HashMap<Long, Double> locsEntro = new HashMap<Long, Double>();
 			for (int j = 0; j < clarray.length; j++) {
-				locentry = locationEntropy( (Long) clarray[j] );
-				weightedFrequency += freq[j] * Math.exp(- locentry);
+				long loc_id = (long) clarray[j];
+				if (locsEntro.containsKey(loc_id)) {
+					locentro = locsEntro.get(loc_id);
+				} else {
+					locentro = locationEntropy( loc_id );
+					locsEntro.put(loc_id, locentro);
+				}
+				weightedFrequency += freq[j] * Math.exp(- locentro);
 			}
 			weightedFreq.add(weightedFrequency);
 			
@@ -212,12 +229,15 @@ public class Tracker {
 			if (i % (FrequentPair.size()/10) == 0)
 				System.out.println(String.format("Process - weightedFrequency finished %d0%%", i/(FrequentPair.size()/10)));
 		}
-		System.out.println("Weighted frequency found!");
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Weighted frequency found in %d seconds", (t_end - t_start)/1000));
 		return weightedFreq;
 	}
+
 	
 	/*
-	 * location entropy for one specific location (Shannon Entropy)
+	 * Assistant function
+	 * -- calculate location entropy for one specific location (Shannon Entropy)
 	 */
 	private static double locationEntropy(long locid) {
 		double[] prob = new double[User.frequentUserSet.size()];
@@ -260,15 +280,36 @@ public class Tracker {
 	 * Here we use the formula:
 	 * 		I(x,y) = H(x) + H(y) - H(x,y)
 	 * to calculate the mutual entropy
+	 * 
+	 * This mutual information is calculated w.r.t. the complete location set.
 	 */
 	public static LinkedList<Double> mutualInformation() {
+		long t_start = System.currentTimeMillis();
+		/*
+		 * Speed boost
+		 * the old method is not efficient, because it is not necessary to calculate the 
+		 * marginal entropy repeatedly.
+		 */
+		HashMap<Integer, Double> entro = new HashMap<Integer,Double>();
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
 			// 1. calculate the marginal entropy of user a
-			double entroA = marginalEntropy(uaid);
+			double entroA;
+			if (entro.containsKey(uaid))
+				entroA = entro.get(uaid);
+			else {
+				entroA = marginalEntropy(uaid);
+				entro.put(uaid, entroA);
+			}
 			// 2. calculate the marginal entropy of user b
-			double entroB = marginalEntropy(ubid);
+			double entroB;
+			if (entro.containsKey(ubid))
+				entroB = entro.get(ubid);
+			else {
+				entroB = marginalEntropy(ubid);
+				entro.put(ubid, entroB);
+			}
 			// 3. joint entropy of A and B
 			double jointEntro = jointEntropy(uaid, ubid);
 			// 4. mutual information
@@ -278,11 +319,14 @@ public class Tracker {
 			if (i % (FrequentPair.size()/10) == 0)
 				System.out.println(String.format("Process - mutualInformation finished %d0%%", i/(FrequentPair.size()/10)));
 		}
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Calculate mutual inforamtion in %d seconds", (t_end - t_start)/1000));
 		return mutualInfo;
 	}
 	
 	/*
-	 * Assistant function for mutual entropy -- calculate marginal entropy
+	 * Assistant function for mutual entropy 
+	 * -- calculate marginal entropy w.r.t. the complete historical locations
 	 */
 	private static double marginalEntropy(int uid) {
 		User u = User.allUserSet.get(uid);
@@ -352,6 +396,7 @@ public class Tracker {
 	 * Calculate the interestingness score defined by Fei's PAKDD submission.
 	 */
 	public static LinkedList<Double> interestingnessPAKDD() {
+		long t_start = System.currentTimeMillis();
 		for (int i = 0; i < FrequentPair.size(); i++ ) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -363,6 +408,8 @@ public class Tracker {
 			if (i % (FrequentPair.size()/20) == 0)
 				System.out.println(String.format("Process - interestingnessPAKDD finished %d%%", 5 * i/(FrequentPair.size()/20)));	
 		}
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Interestingness score found in %d seconds", (t_end - t_start)/1000));
 		return interestingness;
 	}
 	
@@ -408,6 +455,135 @@ public class Tracker {
 	}
 	
 	
+	
+	/*
+	 * ======================================================
+	 * The fifth feature: Mutual entropy on Co-locations
+	 * ======================================================
+	 * 
+	 * We still use the mutual entropy:
+	 * 		I(X,Y) = H(X) + H(Y) - H(X,Y)
+	 * 
+	 * But, the difference between this feature and the third feature is that
+	 * we only focuse on the set of locations where two users co-locate.
+	 * 
+	 */
+	
+	public static LinkedList<Double> mutualEntropyOnColocation() {
+		long t_start = System.currentTimeMillis();
+		// calculate the marginal entropy of each user only once.
+		HashMap<Integer, Double> entro = new HashMap<Integer, Double>();
+		for (int i = 0; i < FrequentPair.size(); i++) {
+			// get two user
+			User a = User.frequentUserSet.get(FrequentPair.get(i)[0]);
+			User b = User.frequentUserSet.get(FrequentPair.get(i)[1]);
+			HashSet<Long> locs = FrequentPair_CoLocations.get(i);
+			// 1. calculate the marginal entropy of U_a over colocations
+			double entroA = 0;
+			if (entro.containsKey(a.userID)) {
+				entroA = entro.get(a.userID);
+			} else {
+				entroA = marginalEntropy(a.userID, locs );
+				entro.put(a.userID, entroA);
+			}
+			// 2. calculate the marginal entropy of U_b over colocations
+			double entroB = 0;
+			if (entro.containsKey(b.userID)) {
+				entroB = entro.get(b.userID);
+			} else {
+				entroB = marginalEntropy(b.userID, locs);
+				entro.put(b.userID, entroB);
+			}
+			// 3. calculate the joint entropy of U_a and U_b over 
+			double joint_entro = jointEntropy(a.userID, b.userID, locs);
+			mutualEntroColoc.add(entroA + entroB - joint_entro);
+			
+			// monitor the process
+			if (i % (FrequentPair.size()/10) == 0)
+				System.out.println(String.format("Process - mutualEntropyOnColocation finished %d0%%", i/(FrequentPair.size()/10)));
+		}
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("mutualEntropyOnColocation executed %d seconds", (t_end - t_start)/1000));
+		return mutualEntroColoc;
+	}
+	
+	/* 
+	 * Assistant function for mutual information calculation
+	 * 
+	 * -- calculate the marginal entropy of one user over the given location set
+	 */
+	private static double marginalEntropy(int uid, HashSet<Long> locs) {
+		User u = User.allUserSet.get(uid);
+		HashMap<Long, Integer> locFreq = new HashMap<Long, Integer>();
+		// 1. count frequency on each locations in location set
+		int totalLocationNum = 0;
+		for (Record r : u.records) {
+			if (locs.contains(r.locID)) {
+				if (locFreq.containsKey(r.locID)) {
+					totalLocationNum ++;
+					locFreq.put(r.locID, locFreq.get(r.locID) + 1);
+				}
+				else {
+					totalLocationNum ++;
+					locFreq.put(r.locID, 1);
+				}
+			}
+		}
+		
+		// 2. probability and entropy
+		double prob = 0;
+		double entro = 0;
+		for (Long i : locFreq.keySet()) {
+			prob = (double) locFreq.get(i) / totalLocationNum;
+			entro += - prob * Math.log(prob);
+		}
+		return entro;
+	}
+	
+	/*
+	 * Assistant function for joint information calculation
+	 * 
+	 * -- calculate the joint entropy of two users over the given location set
+	 */
+	private static double jointEntropy( int uaid, int ubid, HashSet<Long> locs ) {
+		User a = User.allUserSet.get(uaid);
+		User b = User.allUserSet.get(ubid);
+		HashMap<Long, HashMap<Long, Integer>> locFreq = new HashMap<>();
+		// 1. count frequency over given location set
+		int totalCase = 0;
+		for (Record ar : a.records) {
+			for (Record br : b.records) {
+				if (locs.contains(ar.locID) && locs.contains(br.locID)) {
+					if (locFreq.containsKey(ar.locID) && locFreq.get(ar.locID).containsKey(br.locID)) {
+						int f = locFreq.get(ar.locID).get(br.locID) + 1;
+						locFreq.get(ar.locID).put(br.locID, f);
+						totalCase ++;
+					}
+					else if (locFreq.containsKey(ar.locID) && ! locFreq.get(ar.locID).containsKey(br.locID)) {
+						locFreq.get(ar.locID).put(br.locID, 1);
+						totalCase ++;
+					}
+					else if (!locFreq.containsKey(ar.locID)) {
+						locFreq.put(ar.locID, new HashMap<Long, Integer>());
+						locFreq.get(ar.locID).put(br.locID, 1);
+						totalCase ++;
+					}
+				}
+			}
+		}
+		// 2. probability and entropy
+		double prob = 0;
+		double entro = 0;
+		for (Long i : locFreq.keySet()) {
+			for (Long j : locFreq.get(i).keySet()) {
+				prob = (double) locFreq.get(i).get(j) / totalCase;
+				entro += - prob * Math.log(prob);
+			}
+		}
+		return entro;
+	}
+	
+	
 	/*
 	 * Assistant function to write out the results
 	 */
@@ -439,6 +615,10 @@ public class Tracker {
 				fout.write(Integer.toString(i) + "\t");
 			}
 			fout.write("\n");
+			for (double i : mutualEntroColoc) {
+				fout.write(Double.toString(i) + "\t");
+			}
+			fout.write("\n");
 			fout.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -449,15 +629,17 @@ public class Tracker {
 		// 1. find frequent user pair
 		shareLocationCount();
 		// 2. calculate feature one -- Renyi entropy based diversity
-		// RenyiEntropyDiversity();
+		RenyiEntropyDiversity();
 		// 3. calculate feature two -- weighted frequency, and frequency
 		weightedFrequency();
 		// 4. calculate feature three -- mutual information
-		// mutualInformation();
+		mutualInformation();
 		// 5. calculate feature four -- interestingness
-		// interestingnessPAKDD();
+		interestingnessPAKDD();
+		// 6. calculate mutual information over colocations
+		mutualEntropyOnColocation();
 		// 6. write the results
-		writeThreeMeasures("feature-vectors-freq.txt");
+		writeThreeMeasures("feature-vectors.txt");
 		
 		
 		

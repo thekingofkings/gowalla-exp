@@ -71,7 +71,7 @@ public class Record {
 	// TDD
 	private static void TDD_entryParse() {
 		BufferedReader fin = null;
-		String filepath = "C:\\Users\\Hongjian\\pip\\Gowalla_totalCheckins.txt";
+		String filepath = "C:\\dataset\\Gowalla_totalCheckins.txt";
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {

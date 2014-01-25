@@ -12,7 +12,7 @@ public class User {
 	static HashMap<Integer, User> frequentUserSet = new HashMap<>();
 	
 	
-	long userID;
+	int userID;
 	LinkedList<Record> records;
 	
 	User( Record r ) {
@@ -63,7 +63,7 @@ public class User {
 	 */
 	public static void addAllUser() {
 		BufferedReader fin = null;
-		String filepath = "C:\\Users\\Hongjian\\pip\\Gowalla_totalCheckins.txt";
+		String filepath = "C:\\dataset\\Gowalla_totalCheckins.txt";
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {
