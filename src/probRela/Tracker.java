@@ -29,6 +29,7 @@ public class Tracker {
 	static LinkedList<Integer> frequency = new LinkedList<Integer>();
 	static LinkedList<Double> mutualEntroColoc = new LinkedList<Double>();
 	static LinkedList<Double> mutualEntroColoc_v3 = new LinkedList<Double>();
+	static LinkedList<Double> relaMutualEntro = new LinkedList<Double>();
 	
 	/*
 	 * Count the number of co-locations for each pair.
@@ -880,6 +881,18 @@ public class Tracker {
 	}
 	
 	
+	public static LinkedList<Double> relativeMutualEntropy() {
+		for (int i = 0; i < FrequentPair.size(); i++) {
+			int uaid = FrequentPair.get(i)[0];
+			int ubid = FrequentPair.get(i)[1];
+			HashSet<Long> locs = FrequentPair_CoLocations.get(i);
+			double entroA = marginalEntropy(uaid, locs);
+			double entroB = marginalEntropy(ubid, locs);
+			relaMutualEntro.add(mutualEntroColoc.get(i) / (entroA + entroB));
+		}
+		return relaMutualEntro;
+	}
+	
 	
 	/*
 	 * Assistant function to write out the results
@@ -920,6 +933,10 @@ public class Tracker {
 				fout.write(Double.toString(i) + "\t");
 			}
 			fout.write("\n");
+			for (double i : relaMutualEntro) {
+				fout.write(Double.toString(i) + "\t");
+			}
+			fout.write("\n");
 			fout.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -930,20 +947,21 @@ public class Tracker {
 		// 1. find frequent user pair
 		shareLocationCount();
 		// 2. calculate feature one -- Renyi entropy based diversity
-		RenyiEntropyDiversity();
-		// 3. calculate feature two -- weighted frequency, and frequency
-		weightedFrequency();
-		// 4. calculate feature three -- mutual information
-//		mutualInformation();
-		mutualInformation_v2();
-		// 5. calculate feature four -- interestingness
-		interestingnessPAKDD();
-		// 6. calculate mutual information over colocations
-//		mutualEntropyOnColocation();
+//		RenyiEntropyDiversity();
+//		// 3. calculate feature two -- weighted frequency, and frequency
+//		weightedFrequency();
+//		// 4. calculate feature three -- mutual information
+////		mutualInformation();
+//		mutualInformation_v2();
+//		// 5. calculate feature four -- interestingness
+//		interestingnessPAKDD();
+//		// 6. calculate mutual information over colocations
+////		mutualEntropyOnColocation();
 		mutualEntropyOnColocation_v2();
-		mutualEntropyOnColocation_v3();
+//		mutualEntropyOnColocation_v3();
+		relativeMutualEntropy();
 		// 6. write the results
-		writeThreeMeasures("feature-vectors.txt");
+		writeThreeMeasures("feature-vectors-rme.txt");
 		
 		
 		

@@ -37,7 +37,7 @@ title('Frequency features');
 % system('epstopdf freq.eps');
 
 
-prec_rec( c(6,:), friendLabel, 'plotROC', 0, 'holdFigure', 1, 'style', 'r:' );
+prec_rec( c(6,:), friendLabel, 'plotROC', 0, 'holdFigure', 1, 'style', 'r-.' );
 title('Mutual information over co-location set');
 % set(gcf, 'PaperUnits', 'inches', 'PaperPosition', [0 0 8 6]);
 % print('miocl.eps', '-dpsc');
