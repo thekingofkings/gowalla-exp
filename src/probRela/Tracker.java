@@ -28,6 +28,7 @@ public class Tracker {
 	static LinkedList<Double> interestingness = new LinkedList<Double>();
 	static LinkedList<Integer> frequency = new LinkedList<Integer>();
 	static LinkedList<Double> mutualEntroColoc = new LinkedList<Double>();
+	static LinkedList<Double> mutualEntroColoc_v3 = new LinkedList<Double>();
 	
 	/*
 	 * Count the number of co-locations for each pair.
@@ -376,6 +377,18 @@ public class Tracker {
 	
 	/*
 	 * Assistant function for mutual entropy -- calculate joint entropy
+	 * 
+	 * One problem is whether use the synchronized time series to index the records.
+	 * This dataset is the checkin data from gowalla, which is really sparse.
+	 * The record interpolation is impossible. Generally, each user have less than 1
+	 * check-in record each day.
+	 * 
+	 * My solution is to go through all records, then determine whether their timestamp
+	 * are within one timeslot.
+	 * 
+	 * Even though, the observation on both users at the same time slot is an rare events.
+	 * Therefore, I have to use the permutation to produce more fundamental event to 
+	 * approximate the ground truth.
 	 */
 	private static double jointEntropy( int uaid, int ubid ) {
 		User a = User.allUserSet.get(uaid);
@@ -387,7 +400,7 @@ public class Tracker {
 		for (Record ar : a.records) {
 			for (Record br : b.records) {
 				// ar and br are in the same time slots
-				if (Math.abs(ar.timestamp - br.timestamp) <= 4 * 3600) {
+				//if (Math.abs(ar.timestamp - br.timestamp) <= 4 * 3600) {
 					// put that observation at the same timeslot into the two level maps
 					if (locFreq.containsKey(ar.locID) && locFreq.get(ar.locID).containsKey(br.locID)) {
 						int f = locFreq.get(ar.locID).get(br.locID) + 1;
@@ -403,7 +416,7 @@ public class Tracker {
 						locFreq.get(ar.locID).put(br.locID, 1);
 						totalCase ++;
 					}
-				}
+				//}
 			}
 		}
 		//System.out.println(String.format("Total case of joint entropy %d", totalCase));
@@ -417,6 +430,83 @@ public class Tracker {
 			}
 		}
 		return entro;
+	}
+	
+	
+	/*
+	 * Calculate mutual information from the definition:
+	 * 		I(x,y) = \sum \sum p(x,y) log (p(x,y) / (p(x)p(y)) )
+	 */
+	public static LinkedList<Double> mutualInformation_v2() {
+		long t_start = System.currentTimeMillis();
+		// 1. calculate the individual probability
+		HashMap<Integer, HashMap<Long, Double>> user_loc_prob = new HashMap<Integer, HashMap<Long, Double>>();
+		for (int[] p : FrequentPair) {
+			for (int i = 0; i < 2; i++ ) {
+				int uid = p[i];
+				for (Record ra : User.frequentUserSet.get(uid).records) {
+					if (user_loc_prob.containsKey(uid)) {
+						if (user_loc_prob.get(uid).containsKey(ra.locID)) {
+							double f = user_loc_prob.get(uid).get(ra.locID);
+							user_loc_prob.get(uid).put(ra.locID, f + 1);
+						} else {
+							user_loc_prob.get(uid).put(ra.locID, 1.0);
+						}
+					} else {
+						user_loc_prob.put(uid, new HashMap<Long, Double>());
+						user_loc_prob.get(uid).put(ra.locID, 1.0);
+					}
+				}
+				int cnt = User.frequentUserSet.get(uid).records.size();
+				for (Long locid : user_loc_prob.get(uid).keySet()) {
+					double freq = user_loc_prob.get(uid).get(locid);
+					user_loc_prob.get(uid).put(locid, freq / cnt);
+				}
+			}
+		}
+		
+		for (int i = 0; i < FrequentPair.size(); i++ ) {
+			// 2. calculate the pair frequency
+			HashMap<Long, HashMap<Long, Double>> pairLocProb = new HashMap<>();
+			int uaid = FrequentPair.get(i)[0];
+			int ubid = FrequentPair.get(i)[1];
+			int totalCase = 0;
+			for (Record ar : User.frequentUserSet.get(uaid).records) {
+				for (Record br : User.frequentUserSet.get(ubid).records) {
+					if (pairLocProb.containsKey(ar.locID) && pairLocProb.get(ar.locID).containsKey(br.locID)) {
+						double f = pairLocProb.get(ar.locID).get(br.locID) + 1;
+						pairLocProb.get(ar.locID).put(br.locID, f);
+						totalCase ++;
+					}
+					else if (pairLocProb.containsKey(ar.locID) && ! pairLocProb.get(ar.locID).containsKey(br.locID)) {
+						pairLocProb.get(ar.locID).put(br.locID, 1.0);
+						totalCase ++;
+					}
+					else if (!pairLocProb.containsKey(ar.locID)) {
+						pairLocProb.put(ar.locID, new HashMap<Long, Double>());
+						pairLocProb.get(ar.locID).put(br.locID, 1.0);
+						totalCase ++;
+					}
+				}
+			}
+			double mutualE = 0;
+			for (Long l1 : pairLocProb.keySet()) {
+				for (Long l2: pairLocProb.get(l1).keySet()) {
+					// 3. calculate the pair probability
+					double f = pairLocProb.get(l1).get(l2);
+					double pairProb = f / totalCase;
+					// 4. calculate the mutual information
+					mutualE += pairProb * Math.log(pairProb / user_loc_prob.get(uaid).get(l1) / user_loc_prob.get(ubid).get(l2));
+				}
+			}
+			mutualInfo.add(mutualE);
+			// monitor the process
+			if (i % (FrequentPair.size()/10) == 0)
+				System.out.println(String.format("Process - mutualInformation_v2 finished %d0%%", i/(FrequentPair.size()/10)));
+		}
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("mutualInformation_v2 executed for %d seconds", (t_end-t_start)/1000));
+		return mutualInfo;
 	}
 	
 	/*
@@ -588,7 +678,7 @@ public class Tracker {
 		for (Record ar : a.records) {
 			for (Record br : b.records) {
 				// Two records in same timeslot
-				if (Math.abs(ar.timestamp-br.timestamp) <= 4 * 3600) {
+				//if (Math.abs(ar.timestamp-br.timestamp) <= 4 * 3600) {
 					// count frequency only on the target set
 					if (locs.contains(ar.locID) && locs.contains(br.locID)) {
 						if (locFreq.containsKey(ar.locID) && locFreq.get(ar.locID).containsKey(br.locID)) {
@@ -606,7 +696,7 @@ public class Tracker {
 							totalCase ++;
 						}
 					}
-				}
+				//}
 			}
 		}
 		// 2. probability and entropy
@@ -620,6 +710,175 @@ public class Tracker {
 		}
 		return entro;
 	}
+	
+	
+	
+	/*
+	 * Calculate mutual information over given set from the definition:
+	 * 		I(x,y) = \sum \sum p(x,y) log (p(x,y) / (p(x)p(y)) )
+	 */
+	public static LinkedList<Double> mutualEntropyOnColocation_v2() {
+		long t_start = System.currentTimeMillis();
+		// 1. calculate the individual probability
+		HashMap<Integer, HashMap<Long, Double>> user_loc_prob = new HashMap<Integer, HashMap<Long, Double>>();
+		for (int i = 0; i < FrequentPair.size(); i++) {
+			int[] p = FrequentPair.get(i);
+			// get given target locatoin set
+			HashSet<Long> locs = FrequentPair_CoLocations.get(i);
+			for (int j = 0; j < 2; j++ ) {
+				int uid = p[j];
+				int cnt = 0;
+				for (Record ra : User.frequentUserSet.get(uid).records) {
+					if (locs.contains(ra.locID)) {
+						if (user_loc_prob.containsKey(uid)) {
+							if (user_loc_prob.get(uid).containsKey(ra.locID)) {
+								double f = user_loc_prob.get(uid).get(ra.locID);
+								user_loc_prob.get(uid).put(ra.locID, f + 1);
+							} else {
+								user_loc_prob.get(uid).put(ra.locID, 1.0);
+							}
+						} else {
+							user_loc_prob.put(uid, new HashMap<Long, Double>());
+							user_loc_prob.get(uid).put(ra.locID, 1.0);
+						}
+						cnt ++;
+					}
+				}
+				
+				for (Long locid : user_loc_prob.get(uid).keySet()) {
+					double freq = user_loc_prob.get(uid).get(locid);
+					user_loc_prob.get(uid).put(locid, freq / cnt);
+				}
+			}
+		}
+		
+		for (int i = 0; i < FrequentPair.size(); i++ ) {
+			// 2. calculate the pair frequency
+			HashMap<Long, HashMap<Long, Double>> pairLocProb = new HashMap<>();
+			int uaid = FrequentPair.get(i)[0];
+			int ubid = FrequentPair.get(i)[1];
+			HashSet<Long> locs = FrequentPair_CoLocations.get(i);
+			int totalCase = 0;
+			for (Record ar : User.frequentUserSet.get(uaid).records) {
+				for (Record br : User.frequentUserSet.get(ubid).records) {
+					if (locs.contains(ar.locID) && locs.contains(br.locID)) {
+						if (pairLocProb.containsKey(ar.locID) && pairLocProb.get(ar.locID).containsKey(br.locID)) {
+							double f = pairLocProb.get(ar.locID).get(br.locID) + 1;
+							pairLocProb.get(ar.locID).put(br.locID, f);
+							totalCase ++;
+						}
+						else if (pairLocProb.containsKey(ar.locID) && ! pairLocProb.get(ar.locID).containsKey(br.locID)) {
+							pairLocProb.get(ar.locID).put(br.locID, 1.0);
+							totalCase ++;
+						}
+						else if (!pairLocProb.containsKey(ar.locID)) {
+							pairLocProb.put(ar.locID, new HashMap<Long, Double>());
+							pairLocProb.get(ar.locID).put(br.locID, 1.0);
+							totalCase ++;
+						}
+					}
+				}
+			}
+			double mutualE = 0;
+			for (Long l1 : pairLocProb.keySet()) {
+				for (Long l2: pairLocProb.get(l1).keySet()) {
+					// 3. calculate the pair probability
+					double f = pairLocProb.get(l1).get(l2);
+					double pairProb = f / totalCase;
+					// 4. calculate the mutual information
+					mutualE += pairProb * Math.log(pairProb / user_loc_prob.get(uaid).get(l1) / user_loc_prob.get(ubid).get(l2));
+				}
+			}
+			mutualEntroColoc.add(mutualE);
+			// monitor the process
+			if (i % (FrequentPair.size()/10) == 0)
+				System.out.println(String.format("Process - mutualEntroColocation_v2 finished %d0%%", i/(FrequentPair.size()/10)));
+		}
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("mutualEntroColocation_v2 executed for %d seconds", (t_end-t_start)/1000));
+		return mutualEntroColoc;
+	}
+	
+	
+	/*
+	 * Calculate mutual information over colocation from the definition:
+	 * 		I(x,y) = \sum \sum p(x,y) log (p(x,y) / (p(x)p(y)) )
+	 */
+	public static LinkedList<Double> mutualEntropyOnColocation_v3() {
+		long t_start = System.currentTimeMillis();
+		// 1. calculate the individual probability
+		HashMap<Integer, HashMap<Long, Double>> user_loc_prob = new HashMap<Integer, HashMap<Long, Double>>();
+		for (int i = 0; i < FrequentPair.size(); i++) {
+			int[] p = FrequentPair.get(i);
+			// get given target locatoin set
+			HashSet<Long> locs = FrequentPair_CoLocations.get(i);
+			for (int j = 0; j < 2; j++ ) {
+				int uid = p[j];
+				int cnt = 0;
+				for (Record ra : User.frequentUserSet.get(uid).records) {
+					if (locs.contains(ra.locID)) {
+						if (user_loc_prob.containsKey(uid)) {
+							if (user_loc_prob.get(uid).containsKey(ra.locID)) {
+								double f = user_loc_prob.get(uid).get(ra.locID);
+								user_loc_prob.get(uid).put(ra.locID, f + 1);
+							} else {
+								user_loc_prob.get(uid).put(ra.locID, 1.0);
+							}
+						} else {
+							user_loc_prob.put(uid, new HashMap<Long, Double>());
+							user_loc_prob.get(uid).put(ra.locID, 1.0);
+						}
+						cnt ++;
+					}
+				}
+				
+				for (Long locid : user_loc_prob.get(uid).keySet()) {
+					double freq = user_loc_prob.get(uid).get(locid);
+					user_loc_prob.get(uid).put(locid, freq / cnt);
+				}
+			}
+		}
+		
+		for (int i = 0; i < FrequentPair.size(); i++ ) {
+			// 2. calculate the pair frequency
+			HashMap<Long, Double> pairLocProb = new HashMap<>();
+			int uaid = FrequentPair.get(i)[0];
+			int ubid = FrequentPair.get(i)[1];
+			HashSet<Long> locs = FrequentPair_CoLocations.get(i);
+			int totalCase = 0;
+			for (Record ar : User.frequentUserSet.get(uaid).records) {
+				for (Record br : User.frequentUserSet.get(ubid).records) {
+					// ar and br are same location
+					if (locs.contains(ar.locID) && ar.locID == br.locID) {
+						if (pairLocProb.containsKey(ar.locID)) {
+							double f = pairLocProb.get(ar.locID) + 1;
+							pairLocProb.put(ar.locID, f);
+							totalCase ++;
+						} else {
+							pairLocProb.put(ar.locID, 1.0);
+							totalCase ++;
+						}
+					}
+				}
+			}
+			double mutualE = 0;
+			for (Long l : pairLocProb.keySet()) {
+				// 3. calculate the pair probability
+				double f = pairLocProb.get(l);
+				double pairProb = f / totalCase;
+				// 4. calculate the mutual information
+				mutualE += pairProb * Math.log(pairProb / user_loc_prob.get(uaid).get(l) / user_loc_prob.get(ubid).get(l));
+			}
+			mutualEntroColoc_v3.add(mutualE);
+			// monitor the process
+			if (i % (FrequentPair.size()/10) == 0)
+				System.out.println(String.format("Process - mutualEntroColocation_v2 finished %d0%%", i/(FrequentPair.size()/10)));
+		}
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("mutualEntroColocation_v2 executed for %d seconds", (t_end-t_start)/1000));
+		return mutualEntroColoc_v3;
+	}
+	
 	
 	
 	/*
@@ -657,6 +916,10 @@ public class Tracker {
 				fout.write(Double.toString(i) + "\t");
 			}
 			fout.write("\n");
+			for (double i : mutualEntroColoc_v3) {
+				fout.write(Double.toString(i) + "\t");
+			}
+			fout.write("\n");
 			fout.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -671,11 +934,14 @@ public class Tracker {
 		// 3. calculate feature two -- weighted frequency, and frequency
 		weightedFrequency();
 		// 4. calculate feature three -- mutual information
-		mutualInformation();
+//		mutualInformation();
+		mutualInformation_v2();
 		// 5. calculate feature four -- interestingness
 		interestingnessPAKDD();
 		// 6. calculate mutual information over colocations
-		mutualEntropyOnColocation();
+//		mutualEntropyOnColocation();
+		mutualEntropyOnColocation_v2();
+		mutualEntropyOnColocation_v3();
 		// 6. write the results
 		writeThreeMeasures("feature-vectors.txt");
 		
