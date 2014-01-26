@@ -19,7 +19,7 @@ import java.util.LinkedList;
  * 		196514  2010-07-24T13:45:06Z    53.3648119      -2.2723465833   145064
  * 		196514  2010-07-24T13:44:58Z    53.360511233    -2.276369017    1275991
  */
-public class Record {
+public class Record implements Comparable<Record> {
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	private static Calendar myCal = new GregorianCalendar();
 	
@@ -44,6 +44,7 @@ public class Record {
 			System.out.println(e.getMessage());
 		}
 	}
+	
 	
 	/*
 	 * Parse the time String. Return timestamp in seconds.
@@ -74,7 +75,7 @@ public class Record {
 	// TDD
 	private static void TDD_entryParse() {
 		BufferedReader fin = null;
-		String filepath = "../../pip/Gowalla_totalCheckins.txt";
+		String filepath = "../../dataset/Gowalla_totalCheckins.txt";
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {
@@ -98,5 +99,10 @@ public class Record {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public int compareTo(Record o) {
+		return (int) (this.timestamp - o.timestamp);
 	}
 }

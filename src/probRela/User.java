@@ -63,7 +63,7 @@ public class User {
 	 */
 	public static void addAllUser() {
 		BufferedReader fin = null;
-		String filepath = "../../pip/Gowalla_totalCheckins.txt";
+		String filepath = "../../dataset/Gowalla_totalCheckins.txt";
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {
