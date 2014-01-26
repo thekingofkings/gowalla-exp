@@ -108,32 +108,32 @@ public class CaseFinder {
 	 * Calculate the meeting frequency of each user pair
 	 * For the non-friends pair, we will focus on their meeting frequency
 	 */
-	public void freqAndDistance() {
+	public void allPairMeetingFreq() {
 		long t_start = System.currentTimeMillis();
 		for (int i = 0; i < K; i++) {
 			for (int j = i+1; j < K; j++) {
 				System.out.println(String.format("Calculating user with rank %d and %d", i, j));
 				User ua = User.allUserSet.get(topKUser.get(i));
 				User ub = User.allUserSet.get(topKUser.get(j));
-				// distance pair cnt
-				int cnt = 0;
-				for (Record ra : ua.records)
-					for (Record rb : ub.records) {
-						// 1. calculate the average distance
-						double d = distance(ra, rb);
-						avgDistance[i][j] += d;
-						avgDistance[j][i] += d;
-						cnt ++;
+				for (int aind = 0; i < ua.records.size(); i++)
+					for (int bind = 0; j < ub.records.size(); j++) {
+						Record ra = ua.records.get(aind);
+						Record rb = ub.records.get(bind);
 
-						// 2. count the meeting frequency
-						if (ra.locID == rb.locID && Math.abs(ra.timestamp - rb.timestamp) < 4 * 3600) {
-							meetFreq[i][j] ++;
-							meetFreq[j][i] ++;
-						}
-							
+						// 1. count the meeting frequency
+						if (ra.timestamp - rb.timestamp > 4 * 3600) {
+							aind++;
+							continue;
+						} else if (rb.timestamp - ra.timestamp > 4 * 3600) {
+							bind++;
+							continue;
+						} else {
+							if (ra.locID == rb.locID ) {
+								meetFreq[i][j] ++;
+								meetFreq[j][i] ++;
+							}
+						}							
 					}
-				avgDistance[i][j] /= cnt;
-				avgDistance[j][i] /= cnt;
 			}
 			
 			// monitor the process
@@ -149,13 +149,13 @@ public class CaseFinder {
 	 * Write out the overall meeting frequency and average distance
 	 * among the top k users.
 	 */
-	public void writeTopKFreqDistance() {
+	public void writeTopKFreq() {
 		try {
 			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_freq_distance.txt"));
 			for (int i = 0; i < K; i++) {
 				for (int j = i+1; j < K; j++) {
 					// write out id_1, id_2, meeting frequency, distance
-					fout.write(String.format("%d\t%d\t%d\t%g\n", topKUser.get(i), topKUser.get(j), meetFreq[i][j], avgDistance[i][j] ));
+					fout.write(String.format("%d\t%d\t%d\n", topKUser.get(i), topKUser.get(j), meetFreq[i][j] ));
 				}
 			}
 			fout.close();
@@ -175,6 +175,20 @@ public class CaseFinder {
 			for (int b : friendMap.get(a)) {
 				int rank_a = uid_rank.get(a);
 				int rank_b = uid_rank.get(b);
+				int cnt = 0;
+				for (Record ra : User.allUserSet.get(a).records) {
+					for (Record rb : User.allUserSet.get(b).records) {
+						// 1. calculate the average distance
+						double d = distance(ra, rb);
+						avgDistance[rank_a][rank_b] += d;
+						avgDistance[rank_b][rank_a] += d;
+						cnt ++;
+					}
+				}
+				avgDistance[rank_a][rank_b] /= cnt;
+				avgDistance[rank_b][rank_a] /= cnt;
+				
+				
 				if (avgDistance[rank_a][rank_b] > 100) {
 					int[] tuple = { a, b, (int) avgDistance[rank_a][rank_b] };
 					distantFriend.add(tuple);
@@ -258,9 +272,9 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(20);
-		cf.freqAndDistance();
-		cf.writeTopKFreqDistance();
+		CaseFinder cf = new CaseFinder(100);
+		cf.allPairMeetingFreq();
+		cf.writeTopKFreq();
 		
 		cf.remoteFriends();
 		cf.writeRemoteFriend();

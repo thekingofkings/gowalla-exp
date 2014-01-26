@@ -3,6 +3,7 @@ package probRela;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.HashSet;
@@ -85,6 +86,11 @@ public class User {
 			fin.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+		
+		// sort 
+		for (User u : allUserSet.values()) {
+			Collections.sort(u.records);
 		}
 	}
 	
