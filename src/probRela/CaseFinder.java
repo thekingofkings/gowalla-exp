@@ -115,8 +115,8 @@ public class CaseFinder {
 				
 				User ua = User.allUserSet.get(topKUser.get(i));
 				User ub = User.allUserSet.get(topKUser.get(j));
-				for (int aind = 0; i < ua.records.size(); i++)
-					for (int bind = 0; j < ub.records.size(); j++) {
+				for (int aind = 0; aind < ua.records.size(); aind++)
+					for (int bind = 0; bind < ub.records.size(); bind++) {
 						Record ra = ua.records.get(aind);
 						Record rb = ub.records.get(bind);
 
@@ -151,7 +151,7 @@ public class CaseFinder {
 	 */
 	public void writeTopKFreq() {
 		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_freq_distance.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_freq.txt"));
 			for (int i = 0; i < K; i++) {
 				for (int j = i+1; j < K; j++) {
 					// write out id_1, id_2, meeting frequency, distance
@@ -197,7 +197,7 @@ public class CaseFinder {
 			}
 		}
 		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("Found remote friends in %d milliseconds", (t_end-t_start)));
+		System.out.println(String.format("Found remote friends in %d seconds", (t_end-t_start)/1000));
 		return distantFriend;
 	}
 	
@@ -207,8 +207,10 @@ public class CaseFinder {
 		try {
 			BufferedWriter fout = new BufferedWriter(new FileWriter("remoteFriend.txt"));
 			for (int i = 0; i < distantFriend.size(); i++) {
-				// write out u_1, u_2, distance
-				fout.write(String.format("%d\t%d\t%d\n", distantFriend.get(i)[0], distantFriend.get(i)[1], distantFriend.get(i)[2]));
+				// write out u_1, u_2, distance, meeting frequency
+				int uaid = distantFriend.get(i)[0];
+				int ubid = distantFriend.get(i)[1];
+				fout.write(String.format("%d\t%d\t%d\t%d\n", distantFriend.get(i)[0], distantFriend.get(i)[1], distantFriend.get(i)[2], meetFreq[uid_rank.get(uaid)][uid_rank.get(ubid)]));
 			}
 			fout.close();
 		} catch (Exception e) {
@@ -276,7 +278,7 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(100);
+		CaseFinder cf = new CaseFinder(50);
 		cf.allPairMeetingFreq();
 		cf.writeTopKFreq();
 		
