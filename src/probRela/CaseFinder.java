@@ -112,7 +112,7 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		for (int i = 0; i < K; i++) {
 			for (int j = i+1; j < K; j++) {
-				System.out.println(String.format("Calculating user with rank %d and %d", i, j));
+				
 				User ua = User.allUserSet.get(topKUser.get(i));
 				User ub = User.allUserSet.get(topKUser.get(j));
 				for (int aind = 0; i < ua.records.size(); i++)
@@ -173,6 +173,7 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		for (int a : friendMap.keySet()) {
 			for (int b : friendMap.get(a)) {
+				System.out.println(String.format("Calculating user with id %d and %d", a, b));
 				int rank_a = uid_rank.get(a);
 				int rank_b = uid_rank.get(b);
 				int cnt = 0;
@@ -262,10 +263,13 @@ public class CaseFinder {
 	// TDD
 	@SuppressWarnings("unused")
 	private static void test_distance() {
-		double d = distance(50.04, 5.42, 51.04, 5.42);
+		double d = distance(171.52, 47.45, -175.29, 47.31);
 		System.out.println("Distance is " + Double.toString(d));
 
 		d = distance(50.04, 5.42, 58.38, 3.04);
+		System.out.println("Distance is " + Double.toString(d));
+		
+		d = distance(-105.09, 59.42, -68.57, -48.27);
 		System.out.println("Distance is " + Double.toString(d));
 	}
 	
@@ -283,82 +287,6 @@ public class CaseFinder {
 		cf.writeNonFriendsMeeting();
 //		test_distance();
 	}
-	  
-	  	
-	/*
-	 * The case of friends in different city
-	 * bad design
-	 *
-	public ArrayList<int[]> remoteFriends() {
-		long t_start = System.currentTimeMillis();
-		for (int i = 0; i < friendPair.size(); i++) {
-			int uaid = friendPair.get(i)[0];
-			int ubid = friendPair.get(i)[1];
-			double avgDistance = 0;
-			int cnt = 0;
-			// calculate average distance
-			if (User.allUserSet.containsKey(uaid) && User.allUserSet.containsKey(ubid)) {
-				if (User.allUserSet.get(uaid).records.size() > 2000 && User.allUserSet.get(ubid).records.size() > 2000) {
-					for (Record ra : User.allUserSet.get(uaid).records) {
-						for (Record rb : User.allUserSet.get(ubid).records) {
-							avgDistance += distance(ra, rb);
-							cnt ++;
-						}
-					}
-				}
-			}
-			// determine if they are distant
-			if (avgDistance / cnt > 100) {
-				distantFriend.add(friendPair.get(i));
-			}
-			// monitor the process
-			if (i % (User.allUserSet.size()/10) == 0)
-				System.out.println(String.format("Process - remoteFriends finished %d0%%", i/(friendPair.size()/10)));
-		
-		}
-		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("Initailize case finder in %d seconds", (t_end-t_start)/1000));
-		return distantFriend;
-	}
-	*/
-	
-	/*
-	 * The case of people usually meet but are not friends
-	 * bad design
-	public ArrayList<int[]> frequentMeetingNonFriends() {
-		long t_start = System.currentTimeMillis();
-		// friends set
-		Object[] userArray = User.allUserSet.values().toArray();
-		for (int i = 0; i < userArray.length; i++) {
-			for (int j = i+1; j < userArray.length; j++) {
-				User ua = (User) userArray[i];
-				User ub = (User) userArray[j];
-				if (! (friendMap.containsKey(ua.userID))) {
-					// calculate co-location frequency
-					int freq = 0;
-					for (Record ra : ua.records) {
-						for (Record rb: ub.records) {
-							if (ra.locID == rb.locID && Math.abs(ra.timestamp - rb.timestamp) < 4 * 3600)
-								freq ++;
-						}
-					}
-					int[] triple = new int[3];
-					triple[0] = ua.userID;
-					triple[1] = ub.userID;
-					triple[2] = freq;
-					nonFriendMeeting.add(triple);
-				}
-			}
-
-			// monitor the process
-			if (i % (User.allUserSet.size()/10) == 0)
-				System.out.println(String.format("Process - frequentMeetingNonFriends finished %d0%%", i/(User.allUserSet.size()/10)));
-		}
-		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("Initailize case finder in %d seconds", (t_end-t_start)/1000));
-		return nonFriendMeeting;
-	}
-	*/
 
 
 }
