@@ -55,7 +55,7 @@ public class CaseFinder {
 				friends[0] = Integer.parseInt(ls[0]);
 				friends[1] = Integer.parseInt(ls[1]);
 				// only put the friend pair of top k users into friendPair
-				if (topKUser.contains(friends[0]) && topKUser.contains(friends[1])) {
+				if ( friends[0] < friends[1] && topKUser.contains(friends[0]) && topKUser.contains(friends[1])) {
 					friendPair.add(friends);
 					if (friendMap.containsKey(friends[0]))
 						friendMap.get(friends[0]).add(friends[1]);
@@ -71,6 +71,19 @@ public class CaseFinder {
 		}
 		long t_end = System.currentTimeMillis();
 		System.out.println(String.format("Initailize case finder in %d seconds", (t_end-t_start)/1000));
+	}
+	
+	/*
+	 * filterout duplicate friend pair
+	 */
+	@SuppressWarnings("unused")
+	private boolean inFriendPair(int uaid, int ubid) {
+		if (friendMap.containsKey(uaid) && friendMap.get(uaid).contains(ubid))
+			return true;
+		else if (friendMap.containsKey(ubid) && friendMap.get(ubid).contains(uaid))
+			return true;
+		else
+			return false;
 	}
 	
 	
@@ -112,20 +125,20 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		for (int i = 0; i < K; i++) {
 			for (int j = i+1; j < K; j++) {
-				System.out.println(String.format("Calculating user with rank %d and %d", i, j));
+				//System.out.println(String.format("Calculating user with rank %d and %d", i, j));
 				User ua = User.allUserSet.get(topKUser.get(i));
 				User ub = User.allUserSet.get(topKUser.get(j));
-				for (int aind = 0; i < ua.records.size(); i++)
-					for (int bind = 0; j < ub.records.size(); j++) {
-						Record ra = ua.records.get(aind);
-						Record rb = ub.records.get(bind);
+				for (int aind = 0; aind < ua.records.size(); aind++)
+					for (int bind = 0; bind < ub.records.size(); bind++) {
+						Record ra = ua.records.get(i);
+						Record rb = ub.records.get(j);
 
 						// 1. count the meeting frequency
 						if (ra.timestamp - rb.timestamp > 4 * 3600) {
-							aind++;
+							bind++;
 							continue;
 						} else if (rb.timestamp - ra.timestamp > 4 * 3600) {
-							bind++;
+							aind++;
 							continue;
 						} else {
 							if (ra.locID == rb.locID ) {
@@ -151,7 +164,7 @@ public class CaseFinder {
 	 */
 	public void writeTopKFreq() {
 		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_freq_distance.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_freq.txt"));
 			for (int i = 0; i < K; i++) {
 				for (int j = i+1; j < K; j++) {
 					// write out id_1, id_2, meeting frequency, distance
@@ -171,6 +184,7 @@ public class CaseFinder {
 	public ArrayList<int[]> remoteFriends() {
 		// iterate over all user pair
 		long t_start = System.currentTimeMillis();
+		int c = 0;
 		for (int a : friendMap.keySet()) {
 			for (int b : friendMap.get(a)) {
 				int rank_a = uid_rank.get(a);
@@ -194,9 +208,13 @@ public class CaseFinder {
 					distantFriend.add(tuple);
 				}
 			}
+			// monitor process
+			c++;
+			if (c % (friendMap.size()/10) == 0)
+				System.out.println(String.format("Process -- remoteFriends %d0%%", c / (friendMap.size()/10)));
 		}
 		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("Found remote friends in %d milliseconds", (t_end-t_start)));
+		System.out.println(String.format("Found remote friends in %d seconds", (t_end-t_start)/1000));
 		return distantFriend;
 	}
 	
