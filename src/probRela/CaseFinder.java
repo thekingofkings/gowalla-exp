@@ -74,22 +74,26 @@ public class CaseFinder {
 	}
 	
 	
-	private double distance(Record start, Record end) {
+	private static double distance(Record start, Record end) {
 		double longiS = start.longitude;
 		double latiS = start.latitude;
 		double longiE = end.longitude;
 		double latiE = end.latitude;
-		double d2r = (180/Math.PI);
+		return distance(longiS, latiS, longiE, latiE);
+	}
+	
+	private static double distance(double longiS, double latiS, double longiE, double latiE) {
+		double d2r = (Math.PI/180);
 		double distance = 0;
 		
 		try {
 			double dlong = (longiE - longiS) * d2r;
 			double dlati = (latiE - latiS) * d2r;
-			double a = Math.pow(Math.sin (dlati/2.0), 2)
+			double a = Math.pow(Math.sin(dlati/2.0), 2)
 					+ Math.cos(latiS * d2r)
 					* Math.cos(latiE * d2r)
 					* Math.pow(Math.sin(dlong / 2.0), 2);
-			double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-1));
+			double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 			distance = 6367 * c;
 			
 		} catch (Exception e) {
@@ -151,7 +155,7 @@ public class CaseFinder {
 			for (int i = 0; i < K; i++) {
 				for (int j = i+1; j < K; j++) {
 					// write out id_1, id_2, meeting frequency, distance
-					fout.write(String.format("%d\t%d\t%d\t%d\n", topKUser.get(i), topKUser.get(j), meetFreq[i][j], avgDistance[i][j] ));
+					fout.write(String.format("%d\t%d\t%d\t%g\n", topKUser.get(i), topKUser.get(j), meetFreq[i][j], avgDistance[i][j] ));
 				}
 			}
 			fout.close();
@@ -166,6 +170,7 @@ public class CaseFinder {
 	 */
 	public ArrayList<int[]> remoteFriends() {
 		// iterate over all user pair
+		long t_start = System.currentTimeMillis();
 		for (int a : friendMap.keySet()) {
 			for (int b : friendMap.get(a)) {
 				int rank_a = uid_rank.get(a);
@@ -176,6 +181,8 @@ public class CaseFinder {
 				}
 			}
 		}
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Found remote friends in %d milliseconds", (t_end-t_start)));
 		return distantFriend;
 	}
 	
@@ -200,7 +207,7 @@ public class CaseFinder {
 	public ArrayList<int[]> nonFriendsMeetingFreq() {
 		for (int i = 0; i < K; i++ )
 			for (int j = i+1; j < K; j++) {
-				if (nonFriend(topKUser.get(i), topKUser.get(j))) {
+				if (nonFriend(topKUser.get(i), topKUser.get(j)) && meetFreq[i][j] > 0) {
 					int[] tuple = {topKUser.get(i), topKUser.get(j), meetFreq[i][j]};
 					nonFriendMeeting.add(tuple);
 				}
@@ -238,10 +245,20 @@ public class CaseFinder {
 		}
 	}
 	
+	// TDD
+	@SuppressWarnings("unused")
+	private static void test_distance() {
+		double d = distance(50.04, 5.42, 51.04, 5.42);
+		System.out.println("Distance is " + Double.toString(d));
+
+		d = distance(50.04, 5.42, 58.38, 3.04);
+		System.out.println("Distance is " + Double.toString(d));
+	}
+	
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(100);
+		CaseFinder cf = new CaseFinder(20);
 		cf.freqAndDistance();
 		cf.writeTopKFreqDistance();
 		
@@ -250,6 +267,7 @@ public class CaseFinder {
 		
 		cf.nonFriendsMeetingFreq();
 		cf.writeNonFriendsMeeting();
+//		test_distance();
 	}
 	  
 	  	
