@@ -26,8 +26,14 @@ public class CasePlot {
 		System.out.println("Initializing finished");
 	}
 	
-
+	
 	public void drawEachPair() {
+		int k = Integer.MAX_VALUE;
+		drawEachPair(k);
+	}
+
+	public void drawEachPair(int k) {
+		System.out.println("Start drawing");
 		img = new BufferedImage(imgWidth,imgHeight,BufferedImage.TYPE_INT_ARGB);
 		g = img.createGraphics();
 		g.setColor(Color.white);
@@ -35,6 +41,7 @@ public class CasePlot {
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("remoteFriend.txt"));
 			String l; 
+			int c = 0;
 			while ((l = fin.readLine()) != null) {
 				String[] ls = l.split("\\s+");
 				uaid = Integer.parseInt(ls[0]);
@@ -43,11 +50,15 @@ public class CasePlot {
 				findMaxCoord();
 				paint();
 				saveImg(String.format("friend%d-%d.png", uaid, ubid));
+				c++;
+				if (c == k)
+					break;
 			}
 			fin.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		System.out.println("Drawing finished");
 	}
 	
 	private void findMaxCoord() {
@@ -101,8 +112,8 @@ public class CasePlot {
 			int[] point = mapCoord(r);
 			g.fillOval(point[0], point[1], 3, 3);
 		}
-		// paint distance
-		
+		// mark distance
+		g.drawString(String.format("H: %g, W: %g", (maxCoord[3]-maxCoord[1]) * 110, (maxCoord[2] - maxCoord[0]) * 110), 360, 380);
 	}
 	
 	public void saveImg(String fn) {
@@ -117,6 +128,6 @@ public class CasePlot {
 	
 	public static void main(String argv[]) {
 		CasePlot cp = new CasePlot();
-		cp.drawEachPair();
+		cp.drawEachPair(1);
 	}
 }
