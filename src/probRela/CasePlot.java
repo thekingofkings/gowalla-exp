@@ -15,6 +15,7 @@ public class CasePlot {
 	private Graphics g;
 	private int uaid;
 	private int ubid;
+	// maxCoord will store min_longi, min_lati, max_longi, max_lati.
 	private double[] maxCoord;
 	private static int imgWidth = 800;
 	private static int imgHeight = 600;
@@ -34,10 +35,6 @@ public class CasePlot {
 
 	public void drawEachPair(int k) {
 		System.out.println("Start drawing");
-		img = new BufferedImage(imgWidth,imgHeight,BufferedImage.TYPE_INT_ARGB);
-		g = img.createGraphics();
-		g.setColor(Color.white);
-		g.fillRect(0, 0, img.getWidth(), img.getHeight());
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("remoteFriend.txt"));
 			String l; 
@@ -62,6 +59,11 @@ public class CasePlot {
 	}
 	
 	private void findMaxCoord() {
+		// reset maxCoord
+		maxCoord[0] = 180;
+		maxCoord[1] = 90;
+		maxCoord[2] = -180;
+		maxCoord[3] = -90;
 		// iterate through User a
 		for (Record r : User.allUserSet.get(uaid).records) {
 			if (r.longitude < maxCoord[0])
@@ -99,21 +101,26 @@ public class CasePlot {
 		return res;
 	}
 	
-	public void paint() {
+	private void paint() {
+		// initialize the image and graphics
+		img = new BufferedImage(imgWidth,imgHeight,BufferedImage.TYPE_INT_ARGB);
+		g = img.createGraphics();
+		g.setColor(Color.white);
+		g.fillRect(0, 0, img.getWidth(), img.getHeight());
 		// paint the first user
 		g.setColor(Color.blue);
 		for (Record r : User.allUserSet.get(uaid).records) {
 			int[] point = mapCoord(r);
-			g.fillOval(point[0], point[1], 3, 3);
+			g.fillOval(point[0], point[1], 5, 5);
 		}
 		// paint the second user
 		g.setColor(Color.red);
 		for (Record r : User.allUserSet.get(ubid).records) {
 			int[] point = mapCoord(r);
-			g.fillOval(point[0], point[1], 3, 3);
+			g.fillOval(point[0], point[1], 5, 5);
 		}
 		// mark distance
-		g.drawString(String.format("H: %g, W: %g", (maxCoord[3]-maxCoord[1]) * 110, (maxCoord[2] - maxCoord[0]) * 110), 360, 380);
+		g.drawString(String.format("From %g, %g to %g, %g (Latitude, Longitude)", maxCoord[1], maxCoord[0], maxCoord[3], maxCoord[2]), 360, 380);
 	}
 	
 	public void saveImg(String fn) {
@@ -128,6 +135,6 @@ public class CasePlot {
 	
 	public static void main(String argv[]) {
 		CasePlot cp = new CasePlot();
-		cp.drawEachPair(1);
+		cp.drawEachPair();
 	}
 }

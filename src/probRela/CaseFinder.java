@@ -235,8 +235,10 @@ public class CaseFinder {
 		try {
 			BufferedWriter fout = new BufferedWriter(new FileWriter("remoteFriend.txt"));
 			for (int i = 0; i < distantFriend.size(); i++) {
-				// write out u_1, u_2, distance
-				fout.write(String.format("%d\t%d\t%d\n", distantFriend.get(i)[0], distantFriend.get(i)[1], distantFriend.get(i)[2]));
+				// write out u_1, u_2, distance, meeting frequency
+				int uaid = distantFriend.get(i)[0];
+				int ubid = distantFriend.get(i)[1];
+				fout.write(String.format("%d\t%d\t%d\t%d\n", distantFriend.get(i)[0], distantFriend.get(i)[1], distantFriend.get(i)[2], meetFreq[uid_rank.get(uaid)][uid_rank.get(ubid)]));
 			}
 			fout.close();
 		} catch (Exception e) {
@@ -304,7 +306,7 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(10);
+		CaseFinder cf = new CaseFinder(50);
 		cf.allPairMeetingFreq();
 		cf.writeTopKFreq();
 		
