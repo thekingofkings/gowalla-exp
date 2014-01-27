@@ -64,7 +64,7 @@ public class Record implements Comparable<Record> {
 	
 	@Override
 	public String toString(){
-		return String.format("%d %s %d %g %g %d", userID, time, timestamp, latitude, longitude, locID);
+		return String.format("%d %s %g %g %d", userID, time, latitude, longitude, locID);
 	}
 	
 

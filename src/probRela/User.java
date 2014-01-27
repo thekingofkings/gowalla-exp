@@ -46,6 +46,7 @@ public class User {
 				}
 				fin.close();
 			} catch (Exception e) {
+				System.out.println("Exception in User constructor");
 				e.printStackTrace();
 			}
 			allUserSet.put(uid, this);
@@ -146,7 +147,7 @@ public class User {
 //		TDD_records_sorting();
 		findFrequentUsers(400);
 		System.out.println(String.format("Active user number: %d", User.frequentUserSet.size()));
-//		writeOutSortedResult();
+		writeOutSortedResult();
 	}
 	
 	
