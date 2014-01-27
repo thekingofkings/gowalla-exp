@@ -61,9 +61,16 @@ public class Record implements Comparable<Record> {
 		timestamp = myCal.getTimeInMillis() / 1000;
 		return timestamp;
 	}
-	 
+	
+	@Override
 	public String toString(){
 		return String.format("%d %s %g %g %d", userID, time, latitude, longitude, locID);
+	}
+	
+
+	@Override
+	public int compareTo(Record o) {
+		return (int) (this.timestamp - o.timestamp);
 	}
 	 
 	public static void main(String argv[]) {
@@ -101,8 +108,5 @@ public class Record implements Comparable<Record> {
 		}
 	}
 
-	@Override
-	public int compareTo(Record o) {
-		return (int) (this.timestamp - o.timestamp);
-	}
+
 }

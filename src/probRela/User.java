@@ -97,6 +97,7 @@ public class User {
 	
 	public static void main (String argv[] ) {
 		TDD_allUserConstruct();
+		TDD_records_sorting();
 		findFrequentUsers(400);
 		System.out.println(String.format("Active user number: %d", User.frequentUserSet.size()));
 	}
@@ -117,5 +118,9 @@ public class User {
 				User.allUserSet.size(), sum));
 	}
 	
-	
+	private static void TDD_records_sorting() {		
+		for (Record r : allUserSet.get(0).records){
+			System.out.println(r);
+		}
+	}
 }

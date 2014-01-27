@@ -55,8 +55,10 @@ public class CaseFinder {
 				friends[0] = Integer.parseInt(ls[0]);
 				friends[1] = Integer.parseInt(ls[1]);
 				// only put the friend pair of top k users into friendPair
-				if ( friends[0] < friends[1] && topKUser.contains(friends[0]) && topKUser.contains(friends[1])) {
-					friendPair.add(friends);
+				if (topKUser.contains(friends[0]) && topKUser.contains(friends[1])) {
+					// eliminate duplication in friendPair
+					if (friends[0] < friends[1])
+						friendPair.add(friends);
 					if (friendMap.containsKey(friends[0]))
 						friendMap.get(friends[0]).add(friends[1]);
 					else {
@@ -74,9 +76,8 @@ public class CaseFinder {
 	}
 	
 	/*
-	 * filterout duplicate friend pair
+	 * filter out duplicate friend pair
 	 */
-	@SuppressWarnings("unused")
 	private boolean inFriendPair(int uaid, int ubid) {
 		if (friendMap.containsKey(uaid) && friendMap.get(uaid).contains(ubid))
 			return true;
@@ -123,34 +124,39 @@ public class CaseFinder {
 	 */
 	public void allPairMeetingFreq() {
 		long t_start = System.currentTimeMillis();
+		System.out.println("allPairMeetingFreq starts");
 		for (int i = 0; i < K; i++) {
-			for (int j = i+1; j < K; j++) {
+			for (int j = i; j < K; j++) {
 				User ua = User.allUserSet.get(topKUser.get(i));
 				User ub = User.allUserSet.get(topKUser.get(j));
-				for (int aind = 0; aind < ua.records.size(); aind++)
-					for (int bind = 0; bind < ub.records.size(); bind++) {
-						Record ra = ua.records.get(i);
-						Record rb = ub.records.get(j);
+				// iterate through their records to find co-location event.
+				int aind = 0;
+				int bind = 0;
+				while (aind < ua.records.size() && bind < ub.records.size()) {
+					Record ra = ua.records.get(aind);
+					Record rb = ub.records.get(bind);
 
-						// 1. count the meeting frequency
-						if (ra.timestamp - rb.timestamp > 4 * 3600) {
-							bind++;
-							continue;
-						} else if (rb.timestamp - ra.timestamp > 4 * 3600) {
-							aind++;
-							continue;
-						} else {
-							if (ra.locID == rb.locID ) {
-								meetFreq[i][j] ++;
-								meetFreq[j][i] ++;
-							}
-						}							
+					// 1. count the meeting frequency
+					if (ra.timestamp - rb.timestamp > 4 * 3600) {
+						bind++;
+						continue;
+					} else if (rb.timestamp - ra.timestamp > 4 * 3600) {
+						aind++;
+						continue;
+					} else {
+						if (ra.locID == rb.locID ) {
+							meetFreq[i][j] ++;
+							meetFreq[j][i] ++;
+						}
+						aind ++;
+						bind ++;
 					}
+				}
 			}
 			
 			// monitor the process
 			if (i % (K/10) == 0)
-				System.out.println(String.format("Process - freqAndDistance finished %d0%%", i/(K/10)));
+				System.out.println(String.format("Process - allPairMeetingFreq finished %d0%%", i/(K/10)));
 		}
 		long t_end = System.currentTimeMillis();
 		System.out.println(String.format("Finish in %d seconds", (t_end - t_start)/1000));
@@ -167,7 +173,12 @@ public class CaseFinder {
 			for (int i = 0; i < K; i++) {
 				for (int j = i+1; j < K; j++) {
 					// write out id_1, id_2, meeting frequency, distance
-					fout.write(String.format("%d\t%d\t%d\n", topKUser.get(i), topKUser.get(j), meetFreq[i][j] ));
+					if (meetFreq[i][j] > 0)
+						fout.write(String.format("%d\t%d\t%d\t", topKUser.get(i), topKUser.get(j), meetFreq[i][j] ));
+					if (inFriendPair(topKUser.get(i), topKUser.get(j)))
+						fout.write("1\n");
+					else
+						fout.write("0\n");
 				}
 			}
 			fout.close();
@@ -248,7 +259,7 @@ public class CaseFinder {
 	}
 	
 	/*
-	 * Assitant function for nonFriendsMeetingFreq
+	 * Assistant function for nonFriendsMeetingFreq
 	 */
 	private boolean nonFriend(int aid, int bid) {
 		if (friendMap.containsKey(aid)) {
@@ -293,15 +304,15 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(100);
+		CaseFinder cf = new CaseFinder(10);
 		cf.allPairMeetingFreq();
 		cf.writeTopKFreq();
 		
-		cf.remoteFriends();
-		cf.writeRemoteFriend();
-		
-		cf.nonFriendsMeetingFreq();
-		cf.writeNonFriendsMeeting();
+//		cf.remoteFriends();
+//		cf.writeRemoteFriend();
+//		
+//		cf.nonFriendsMeetingFreq();
+//		cf.writeNonFriendsMeeting();
 //		test_distance();
 	}
 
