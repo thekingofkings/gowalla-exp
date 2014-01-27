@@ -1,8 +1,11 @@
 package probRela;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,11 +14,15 @@ import java.util.HashSet;
 public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
 	static HashMap<Integer, User> frequentUserSet = new HashMap<>();
+	static String dirPath = "../../dataset/sorteddata";
 	
 	
 	int userID;
 	LinkedList<Record> records;
 	
+	/*
+	 * Construct the allUserSet (static field) in User class
+	 */
 	User( Record r ) {
 		userID = r.userID;
 		records = new LinkedList<Record>();
@@ -24,6 +31,27 @@ public class User {
 			allUserSet.put(r.userID, this);
 	}
 	
+	/*
+	 * Initialize a single instance
+	 */
+	User (int uid) {
+		userID = uid;
+		records = new LinkedList<Record>();
+		if (! allUserSet.containsKey(uid)) {
+			try {
+				BufferedReader fin = new BufferedReader(new FileReader(String.format("%s/%d", dirPath, uid)));
+				String l;
+				while ((l = fin.readLine()) != null) {
+					records.add(new Record(l));
+				}
+				fin.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			allUserSet.put(uid, this);
+		}
+	}
+
 	HashSet<Long> getLocations() {
 		HashSet<Long> locs = new HashSet<Long>();
 		for (Record r : records) {
@@ -95,11 +123,30 @@ public class User {
 	}
 	
 	
+	public static void writeOutSortedResult() {
+		File dir = new File(dirPath);
+		dir.mkdir();
+		
+		// write each user's records into one file
+		for (User u : allUserSet.values()) {
+			try {
+				BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("%s/%d", dirPath, u.userID)));
+				for (Record r : u.records) {
+					fout.write(r.toString() + "\n");
+				}
+				fout.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public static void main (String argv[] ) {
 		TDD_allUserConstruct();
-		TDD_records_sorting();
+//		TDD_records_sorting();
 		findFrequentUsers(400);
 		System.out.println(String.format("Active user number: %d", User.frequentUserSet.size()));
+//		writeOutSortedResult();
 	}
 	
 	
@@ -118,6 +165,7 @@ public class User {
 				User.allUserSet.size(), sum));
 	}
 	
+	@SuppressWarnings("unused")
 	private static void TDD_records_sorting() {		
 		for (Record r : allUserSet.get(0).records){
 			System.out.println(r);

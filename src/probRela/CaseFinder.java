@@ -173,8 +173,7 @@ public class CaseFinder {
 			for (int i = 0; i < K; i++) {
 				for (int j = i+1; j < K; j++) {
 					// write out id_1, id_2, meeting frequency, distance
-					if (meetFreq[i][j] > 0)
-						fout.write(String.format("%d\t%d\t%d\t", topKUser.get(i), topKUser.get(j), meetFreq[i][j] ));
+					fout.write(String.format("%d\t%d\t%d\t", topKUser.get(i), topKUser.get(j), meetFreq[i][j] ));
 					if (inFriendPair(topKUser.get(i), topKUser.get(j)))
 						fout.write("1\n");
 					else
@@ -306,15 +305,15 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(50);
+		CaseFinder cf = new CaseFinder(200);
 		cf.allPairMeetingFreq();
 		cf.writeTopKFreq();
 		
-//		cf.remoteFriends();
-//		cf.writeRemoteFriend();
-//		
-//		cf.nonFriendsMeetingFreq();
-//		cf.writeNonFriendsMeeting();
+		cf.remoteFriends();
+		cf.writeRemoteFriend();
+		
+		cf.nonFriendsMeetingFreq();
+		cf.writeNonFriendsMeeting();
 //		test_distance();
 	}
 
