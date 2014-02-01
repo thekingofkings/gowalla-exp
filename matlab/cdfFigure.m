@@ -1,10 +1,10 @@
-a = importdata('userCount.txt');
+a = importdata('../../../dataset/userCount.txt');
 
 cdfplot(a(:,1));
 title('Records number per user CDF');
 
 
-b = importdata('locCount.txt');
+b = importdata('../../../dataset/locCount.txt');
 
 figure();
 cdfplot(b(:,1));
