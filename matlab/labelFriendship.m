@@ -1,4 +1,4 @@
-a = importdata('../../../pip/Gowalla_edges.txt');
+a = importdata('../../../dataset/Gowalla_edges.txt');
 b = importdata('../frequent-pair.txt');
 
 % get the most frequent pairs.

@@ -16,14 +16,8 @@ for i = 1: size(b,1)
         end
     end
     
-    u1 = find(freq_a(:,1) == pair(i,2));
-    if ~ isempty(u1)
-        u2 = find(freq_a(u1,2) == pair(i,1));
-        if ~ isempty(u2)
-            cind(n) = i;
-            n = n + 1;
-        end
-    end        
+    u1 = find(freq_a(:,2) == pair(i,2));
+    if ~ isempty(
 end
 
 
