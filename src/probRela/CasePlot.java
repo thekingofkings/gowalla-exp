@@ -61,7 +61,7 @@ public class CasePlot {
 	}
 	
 
-	/*
+	/**
 	 * Draw each friend pair
 	 */
 	public void drawEachFriendPair() {
@@ -182,7 +182,7 @@ public class CasePlot {
 	}
 	
 	
-	/*
+	/**
 	 * Draw each nonfriend pair
 	 */
 	public void drawEachNonFriendPair() {
@@ -214,7 +214,7 @@ public class CasePlot {
 	}
 	
 	
-	/*
+	/**
 	 * Save image
 	 */
 	public void saveImg(String fn) {

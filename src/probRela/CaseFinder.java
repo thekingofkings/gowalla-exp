@@ -78,7 +78,7 @@ public class CaseFinder {
 		System.out.println(String.format("Initailize case finder in %d seconds", (t_end-t_start)/1000));
 	}
 	
-	/*
+	/**
 	 * filter out duplicate friend pair
 	 */
 	private boolean inFriendPair(int uaid, int ubid) {
@@ -91,6 +91,12 @@ public class CaseFinder {
 	}
 	
 	
+	/**
+	 * Calculate the distance between two locations, with their Records
+	 * @param start -- the first record
+	 * @param end	-- the second record
+	 * @return	the distance in km
+	 */
 	private static double distance(Record start, Record end) {
 		double longiS = start.longitude;
 		double latiS = start.latitude;
@@ -99,6 +105,14 @@ public class CaseFinder {
 		return distance(longiS, latiS, longiE, latiE);
 	}
 	
+	/**
+	 * Calculate the distance between two locations, with their longitudes and latitudes
+	 * @param longiS	-- longitude of first record
+	 * @param latiS		-- latitude of first record
+	 * @param longiE	-- longitude of second record
+	 * @param latiE		-- latitude of second record
+	 * @return the distance between two locations
+	 */
 	private static double distance(double longiS, double latiS, double longiE, double latiE) {
 		double d2r = (Math.PI/180);
 		double distance = 0;

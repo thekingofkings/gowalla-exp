@@ -8,6 +8,26 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+
+
+/**
+ * Class Tracker
+ * ==================================
+ * 
+ * This class handles the various measures calculated from the location history of users.
+ * All these measures are used to represent the closeness of two users. More specifically
+ * we have the following measures:
+ * 		1. Renyi entropy based co-locating places diversity
+ * 		2. Frequency weighted by the location entropy
+ * 		3. Mutual information between two users' historic locations
+ * 		4. Interestingness score calculated by product of individual probability
+ * 		5. Frequency	(the dominant factor)
+ * 		6. Mutual entropy on co-locating places
+ * 		7. Relative mutual entropy
+ * 
+ * 	
+ *  @author Hongjian	
+ */
 public class Tracker {
 
 	// overall measure
@@ -31,7 +51,7 @@ public class Tracker {
 	static LinkedList<Double> mutualEntroColoc_v3 = new LinkedList<Double>();
 	static LinkedList<Double> relaMutualEntro = new LinkedList<Double>();
 	
-	/*
+	/**
 	 * Count the number of co-locations for each pair.
 	 * Initialize two packet private static field:
 	 * 			FrequentPair
@@ -110,7 +130,7 @@ public class Tracker {
 	 * 
 	 */
 	
-	/*
+	/**
 	 * Implement the first feature in SIGMOD'13
 	 * The Renyi Entropy based diversity.
 	 */
@@ -151,8 +171,9 @@ public class Tracker {
 		return renyiDiversity;
 	}
 	
-	/*
-	 * Assistant function for Renyi entropy based diversity
+	
+	/**
+	 * Assistant function for Renyi entropy based diversity.
 	 * calculate the colocation frequency given two user IDs and the location
 	 * 
 	 * the cnt[] is the meeting frequency at each different locations
@@ -198,7 +219,7 @@ public class Tracker {
 	 * 
 	 */
 	
-	/*
+	/**
 	 * Implement the second feature of SIGMOD'13
 	 * The weighted frequency (weight by location entropy)
 	 */
@@ -242,7 +263,7 @@ public class Tracker {
 	}
 
 	
-	/*
+	/**
 	 * Assistant function
 	 * -- calculate location entropy for one specific location (Shannon Entropy)
 	 */
@@ -302,7 +323,7 @@ public class Tracker {
 	 * 
 	 */
 	
-	/*
+	/**
 	 * use mutual information between two users to measure their correlation
 	 * Here we use the formula:
 	 * 		I(x,y) = H(x) + H(y) - H(x,y)
@@ -351,7 +372,7 @@ public class Tracker {
 		return mutualInfo;
 	}
 	
-	/*
+	/**
 	 * Assistant function for mutual entropy 
 	 * -- calculate marginal entropy w.r.t. the complete historical locations
 	 */
@@ -376,7 +397,7 @@ public class Tracker {
 		return entro;
 	}
 	
-	/*
+	/**
 	 * Assistant function for mutual entropy -- calculate joint entropy
 	 * 
 	 * One problem is whether use the synchronized time series to index the records.
@@ -434,7 +455,7 @@ public class Tracker {
 	}
 	
 	
-	/*
+	/**
 	 * Calculate mutual information from the definition:
 	 * 		I(x,y) = \sum \sum p(x,y) log (p(x,y) / (p(x)p(y)) )
 	 */
@@ -517,7 +538,7 @@ public class Tracker {
 	 * 
 	 */
 	
-	/*
+	/**
 	 * Calculate the interestingness score defined by Fei's PAKDD submission.
 	 */
 	public static LinkedList<Double> interestingnessPAKDD() {
@@ -538,7 +559,7 @@ public class Tracker {
 		return interestingness;
 	}
 	
-	/*
+	/**
 	 * calculate the colocation score directly
 	 */
 	private static double coLocationScore( int user_a_id, int user_b_id, HashSet<Long> colocs ) {
@@ -632,7 +653,7 @@ public class Tracker {
 		return mutualEntroColoc;
 	}
 	
-	/* 
+	/** 
 	 * Assistant function for mutual information calculation
 	 * 
 	 * -- calculate the marginal entropy of one user over the given location set
@@ -665,7 +686,7 @@ public class Tracker {
 		return entro;
 	}
 	
-	/*
+	/**
 	 * Assistant function for joint information calculation
 	 * 
 	 * -- calculate the joint entropy of two users over the given location set
@@ -714,8 +735,8 @@ public class Tracker {
 	
 	
 	
-	/*
-	 * Calculate mutual information over colocations given set from the definition:
+	/**
+	 * Calculate mutual information over co-locations given set from the definition:
 	 * 		I(x,y) = \sum \sum p(x,y) log (p(x,y) / (p(x)p(y)) )
 	 */
 	public static LinkedList<Double> mutualEntropyOnColocation_v2() {
@@ -801,7 +822,7 @@ public class Tracker {
 	}
 	
 	
-	/*
+	/**
 	 * Calculate mutual information over colocation from the definition:
 	 * 		I(x,y) = \sum \sum p(x,y) log (p(x,y) / (p(x)p(y)) )
 	 */
@@ -895,7 +916,7 @@ public class Tracker {
 	}
 	
 	
-	/*
+	/**
 	 * Assistant function to write out the results
 	 */
 	private static void writeThreeMeasures(String filename) {
