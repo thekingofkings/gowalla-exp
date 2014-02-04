@@ -10,6 +10,16 @@ import java.util.LinkedList;
 
 import javax.imageio.ImageIO;
 
+
+/**
+ * class CasePlot </br>
+ * ===============================
+ * Plot user visiting locations in pair
+ * 
+ * 
+ * @author Hongjian
+ *
+ */
 public class CasePlot {
 	
 	private BufferedImage img;

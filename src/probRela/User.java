@@ -35,9 +35,10 @@ public class User {
 	 * Initialize a single instance
 	 */
 	User (int uid) {
-		userID = uid;
-		records = new LinkedList<Record>();
 		if (! allUserSet.containsKey(uid)) {
+			userID = uid;
+			records = new LinkedList<Record>();
+			
 			try {
 				BufferedReader fin = new BufferedReader(new FileReader(String.format("%s/%d", dirPath, uid)));
 				String l;
@@ -50,6 +51,9 @@ public class User {
 				e.printStackTrace();
 			}
 			allUserSet.put(uid, this);
+		} else {
+			this.userID = uid;
+			this.records = allUserSet.get(uid).records;
 		}
 	}
 
@@ -60,6 +64,29 @@ public class User {
 				locs.add( r.locID );
 		}
 		return locs;
+	}
+	
+	/**
+	 * Calculate the weight of one location (represented by record) in this user's movement. </br>
+	 * ==========================</br>
+	 * The weight is calculated by </br>
+	 * 			Prob_weight (loc_i ) = sum( e^(- distance ( loc_i, loc_j)) / n.
+	 * @param rt  target record rt
+	 * @return   the weight of this location
+	 */
+	public double locationWeight( Record rt ) {
+		double weight = 0;
+		double dist = 0;
+		
+		for (Record r : records) {
+			dist = rt.distanceTo(r);
+			dist = Math.exp(- dist);
+			weight += dist;
+		}
+		
+		weight /= records.size();
+		
+		return weight;
 	}
 	
 	public static User feedRecord( Record r ) {

@@ -77,6 +77,34 @@ public class Record implements Comparable<Record> {
 		TDD_entryParse();
 	}
 	
+	/**
+	 * Calculate the distance to another record
+	 * @param o -- another record
+	 * @return -- the distance between two records in km
+	 */
+	public double distanceTo(Record o) {
+		double d2r = (Math.PI/180);
+		double distance = 0;
+		
+		double longiE = o.longitude;
+		double latiE = o.latitude;
+		try {
+			double dlong = (longiE - longitude) * d2r;
+			double dlati = (latiE - latitude) * d2r;
+			double a = Math.pow(Math.sin(dlati/2.0), 2)
+					+ Math.cos(latitude * d2r)
+					* Math.cos(latiE * d2r)
+					* Math.pow(Math.sin(dlong / 2.0), 2);
+			double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+			distance = 6367 * c;
+			
+		} catch (Exception e) {
+			e.printStackTrace();	
+		}
+		return distance;
+		
+	}
+	
 
 
 	// TDD

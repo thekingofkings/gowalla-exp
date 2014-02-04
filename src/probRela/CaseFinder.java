@@ -308,7 +308,7 @@ public class CaseFinder {
 	
 	
 	/*
-	 * Pair statistics
+	 * Analyze a pair of users
 	 * 
 	 * Calculate the following value:
 	 * 		total meeting frequency
@@ -320,12 +320,17 @@ public class CaseFinder {
 	 * 		how many times user b go there 
 	 */
 	
+	/**
+	 * Calculate the measures from a pair of users
+	 * @param uaid
+	 * @param ubid
+	 */
 	public static void pairAnalysis( int uaid, int ubid ) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		// 1. get the co-locations and the corresponding meeting freq
 		HashMap<Long, Integer> mf = meetingFreq(ua, ub);
-		// 2. get the total meeting freq
+		// 2. get the total meeting frequency
 		int sum = 0;
 		for (int i : mf.values()) {
 			sum += i;
@@ -352,6 +357,13 @@ public class CaseFinder {
 		
 	}
 	
+
+	/**
+	 * Calculate the meeting frequency between a pair of users
+	 * @param ua	user a
+	 * @param ub	user b
+	 * @return		a map with location ID as keys and meeting frequency at that location as values
+	 */
 	private static HashMap<Long, Integer> meetingFreq( User ua, User ub ) {
 		HashMap<Long, Integer> colofreq = new HashMap<Long, Integer>();
 		int aind = 0;
@@ -383,8 +395,70 @@ public class CaseFinder {
 	}
 	
 	
-	/*
+	
+	/**
+	 * Analyze pair of users using distance to judge co-locating and eliminating consecutive meeting
+	 * @param uaid
+	 * @param ubid
+	 */
+	public static void distanceBased_pairAnalysis(int uaid, int ubid) {
+		User ua = new User(uaid);
+		User ub = new User(ubid);
+		
+		ArrayList<double[]> coloEnt = meetingWeight(ua, ub);
+
+		// print out the probability
+		System.out.println(String.format("User %d and %d\nweight\t\tA.lati\t\tA.longi\t\tB.lati\t\tB.longi", ua.userID, ub.userID));
+		for (double[] a : coloEnt) {
+			System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g", a[0], a[1], a[2], a[3], a[4], a[5]));
+		}
+	}
+	
+	
+	/**
+	 * Calculate the weight for each meeting event
+	 * @param ua	user a
+	 * @param ub	user b
+	 * @return		a list of meeting event. Each event is represented by probability, 
+	 * 				location of a, and location of b
+	 */
+	private static ArrayList<double[]> meetingWeight( User ua, User ub ) {
+		ArrayList<double[]> coloEnt = new ArrayList<double[]>();
+		int aind = 0;
+		int bind = 0;
+		double time_lastMeet = 0;
+		while (aind < ua.records.size() && bind < ub.records.size()) {
+			Record ra = ua.records.get(aind);
+			Record rb = ub.records.get(bind);
+			
+			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+				bind ++;
+				continue;
+			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+				aind ++;
+				continue;
+			} else {
+				if (ra.distanceTo(rb) < 0.1 && ra.timestamp - time_lastMeet >= 3600) {
+					double wta = ua.locationWeight(ra);
+					double wtb = ub.locationWeight(rb);
+					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude };
+					coloEnt.add(evnt);
+					time_lastMeet = ra.timestamp;
+				}
+				aind ++;
+				bind ++;
+			}
+		}
+		
+		return coloEnt;
+	}
+	
+	
+	/**
 	 * Get the location visiting distribution of a specific user
+	 * @param ua  user a
+	 * @return a map with each location ID as keys and the visiting frequency as values
+	 * 
 	 */
 	private static TreeMap<Long, Integer> locationDistribution( User ua ) {
 		TreeMap<Long, Integer> freq = new TreeMap<Long, Integer>();
@@ -427,7 +501,10 @@ public class CaseFinder {
 //		test_distance();
 		
 		
-		pairAnalysis( 3756    ,    4989);
+		int uaid = 19404;
+		int ubid = 350;
+		pairAnalysis(uaid, ubid);
+		distanceBased_pairAnalysis(uaid, ubid);
 	}
 
 
