@@ -5,8 +5,11 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.TreeMap;
 
 
 public class CaseFinder {
@@ -289,6 +292,99 @@ public class CaseFinder {
 		}
 	}
 	
+	
+	/*
+	 * Pair statistics
+	 * 
+	 * Calculate the following value:
+	 * 		total meeting frequency
+	 * 		locID -- where they meet
+	 * 		meeting frequency at each location
+	 * 		ranking of this place of user a
+	 * 		how many times user a go there
+	 * 		ranking of this place of user b
+	 * 		how many times user b go there 
+	 */
+	
+	public static void pairAnalysis( int uaid, int ubid ) {
+		User ua = new User(uaid);
+		User ub = new User(ubid);
+		// 1. get the co-locations and the corresponding meeting freq
+		HashMap<Long, Integer> mf = meetingFreq(ua, ub);
+		// 2. get the total meeting freq
+		int sum = 0;
+		for (int i : mf.values()) {
+			sum += i;
+		}
+		System.out.println(String.format("Total Meet %d times between user %d and %d.", sum, uaid, ubid));
+		// 3. get the location distribution of two users
+		TreeMap<Long, Integer> loca = locationDistribution(ua);
+		TreeMap<Long, Integer> locb = locationDistribution(ub);
+		// 4. get the ranking
+		LinkedList<Integer> freqa = new LinkedList<>(loca.values());
+		Collections.sort(freqa);
+		Collections.reverse(freqa);
+		LinkedList<Integer> freqb = new LinkedList<>(locb.values());
+		Collections.sort(freqb);
+		Collections.reverse(freqb);
+		System.out.println("loc \t meeting frequency \t rank of A \t frequency of A \t rank of B \t frequency of B");
+		for (Long l : mf.keySet()) {
+			int fa = loca.get(l);
+			int ranka = freqa.indexOf(fa) + 1;
+			int fb = locb.get(l);
+			int rankb = freqb.indexOf(fb) + 1;
+			System.out.println(String.format("%d \t\t %d \t\t %d \t\t %d \t\t %d \t\t %d", l, mf.get(l), ranka, fa, rankb, fb));
+		}
+		
+	}
+	
+	private static HashMap<Long, Integer> meetingFreq( User ua, User ub ) {
+		HashMap<Long, Integer> colofreq = new HashMap<Long, Integer>();
+		int aind = 0;
+		int bind = 0;
+		while (aind < ua.records.size() && bind < ub.records.size()) {
+			Record ra = ua.records.get(aind);
+			Record rb = ub.records.get(bind);
+			
+			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+				bind ++;
+				continue;
+			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+				aind ++;
+				continue;
+			} else {
+				if (ra.locID == rb.locID) {
+					if (colofreq.containsKey(ra.locID)) {
+						int tmp = colofreq.get(ra.locID);
+						colofreq.put(ra.locID, tmp + 1);
+					} else {
+						colofreq.put(ra.locID, 1);
+					}
+				}
+				aind ++;
+				bind ++;
+			}
+		}
+		return colofreq;
+	}
+	
+	
+	/*
+	 * Get the location visiting distribution of a specific user
+	 */
+	private static TreeMap<Long, Integer> locationDistribution( User ua ) {
+		TreeMap<Long, Integer> freq = new TreeMap<Long, Integer>();
+		for (Record r : ua.records) {
+			if (freq.containsKey(r.locID)) {
+				int tmp = freq.get(r.locID);
+				freq.put(r.locID, tmp + 1);
+			} else {
+				freq.put(r.locID, 1);
+			}
+		}
+		return freq;
+	}
+	
 	// TDD
 	@SuppressWarnings("unused")
 	private static void test_distance() {
@@ -305,16 +401,19 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(200);
-		cf.allPairMeetingFreq();
-		cf.writeTopKFreq();
-		
-		cf.remoteFriends();
-		cf.writeRemoteFriend();
-		
-		cf.nonFriendsMeetingFreq();
-		cf.writeNonFriendsMeeting();
+//		CaseFinder cf = new CaseFinder(200);
+//		cf.allPairMeetingFreq();
+//		cf.writeTopKFreq();
+//		
+//		cf.remoteFriends();
+//		cf.writeRemoteFriend();
+//		
+//		cf.nonFriendsMeetingFreq();
+//		cf.writeNonFriendsMeeting();
 //		test_distance();
+		
+		
+		pairAnalysis( 3756    ,    4989);
 	}
 
 

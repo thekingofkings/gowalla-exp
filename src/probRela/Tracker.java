@@ -42,7 +42,7 @@ public class Tracker {
 		User.addAllUser();
 		long t_mid = System.currentTimeMillis();
 		System.out.println(String.format("Initialize all users in %d seconds", (t_mid - t_start)/1000));
-		User.findFrequentUsers(1500);
+		User.findFrequentUsers(1612);
 		HashMap<Integer, User> users = User.frequentUserSet;
 		int cnt = 0;
 		
@@ -64,7 +64,7 @@ public class Tracker {
 				numOfColocations.add(colocations.size());
 				
 				// record the pair that share more than 10 common locations
-				if (colocations.size() >= 80) {
+				if (colocations.size() >= 1) {
 					int[] p = new int[3];
 					p[0] = (int) ui.userID;
 					p[1] = (int) uj.userID;
@@ -96,7 +96,6 @@ public class Tracker {
 			fout.close();
 			foutpair.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 		}
 		long t_end = System.currentTimeMillis();
@@ -122,14 +121,12 @@ public class Tracker {
 			int ubid = FrequentPair.get(i)[1];
 			// 1. calculate the number of co-occurrence on each co-locating places
 			HashSet<Long> coloc = FrequentPair_CoLocations.get(i);
-			Object[] clarray = coloc.toArray();
+			ArrayList<Long> coloc_list = new ArrayList<Long>(coloc);
 			int coloc_num = coloc.size();
 			int[] cnt = new int[coloc_num];
-			int sum = 0;
-			for (int j = 0; j < coloc_num; j++ ) {
-				cnt[j] = coLocationFreq (uaid, ubid, (Long) clarray[j]);
-				sum += cnt[j];
-			}
+			// call the assistant function to calcualte the meeting frequency
+			int sum = coLocationFreq (uaid, ubid, coloc_list, cnt);
+
 			// 2. calculate the probability of co-occurrence
 			double[] prob = new double[coloc_num];
 			for (int j = 0; j < coloc_num; j++) {
@@ -156,33 +153,41 @@ public class Tracker {
 	
 	/*
 	 * Assistant function for Renyi entropy based diversity
-	 * calculat the colocation frequency given two user IDs and the location
+	 * calculate the colocation frequency given two user IDs and the location
+	 * 
+	 * the cnt[] is the meeting frequency at each different locations
+	 * the return value (sum) is the totoal meeting frequency
 	 */
-	private static int coLocationFreq( int user_a_id, int user_b_id, Long loc_id ) {
-		LinkedList<Record> ra = User.frequentUserSet.get(user_a_id).records;
-		LinkedList<Record> raco = new LinkedList<Record>();
-		LinkedList<Record> rb = User.frequentUserSet.get(user_b_id).records;
-		LinkedList<Record> rbco = new LinkedList<Record>();
-		int cnt = 0;
+	private static int coLocationFreq( int user_a_id, int user_b_id, ArrayList<Long> loc_list, int cnt[] ) {
+		LinkedList<Record> ras = User.frequentUserSet.get(user_a_id).records;
+		LinkedList<Record> rbs = User.frequentUserSet.get(user_b_id).records;
+		int sum = 0;
 		// find records of user_a in colocating places
-		for (Record r : ra ) {
-			if (r.locID == loc_id)
-				raco.add(r);
-		}
-		// find records of user b in colocating places
-		for (Record r : rb) {
-			if (r.locID == loc_id)
-				rbco.add(r);
-		}
-		// judge their colocating events with time
-		for (Record r1 : raco) {
-			for (Record r2 : rbco) {
-				// We identify the colocating event with a 30 minutes time window
-				if (Math.abs(r1.timestamp - r2.timestamp) <= 60 * 30)
-					cnt ++;
+		int aind = 0;
+		int bind = 0;
+		while (aind < ras.size() && bind < rbs.size()) {
+			Record ra = ras.get(aind);
+			Record rb = rbs.get(bind);
+			
+			// count the frequency
+			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+				bind ++;
+				continue;
+			} else if (rb.timestamp - ra.timestamp > 3600 * 4) {
+				aind ++;
+				continue;
+			} else {
+				if (ra.locID == rb.locID) {
+					int lid = loc_list.indexOf(ra.locID);
+					cnt[lid] ++;
+					sum ++;
+				}
+				aind ++;
+				bind ++;
 			}
+			
 		}
-		return cnt;
+		return sum;
 	}
 	
 	
@@ -211,22 +216,17 @@ public class Tracker {
 			int ubid = FrequentPair.get(i)[1];
 			// 1. calculate the frequency of co-occurrence on each co-locating places
 			HashSet<Long> coloc = FrequentPair_CoLocations.get(i);
-			Object[] clarray = coloc.toArray();
+			ArrayList<Long> clarray = new ArrayList<Long>(coloc);
 			int coloc_num = coloc.size();
 			int[] freq = new int[coloc_num];
-			int frequen = 0;
-			
-			for (int j = 0; j < coloc_num; j++ ) {
-				freq[j] = coLocationFreq (uaid, ubid, (Long) clarray[j]);
-				frequen += freq[j];
-			}
+			int frequen = coLocationFreq (uaid, ubid, clarray, freq);
 			frequency.add(frequen);
 			
 			// 2. calculate location entropy
 			double weightedFrequency = 0;
 			
-			for (int j = 0; j < clarray.length; j++) {
-				long locid = (long) clarray[j];
+			for (int j = 0; j < coloc_num; j++) {
+				long locid = clarray.get(j);
 				weightedFrequency += freq[j] * Math.exp(- locsEntro.get(locid));
 			}
 			weightedFreq.add(weightedFrequency);
@@ -531,7 +531,7 @@ public class Tracker {
 			interestingness.add(Finterest);
 			// monitor the process
 			if (i % (FrequentPair.size()/10) == 0)
-				System.out.println(String.format("Process - interestingnessPAKDD finished %d%%", i/(FrequentPair.size()/10)));	
+				System.out.println(String.format("Process - interestingnessPAKDD finished %d0%%", i/(FrequentPair.size()/10)));	
 		}
 		long t_end = System.currentTimeMillis();
 		System.out.println(String.format("Interestingness score found in %d seconds", (t_end - t_start)/1000));
@@ -569,8 +569,8 @@ public class Tracker {
 			// judge their colocating events with time
 			for (Record r1 : raco.get(loc_id)) {
 				for (Record r2 : rbco.get(loc_id)) {
-					// We identify the colocating event with a 30 minutes time window
-					if (r1.timestamp - r2.timestamp <= 60 * 30)
+					// We identify the colocating event with a 4-hour time window
+					if (r1.timestamp - r2.timestamp <= 3600 * 4)
 						interest += - Math.log( (double) raco.get(loc_id).size() / ra.size()) 
 							- Math.log( (double) rbco.get(loc_id).size() / rb.size() );
 				}
@@ -715,7 +715,7 @@ public class Tracker {
 	
 	
 	/*
-	 * Calculate mutual information over given set from the definition:
+	 * Calculate mutual information over colocations given set from the definition:
 	 * 		I(x,y) = \sum \sum p(x,y) log (p(x,y) / (p(x)p(y)) )
 	 */
 	public static LinkedList<Double> mutualEntropyOnColocation_v2() {
@@ -873,10 +873,10 @@ public class Tracker {
 			mutualEntroColoc_v3.add(mutualE);
 			// monitor the process
 			if (i % (FrequentPair.size()/10) == 0)
-				System.out.println(String.format("Process - mutualEntroColocation_v2 finished %d0%%", i/(FrequentPair.size()/10)));
+				System.out.println(String.format("Process - mutualEntroColocation_v3 finished %d0%%", i/(FrequentPair.size()/10)));
 		}
 		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("mutualEntroColocation_v2 executed for %d seconds", (t_end-t_start)/1000));
+		System.out.println(String.format("mutualEntroColocation_v3 executed for %d seconds", (t_end-t_start)/1000));
 		return mutualEntroColoc_v3;
 	}
 	
@@ -888,6 +888,7 @@ public class Tracker {
 			HashSet<Long> locs = FrequentPair_CoLocations.get(i);
 			double entroA = marginalEntropy(uaid, locs);
 			double entroB = marginalEntropy(ubid, locs);
+			System.out.println(String.format("entro A %g, B %g", entroA, entroB));
 			relaMutualEntro.add(mutualEntroColoc.get(i) / (entroA + entroB));
 		}
 		return relaMutualEntro;
@@ -951,7 +952,7 @@ public class Tracker {
 //		// 3. calculate feature two -- weighted frequency, and frequency
 //		weightedFrequency();
 //		// 4. calculate feature three -- mutual information
-////		mutualInformation();
+//		mutualInformation();
 //		mutualInformation_v2();
 //		// 5. calculate feature four -- interestingness
 //		interestingnessPAKDD();

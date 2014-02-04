@@ -47,7 +47,7 @@ title('Weighted Frequency features');
 
 
 
-% prec_rec( c(3,:), friendLabel, 'plotROC', 0, 'holdFigure', 1 );
+prec_rec( c(3,:), friendLabel, 'plotROC', 0, 'holdFigure', 1, 'style', 'g-.' );
 title('Mutual Information features');
 % set(gcf, 'PaperUnits', 'inches', 'PaperPosition', [0 0 8 6]);
 % print('mutualInfo.eps', '-dpsc');
@@ -87,8 +87,9 @@ set(hline, 'linewidth', 2);
 label = findobj(gcf, 'type', 'label');
 set(label, 'fontsize', 14);
 set(gca, 'linewidth', 2, 'fontsize', 12);
-legend({'baseline', 'colocation diversity', 'weighted frequency', 'interestingness', ...
-    'frequency', 'mutual information', 'mutual informaiton over colocation'});
+legend({'baseline', 'colocation diversity', 'weighted frequency', ...
+    'mutual info', 'interestingness', ...
+    'frequency', 'mutual info over co-location' }); %, 'relative mutual info'});
 set(gcf, 'PaperUnits', 'inches', 'PaperPosition', [0 0 8 6]);
 print('prec-rec.eps', '-dpsc');
 system('epstopdf prec-rec.eps');

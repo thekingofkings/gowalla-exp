@@ -1,0 +1,48 @@
+Non-friends pair
+The most frequent meeting pairs
+
+
+
+// consecutive checkins in a park
+Total Meet 6 times between user 819 and 956.
+loc 4994634 meet 1 times. In A ranking 192 with frequency 1; In B ranking 5 with frequency 3
+loc 4998370 meet 1 times. In A ranking 65 with frequency 2; In B ranking 5 with frequency 3
+loc 4997564 meet 1 times. In A ranking 192 with frequency 1; In B ranking 5 with frequency 3
+loc 4994106 meet 1 times. In A ranking 192 with frequency 1; In B ranking 5 with frequency 3
+loc 4992438 meet 1 times. In A ranking 192 with frequency 1; In B ranking 5 with frequency 3
+loc 4993614 meet 1 times. In A ranking 192 with frequency 1; In B ranking 21 with frequency 2
+
+
+// 3 nearby places in austin
+Total Meet 5 times between user 267 and 18898.
+loc 9241 meet 3 times. In A ranking 5 with frequency 54; In B ranking 2 with frequency 59
+loc 65996 meet 1 times. In A ranking 30 with frequency 7; In B ranking 184 with frequency 1
+loc 420315 meet 1 times. In A ranking 3 with frequency 129; In B ranking 6 with frequency 20
+
+
+
+
+// high school case
+Total Meet 4 times between user 19404 and 267.
+loc 	 meeting frequency 	 rank of A 	 frequency of A 	 rank of B 	 frequency of B
+65996		 1 		 237 		 1 		 30 		 7
+16233		 1 		 9 		 15 		 12 		 13
+820726		 2 		 16 		 8 		 42 		 5
+
+
+// 4 nearby locations in austin
+Total Meet 4 times between user 19096 and 3756.
+loc 	 meeting frequency 	 rank of A 	 frequency of A 	 rank of B 	 frequency of B
+672179 		 1 		 230 		 1 		 210 		 1
+9247  		 1 		 10 		 7 		 3 		 10
+672157 		 1 		 230 		 1 		 210 		 1
+671245 		 1 		 8 		 8 		 35 		 3
+
+
+
+// 3 nearby locations in austin
+Total Meet 3 times between user 4989 and 4794.
+loc 	 meeting frequency 	 rank of A 	 frequency of A 	 rank of B 	 frequency of B
+9247  		 1 		 11 		 4 		 7 		 10
+9248  		 1 		 49 		 2 		 3 		 15
+686048 		 1 		 165 		 1 		 9 		 9

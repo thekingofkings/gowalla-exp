@@ -1,6 +1,6 @@
 % given a pair of user
-uaid = 521; % 819;
-ubid = 573; % 956;
+uaid = 19404; % 819;
+ubid = 267; % 956;
 
 ra = importdata(['../../../dataset/sorteddata/', num2str(uaid)]);
 rb = importdata(['../../../dataset/sorteddata/', num2str(ubid)]);
