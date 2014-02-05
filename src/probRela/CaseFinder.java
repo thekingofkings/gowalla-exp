@@ -416,13 +416,14 @@ public class CaseFinder {
 	 * 		measure = sum ( log(a) * log(b) )
 	 * @param uaid
 	 * @param ubid
+	 * @return two numbers, the first is the distance based measure, the second is the meeting frequency
 	 */
-	public static double distanceBased_pairAnalysis(int uaid, int ubid, boolean printFlag) {
+	public static double[] distanceBased_pairAnalysis(int uaid, int ubid, boolean printFlag) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		
 		// get the co-locating event
-		ArrayList<double[]> coloEnt = meetingWeight(ua, ub);
+		ArrayList<double[]> coloEnt = meetingWeight(ua, ub, 0.03);
 		
 		// aggregate the measure
 		double M = 0;
@@ -439,10 +440,11 @@ public class CaseFinder {
 			}
 			System.out.println(String.format("User pair %d and %d has measure %g", uaid, ubid, M));
 		}
-		return M;
+		double[] rt = {M, (double) coloEnt.size()};
+		return rt;
 	}
 	
-	public static double distanceBased_pairAnalysis(int uaid, int ubid) {
+	public static double[] distanceBased_pairAnalysis(int uaid, int ubid) {
 		return distanceBased_pairAnalysis(uaid, ubid, false);
 	}
 	
@@ -456,8 +458,7 @@ public class CaseFinder {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freq.txt"));
 			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label.txt"));
 			String l = null;
-			double m = 0;
-			ArrayList<double[]> f = null;
+			double[] m = null;
 			int loc_f = 0;
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
@@ -466,12 +467,9 @@ public class CaseFinder {
 				int freq = Integer.parseInt(ls[2]);
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
-					User ua = new User(uaid);
-					User ub = new User(ubid);
 					m = distanceBased_pairAnalysis(uaid, ubid);
-					f = meetingWeight(ua, ub);
 					loc_f = totalMeetingFreq(uaid, ubid);
-					fout.write(String.format("%d\t%d\t%g\t%d\t%d%n", uaid, ubid, m, f.size(), loc_f, friflag));
+					fout.write(String.format("%d\t%d\t%g\t%d\t%d\t%d%n", uaid, ubid, m[0], (int) m[1], loc_f, friflag));
 				}
 			}
 			
@@ -487,10 +485,11 @@ public class CaseFinder {
 	 * Calculate the weight for each meeting event
 	 * @param ua	user a
 	 * @param ub	user b
+	 * @param dist_threshold   the threshold for distance measure in km
 	 * @return		a list of meeting event. Each event is represented by probability, 
 	 * 				location of a, and location of b
 	 */
-	private static ArrayList<double[]> meetingWeight( User ua, User ub ) {
+	private static ArrayList<double[]> meetingWeight( User ua, User ub, double dist_threshold ) {
 		ArrayList<double[]> coloEnt = new ArrayList<double[]>();
 		int aind = 0;
 		int bind = 0;
@@ -506,7 +505,7 @@ public class CaseFinder {
 				aind ++;
 				continue;
 			} else {
-				if (ra.distanceTo(rb) < 0.1 && ra.timestamp - time_lastMeet >= 3600) {
+				if (ra.distanceTo(rb) < dist_threshold && ra.timestamp - time_lastMeet >= 3600) {
 					double wta = ua.locationWeight(ra);
 					double wtb = ub.locationWeight(rb);
 					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude };
@@ -519,6 +518,10 @@ public class CaseFinder {
 		}
 		
 		return coloEnt;
+	}
+	
+	private static ArrayList<double[]> meetingWeight( User ua, User ub ) {
+		return meetingWeight(ua, ub, 0.1);
 	}
 	
 	
