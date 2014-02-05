@@ -360,6 +360,7 @@ public class CaseFinder {
 
 	/**
 	 * Calculate the meeting frequency between a pair of users
+	 * The meeting event is based on location ID
 	 * @param ua	user a
 	 * @param ub	user b
 	 * @return		a map with location ID as keys and meeting frequency at that location as values
@@ -397,6 +398,13 @@ public class CaseFinder {
 	}
 	
 	
+	/**
+	 * Calculate the total meeting frequency
+	 * @param uaid
+	 * @param ubid
+	 * @return
+	 */
+	@SuppressWarnings("unused")
 	private static int totalMeetingFreq( int uaid, int ubid ) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
@@ -408,6 +416,47 @@ public class CaseFinder {
 		return sum;
 	}
 	
+
+	
+	/**
+	 * Calculate the sum of log measure of user
+	 * meeting event is based on location ID
+	 * @param ua 		user a
+	 * @param ub		user b
+	 * @param meetingEvent    	a map from meeting location ID to how many times meet here
+	 * @return   the sum log measure and the total meeting frequency
+	 */
+	private static double[] locIDBasedSumLogMeasure(int uaid, int ubid) {
+		User ua = new User(uaid);
+		User ub = new User(ubid);
+		int aind = 0;
+		int bind = 0;
+		long lastMeet = 0;
+		double freq = 0;
+		double measure = 0;
+		while (aind < ua.records.size() && bind < ub.records.size()) {
+			Record ra = ua.records.get(aind);
+			Record rb = ub.records.get(bind);
+			
+			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+				bind ++;
+				continue;
+			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+				aind ++;
+				continue;
+			} else {
+				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
+					freq ++;
+					measure += Math.log(ua.locationWeight(ra)) * Math.log(ub.locationWeight(rb)); 
+					lastMeet = ra.timestamp;
+				}
+				aind ++;
+				bind ++;
+			}
+		}
+		double[] rt = {measure, freq};
+		return rt;
+	}
 	
 	
 	/**
@@ -418,12 +467,12 @@ public class CaseFinder {
 	 * @param ubid
 	 * @return two numbers, the first is the distance based measure, the second is the meeting frequency
 	 */
-	public static double[] distanceBased_pairAnalysis(int uaid, int ubid, boolean printFlag) {
+	public static double[] distanceBasedSumLogMeasure(int uaid, int ubid, boolean printFlag) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		
 		// get the co-locating event
-		ArrayList<double[]> coloEnt = meetingWeight(ua, ub, 0.03);
+		ArrayList<double[]> coloEnt = meetingWeight(ua, ub, 0.1);
 		
 		// aggregate the measure
 		double M = 0;
@@ -444,8 +493,8 @@ public class CaseFinder {
 		return rt;
 	}
 	
-	public static double[] distanceBased_pairAnalysis(int uaid, int ubid) {
-		return distanceBased_pairAnalysis(uaid, ubid, false);
+	public static double[] distanceBasedSumLogMeasure(int uaid, int ubid) {
+		return distanceBasedSumLogMeasure(uaid, ubid, false);
 	}
 	
 	
@@ -453,13 +502,13 @@ public class CaseFinder {
 	/**
 	 * Calculate the distance based measure for all the top user pairs
 	 */
-	public static void distanceBasedMeasure() {
+	public static void writeOutDifferentMeasures() {
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freq.txt"));
 			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label.txt"));
 			String l = null;
-			double[] m = null;
-			int loc_f = 0;
+			double[] dbm = null;
+			double[] locidm = null;
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
 				int uaid = Integer.parseInt(ls[0]);
@@ -467,9 +516,9 @@ public class CaseFinder {
 				int freq = Integer.parseInt(ls[2]);
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
-					m = distanceBased_pairAnalysis(uaid, ubid);
-					loc_f = totalMeetingFreq(uaid, ubid);
-					fout.write(String.format("%d\t%d\t%g\t%d\t%d\t%d%n", uaid, ubid, m[0], (int) m[1], loc_f, friflag));
+					dbm = distanceBasedSumLogMeasure(uaid, ubid);
+					locidm = locIDBasedSumLogMeasure(uaid, ubid);
+					fout.write(String.format("%d\t%d\t%g\t%d\t%g\t%d\t%d%n", uaid, ubid, dbm[0], (int) dbm[1], locidm[0], (int) locidm[1], friflag));
 				}
 			}
 			
@@ -520,6 +569,7 @@ public class CaseFinder {
 		return coloEnt;
 	}
 	
+	@SuppressWarnings("unused")
 	private static ArrayList<double[]> meetingWeight( User ua, User ub ) {
 		return meetingWeight(ua, ub, 0.1);
 	}
@@ -590,11 +640,11 @@ public class CaseFinder {
 //		}
 //		
 		
-		distanceBased_pairAnalysis(350, 573, true);
-		distanceBased_pairAnalysis(10467, 5479, true);
+		distanceBasedSumLogMeasure(350, 573, true);
+		distanceBasedSumLogMeasure(10467, 5479, true);
 		
 		
-		distanceBasedMeasure();
+		writeOutDifferentMeasures();
 	}
 
 

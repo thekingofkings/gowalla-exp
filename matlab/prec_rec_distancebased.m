@@ -17,12 +17,19 @@ prec_rec( locidf, dl, 'plotROC', 0, 'holdFigure', 1, 'style', 'r-' );
 
 
 dml5 = importdata('../distanceMeasure_label-50.txt');
+dml5(:, 1:2) = dml5(:,1:2)./1000;
+[~, ind] = sort(dml5(:,3));
+dml5 = dml5(ind, :);
 dm5 = dml5(:,3);
 df5 = dml5(:,4);
-dl5 = dml5(:,6);
+locm5 = dml5(:,5);
+locf5 = dml5(:,6);
+dl5 = dml5(:,7);
 
 prec_rec( dm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'g-' );
 prec_rec( df5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c-' );
+% prec_rec( locm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'b--' );
+% prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'm--' );
 
 
 dml3 = importdata('../distanceMeasure_label-30.txt');
