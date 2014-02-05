@@ -1,3 +1,4 @@
+% plot the cdf of user count and location count
 a = importdata('../../../dataset/userCount.txt');
 
 cdfplot(a(:,1));

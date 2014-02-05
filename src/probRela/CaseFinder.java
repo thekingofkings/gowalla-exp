@@ -135,7 +135,7 @@ public class CaseFinder {
 
 	
 	
-	/*
+	/**
 	 * Calculate the meeting frequency of each user pair
 	 * For the non-friends pair, we will focus on their meeting frequency
 	 */
@@ -180,7 +180,7 @@ public class CaseFinder {
 	}
 	
 
-	/*
+	/**
 	 * Write out the overall meeting frequency and average distance
 	 * among the top k users.
 	 */
@@ -204,7 +204,7 @@ public class CaseFinder {
 	}
 	
 	
-	/*
+	/**
 	 * average distance between remote friends
 	 */
 	public ArrayList<int[]> remoteFriends() {
@@ -262,7 +262,7 @@ public class CaseFinder {
 		}
 	}
 	
-	/*
+	/**
 	 * meeting frequency of non-friends
 	 */
 	public ArrayList<int[]> nonFriendsMeetingFreq() {
@@ -276,7 +276,7 @@ public class CaseFinder {
 		return nonFriendMeeting;
 	}
 	
-	/*
+	/**
 	 * Assistant function for nonFriendsMeetingFreq
 	 */
 	private boolean nonFriend(int aid, int bid) {
@@ -368,6 +368,7 @@ public class CaseFinder {
 		HashMap<Long, Integer> colofreq = new HashMap<Long, Integer>();
 		int aind = 0;
 		int bind = 0;
+		long lastMeet = 0;
 		while (aind < ua.records.size() && bind < ub.records.size()) {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
@@ -379,13 +380,14 @@ public class CaseFinder {
 				aind ++;
 				continue;
 			} else {
-				if (ra.locID == rb.locID) {
+				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
 					if (colofreq.containsKey(ra.locID)) {
 						int tmp = colofreq.get(ra.locID);
 						colofreq.put(ra.locID, tmp + 1);
 					} else {
 						colofreq.put(ra.locID, 1);
 					}
+					lastMeet = ra.timestamp;
 				}
 				aind ++;
 				bind ++;
@@ -395,22 +397,88 @@ public class CaseFinder {
 	}
 	
 	
+	private static int totalMeetingFreq( int uaid, int ubid ) {
+		User ua = new User(uaid);
+		User ub = new User(ubid);
+		HashMap<Long, Integer> mf = meetingFreq(ua, ub);
+		int sum = 0;
+		for (int f : mf.values()) {
+			sum += f;
+		}
+		return sum;
+	}
+	
+	
 	
 	/**
 	 * Analyze pair of users using distance to judge co-locating and eliminating consecutive meeting
+	 * Our new measure is </br>
+	 * 		measure = sum ( log(a) * log(b) )
 	 * @param uaid
 	 * @param ubid
 	 */
-	public static void distanceBased_pairAnalysis(int uaid, int ubid) {
+	public static double distanceBased_pairAnalysis(int uaid, int ubid, boolean printFlag) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		
+		// get the co-locating event
 		ArrayList<double[]> coloEnt = meetingWeight(ua, ub);
+		
+		// aggregate the measure
+		double M = 0;
+		for (double[] a : coloEnt) {
+			M += Math.log10(a[0]) * Math.log10(a[1]);
+		}
 
 		// print out the probability
-		System.out.println(String.format("User %d and %d\nweight\t\tA.lati\t\tA.longi\t\tB.lati\t\tB.longi", ua.userID, ub.userID));
-		for (double[] a : coloEnt) {
-			System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g", a[0], a[1], a[2], a[3], a[4], a[5]));
+		if (printFlag) {
+			System.out.println(String.format("User %d and %d meet %d times.\nA.weight\t\tB.weight\t\tA.lati\t\tA.longi\t\tB.lati\t\tB.longi", 
+					ua.userID, ub.userID, coloEnt.size()));
+			for (double[] a : coloEnt) {
+				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g", a[0], a[1], a[2], a[3], a[4], a[5]));
+			}
+			System.out.println(String.format("User pair %d and %d has measure %g", uaid, ubid, M));
+		}
+		return M;
+	}
+	
+	public static double distanceBased_pairAnalysis(int uaid, int ubid) {
+		return distanceBased_pairAnalysis(uaid, ubid, false);
+	}
+	
+	
+	
+	/**
+	 * Calculate the distance based measure for all the top user pairs
+	 */
+	public static void distanceBasedMeasure() {
+		try {
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freq.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label.txt"));
+			String l = null;
+			double m = 0;
+			ArrayList<double[]> f = null;
+			int loc_f = 0;
+			while ( (l = fin.readLine()) != null ) {
+				String[] ls = l.split("\\s+");
+				int uaid = Integer.parseInt(ls[0]);
+				int ubid = Integer.parseInt(ls[1]);
+				int freq = Integer.parseInt(ls[2]);
+				int friflag = Integer.parseInt(ls[3]);
+				if (freq > 0) {
+					User ua = new User(uaid);
+					User ub = new User(ubid);
+					m = distanceBased_pairAnalysis(uaid, ubid);
+					f = meetingWeight(ua, ub);
+					loc_f = totalMeetingFreq(uaid, ubid);
+					fout.write(String.format("%d\t%d\t%g\t%d\t%d%n", uaid, ubid, m, f.size(), loc_f, friflag));
+				}
+			}
+			
+			fin.close();
+			fout.close();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -473,6 +541,8 @@ public class CaseFinder {
 		return freq;
 	}
 	
+
+	
 	// TDD
 	@SuppressWarnings("unused")
 	private static void test_distance() {
@@ -501,10 +571,27 @@ public class CaseFinder {
 //		test_distance();
 		
 		
-		int uaid = 19404;
-		int ubid = 350;
-		pairAnalysis(uaid, ubid);
-		distanceBased_pairAnalysis(uaid, ubid);
+//		int[][] friend_pair = {{19404, 350}, {3756, 4989}, {819, 3328}, {588, 401}, {551, 3340}};
+//		int[][] nonfriend_pair = {{819, 956}, {267, 18898}, {19096, 3756}, {19404, 267}};
+//		double m = 0;
+//		for (int[] u : friend_pair) {
+////			pairAnalysis(u[0], u[1]);
+//			m = distanceBased_pairAnalysis(u[0], u[1]);
+//			System.out.println(String.format("User pair %d and %d has measure %g", u[0], u[1], m));
+//		}
+//		
+//		for (int[] u : nonfriend_pair) {
+////			pairAnalysis(u[0], u[1]);
+//			m = distanceBased_pairAnalysis(u[0], u[1]);
+//			System.out.println(String.format("User pair %d and %d has measure %g", u[0], u[1], m));
+//		}
+//		
+		
+		distanceBased_pairAnalysis(350, 573, true);
+		distanceBased_pairAnalysis(10467, 5479, true);
+		
+		
+		distanceBasedMeasure();
 	}
 
 
