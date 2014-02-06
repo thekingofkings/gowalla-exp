@@ -11,7 +11,7 @@ import java.util.GregorianCalendar;
 import java.util.LinkedList;
 
 
-/*
+/**
  * Record class
  * 
  * Represent the check-in information. The check-in data has the following format:
@@ -46,7 +46,7 @@ public class Record implements Comparable<Record> {
 	}
 	
 	
-	/*
+	/**
 	 * Parse the time String. Return timestamp in seconds.
 	 */
 	private long getTimestamp() {
@@ -55,7 +55,6 @@ public class Record implements Comparable<Record> {
 		try {
 			myCal.setTime( sdf.parse( time ) );
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		timestamp = myCal.getTimeInMillis() / 1000;
@@ -114,7 +113,6 @@ public class Record implements Comparable<Record> {
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			System.out.println(filepath);
 			e.printStackTrace();
 		}
@@ -123,7 +121,6 @@ public class Record implements Comparable<Record> {
 			try {
 				recs.add(new Record(fin.readLine()));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			System.out.println(recs.getLast());
@@ -131,7 +128,6 @@ public class Record implements Comparable<Record> {
 		try {
 			fin.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

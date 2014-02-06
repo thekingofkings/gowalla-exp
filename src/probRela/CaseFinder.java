@@ -447,7 +447,7 @@ public class CaseFinder {
 			} else {
 				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
 					freq ++;
-					measure += Math.log10(ua.locationWeight(ra)) / Math.log10(2) * Math.log10(ub.locationWeight(rb)) / Math.log10(2); 
+					measure += Math.log10(ua.locationWeight(ra)) * Math.log10(ub.locationWeight(rb)); 
 					lastMeet = ra.timestamp;
 				}
 				aind ++;
@@ -472,12 +472,12 @@ public class CaseFinder {
 		User ub = new User(ubid);
 		
 		// get the co-locating event
-		ArrayList<double[]> coloEnt = meetingWeight(ua, ub, 0.05);
+		ArrayList<double[]> coloEnt = meetingWeight(ua, ub, 0.03);
 		
 		// aggregate the measure
 		double M = 0;
 		for (double[] a : coloEnt) {
-			M += Math.log10(a[0]) / Math.log10(2) * Math.log10(a[1]) / Math.log10(2);
+			M += Math.log10(a[0]) * Math.log10(a[1]);
 		}
 
 		// print out the probability
@@ -571,7 +571,7 @@ public class CaseFinder {
 	
 	@SuppressWarnings("unused")
 	private static ArrayList<double[]> meetingWeight( User ua, User ub ) {
-		return meetingWeight(ua, ub, 0.1);
+		return meetingWeight(ua, ub, 0.05);
 	}
 	
 	
@@ -612,7 +612,7 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-//		CaseFinder cf = new CaseFinder(200);
+//		CaseFinder cf = new CaseFinder(1000);
 //		cf.allPairMeetingFreq();
 //		cf.writeTopKFreq();
 //		
@@ -633,15 +633,15 @@ public class CaseFinder {
 //			System.out.println(String.format("User pair %d and %d has measure %g", u[0], u[1], m));
 //		}
 //		
-//		for (int[] u : nonfriend_pair) {
+//		for (int[] u : nonfriend_pair) { 
 ////			pairAnalysis(u[0], u[1]);
 //			m = distanceBased_pairAnalysis(u[0], u[1]);
 //			System.out.println(String.format("User pair %d and %d has measure %g", u[0], u[1], m));
 //		}
 //		
 		
-		distanceBasedSumLogMeasure(350, 573, true);
-		distanceBasedSumLogMeasure(10467, 5479, true);
+//		distanceBasedSumLogMeasure(401, 18898, true);
+//		distanceBasedSumLogMeasure(350, 573, true);
 		
 		
 		writeOutDifferentMeasures();

@@ -15,6 +15,9 @@ import java.util.LinkedList;
  * ==================================
  * 
  * This class handles the various measures calculated from the location history of users.
+ * The meeting event in this tracker is decided on the granularity of Gowalla check-in IDs.
+ * This will provide higher accuracy when decide whether two users are meeting or not.
+ * 
  * All these measures are used to represent the closeness of two users. More specifically
  * we have the following measures:
  * 		1. Renyi entropy based co-locating places diversity

@@ -1,7 +1,7 @@
-dml5 = importdata('../distanceMeasure_label-50.txt');
-%dml5(:, 1:2) = dml5(:,1:2)./1000;
+clc;
+dml5 = importdata('../distanceMeasure_label.txt');
 [~, ind] = sort(dml5(:,5));
-dml5 = dml5(ind, :);
+dml5 = dml5(ind, :)
 dm5 = dml5(:,3);
 df5 = dml5(:,4);
 locm5 = dml5(:,5);
@@ -22,7 +22,7 @@ set(hline, 'linewidth', 3);
 xlabel('Recall', 'fontsize', 14);
 ylabel('Precision', 'fontsize', 14);
 set(gca, 'linewidth', 2, 'fontsize', 12);
-legend({'baseline', 'Distance based (100m) measure', 'Distance based (100m) frequency', ...
+legend({'baseline', 'Distance based (30m) measure', 'Distance based (30m) frequency', ...
     'Location ID measure', 'Location ID frequency'});
 set(gcf, 'PaperUnits', 'inches');
 print('prec-rec-loc-measure-50.eps', '-dpsc');
