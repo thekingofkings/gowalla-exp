@@ -78,6 +78,29 @@ public class CaseFinder {
 		System.out.println(String.format("Initailize case finder in %d seconds", (t_end-t_start)/1000));
 	}
 	
+	
+	
+	public void locationDistancePowerLaw( ) {
+		try {
+			BufferedWriter fout = new BufferedWriter( new FileWriter ("distance-top200.txt"));
+		
+//			for (User u : User.allUserSet.values()) {
+			User u = new User(topKUser.get(190));
+				for (int i = 0; i < u.records.size(); i++) {
+					for (int j = i + 1; j < u.records.size(); j++ ) {
+						double d = u.records.get(i).distanceTo(u.records.get(j));
+						fout.write(Double.toString(d) + "\n");
+					}
+				}
+//				fout.write("\n");
+//			}
+			fout.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 	/**
 	 * filter out duplicate friend pair
 	 */
@@ -612,7 +635,8 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-//		CaseFinder cf = new CaseFinder(1000);
+		CaseFinder cf = new CaseFinder(200);
+		cf.locationDistancePowerLaw();
 //		cf.allPairMeetingFreq();
 //		cf.writeTopKFreq();
 //		
@@ -644,7 +668,7 @@ public class CaseFinder {
 //		distanceBasedSumLogMeasure(350, 573, true);
 		
 		
-		writeOutDifferentMeasures();
+//		writeOutDifferentMeasures();
 	}
 
 
