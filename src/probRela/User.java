@@ -170,6 +170,7 @@ public class User {
 		}
 	}
 	
+
 	public static void main (String argv[] ) {
 		TDD_allUserConstruct();
 //		TDD_records_sorting();
@@ -177,6 +178,7 @@ public class User {
 		System.out.println(String.format("Active user number: %d", User.frequentUserSet.size()));
 		writeOutSortedResult();
 	}
+	
 	
 	
 	
