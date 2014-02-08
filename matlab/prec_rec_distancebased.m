@@ -1,4 +1,4 @@
-dml = importdata('../distanceMeasure_label-100.txt');
+dml = importdata('../distanceMeasure_label.txt');
 dml(:, 1:2) = dml(:,1:2)./1000;
 [~, ind] = sort(dml(:,3));
 dml = dml(ind, :);

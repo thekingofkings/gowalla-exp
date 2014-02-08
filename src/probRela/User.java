@@ -15,9 +15,10 @@ public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
 	static HashMap<Integer, User> frequentUserSet = new HashMap<>();
 	static String dirPath = "../../dataset/sorteddata";
-	static double para_c = 20;
+	static double para_c = 3;
 	
 	
+	double totalweight;
 	int userID;
 	LinkedList<Record> records;
 	
@@ -56,6 +57,8 @@ public class User {
 			this.userID = uid;
 			this.records = allUserSet.get(uid).records;
 		}
+		
+		//totalweight = totalWeight();
 	}
 
 	HashSet<Long> getLocations() {
@@ -86,7 +89,21 @@ public class User {
 		}
 		
 		weight /= records.size();
+//		weight = weight / totalweight;
 		
+		return weight;
+	}
+	
+	public double totalWeight( ) {
+		double weight = 0;
+		double dist = 0;
+		for (int i = 0; i < records.size(); i++ ) {
+			for (int j = i+1; j < records.size(); j++) {
+				dist = records.get(i).distanceTo(records.get(j));
+				dist = Math.exp( - User.para_c * dist);
+				weight += dist;
+			}
+		}
 		return weight;
 	}
 	
@@ -125,7 +142,6 @@ public class User {
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			System.out.println(filepath);
 			e.printStackTrace();
 		}

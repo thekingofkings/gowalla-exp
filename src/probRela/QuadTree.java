@@ -57,13 +57,16 @@ public class QuadTree  {
     private Node insert(Node h, Record r) {
         if (h == null)
         	return new Node(-180, -90, 180, 90, r);
-        if (h.leafFlag == true) {
+        if (h.insertable(r))
         	h.insert(r);
-        }
-        else if ( h.insertable(r) ) h.SW = insert(h.SW, x, y, r);
-        else if ( less(x, h.x) && !less(y, h.y)) h.NW = insert(h.NW, x, y, r);
-        else if (!less(x, h.x) &&  less(y, h.y)) h.SE = insert(h.SE, x, y, r);
-        else if (!less(x, h.x) && !less(y, h.y)) h.NE = insert(h.NE, x, y, r);
+        else if ( h.SW.insertable(r) ) 
+        	h.SW.insert(r);
+        else if ( h.NW.insertable(r) )
+        	h.NW.insert(r);
+        else if ( h.SE.insertable(r) ) 
+        	h.SE.insert(r);
+        else if ( h.NE.insertable(r) ) 
+        	h.NE.insert(r);
         return h;
     }
     
@@ -74,9 +77,7 @@ public class QuadTree  {
     *  Range search.
     ***********************************************************************/
 
-    public void query2D(Interval2D<double> rect) {
-        query2D(root, rect);
-    }
+ 
 
     private void query2D(Node h, Interval2D<double> rect) {
         if (h == null) return;

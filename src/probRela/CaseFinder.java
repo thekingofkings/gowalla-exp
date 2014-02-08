@@ -85,19 +85,18 @@ public class CaseFinder {
 	
 	public void locationDistancePowerLaw( ) {
 		try {
-			BufferedWriter fout = new BufferedWriter( new FileWriter ("distance-top200.txt"));
-		
-//			for (User u : User.allUserSet.values()) {
-			User u = new User(topKUser.get(190));
+			for (int id : topKUser) {
+				User u = User.allUserSet.get(id);
+				BufferedWriter fout = new BufferedWriter( new FileWriter (String.format("dists/distance-top200%d.txt", u.userID)));
+
 				for (int i = 0; i < u.records.size(); i++) {
 					for (int j = i + 1; j < u.records.size(); j++ ) {
 						double d = u.records.get(i).distanceTo(u.records.get(j));
 						fout.write(Double.toString(d) + "\n");
 					}
 				}
-//				fout.write("\n");
-//			}
-			fout.close();
+				fout.close();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -473,7 +472,7 @@ public class CaseFinder {
 			} else {
 				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
 					freq ++;
-					measure += Math.log10(ua.locationWeight(ra)) * Math.log10(ub.locationWeight(rb)); 
+					measure -= Math.log10(ua.locationWeight(ra)) + Math.log10(ub.locationWeight(rb)); 
 					lastMeet = ra.timestamp;
 				}
 				aind ++;
@@ -503,7 +502,7 @@ public class CaseFinder {
 		// aggregate the measure
 		double M = 0;
 		for (double[] a : coloEnt) {
-			M += Math.log10(a[0]) * Math.log10(a[1]);
+			M -= Math.log10(a[0]) + Math.log10(a[1]);
 		}
 
 		// print out the probability
@@ -511,7 +510,7 @@ public class CaseFinder {
 			System.out.println(String.format("User %d and %d meet %d times.\nA.weight\t\tB.weight\t\tA.lati\t\tA.longi\t\tB.lati\t\tB.longi", 
 					ua.userID, ub.userID, coloEnt.size()));
 			for (double[] a : coloEnt) {
-				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g", a[0], a[1], a[2], a[3], a[4], a[5]));
+				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%.12f", a[0], a[1], a[2], a[3], a[4], a[5], a[6] /60 /60));
 			}
 			System.out.println(String.format("User pair %d and %d has measure %g", uaid, ubid, M));
 		}
@@ -533,9 +532,9 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-randomtest.txt"));
 			String l = null;
-			double[] dbm = null;
+			double[] dbm = {0, 0};
 			double[] locidm = null;
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
@@ -544,7 +543,7 @@ public class CaseFinder {
 				int freq = Integer.parseInt(ls[2]);
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
-					dbm = distanceBasedSumLogMeasure(uaid, ubid);
+//					dbm = distanceBasedSumLogMeasure(uaid, ubid);
 					locidm = locIDBasedSumLogMeasure(uaid, ubid);
 					fout.write(String.format("%d\t%d\t%g\t%d\t%g\t%d\t%d%n", uaid, ubid, dbm[0], (int) dbm[1], locidm[0], (int) locidm[1], friflag));
 				}
@@ -584,10 +583,17 @@ public class CaseFinder {
 				aind ++;
 				continue;
 			} else {
-				if (ra.distanceTo(rb) < dist_threshold && ra.timestamp - time_lastMeet >= 3600) {
+//				if (ra.distanceTo(rb) < dist_threshold && ra.timestamp - time_lastMeet >= 3600) {
+//					double wta = ua.locationWeight(ra);
+//					double wtb = ub.locationWeight(rb);
+//					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude };
+//					coloEnt.add(evnt);
+//					time_lastMeet = ra.timestamp;
+//				}
+				if (ra.locID == rb.locID && ra.timestamp - time_lastMeet >= 3600 ) {
 					double wta = ua.locationWeight(ra);
-					double wtb = ub.locationWeight(rb);
-					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude };
+					double wtb = ub.locationWeight(rb);					
+					double[] evnt = {wta, wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude, ra.timestamp };
 					coloEnt.add(evnt);
 					time_lastMeet = ra.timestamp;
 				}
@@ -642,8 +648,8 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(200);
-		cf.locationDistancePowerLaw();
+//		CaseFinder cf = new CaseFinder(200);
+//		cf.locationDistancePowerLaw();
 //		cf.allPairMeetingFreq();
 //		cf.writeTopKFreq();
 //		
@@ -670,8 +676,8 @@ public class CaseFinder {
 //		}
 //		
 		
-//		distanceBasedSumLogMeasure(401, 18898, true);
-//		distanceBasedSumLogMeasure(350, 573, true);
+//		distanceBasedSumLogMeasure( 103924   ,   138741, true);
+		distanceBasedSumLogMeasure(  3574        , 2241   , true);
 		
 		
 //		writeOutDifferentMeasures();
