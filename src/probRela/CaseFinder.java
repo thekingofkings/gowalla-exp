@@ -13,6 +13,9 @@ import java.util.TreeMap;
 
 
 public class CaseFinder {
+	public static double distance_threshold = 0.05;	 // in km 
+	
+	
 	int K;
 	ArrayList<int[]> friendPair;
 	ArrayList<int[]> distantFriend;
@@ -472,7 +475,7 @@ public class CaseFinder {
 		User ub = new User(ubid);
 		
 		// get the co-locating event
-		ArrayList<double[]> coloEnt = meetingWeight(ua, ub, 0.03);
+		ArrayList<double[]> coloEnt = meetingWeight(ua, ub, CaseFinder.distance_threshold);
 		
 		// aggregate the measure
 		double M = 0;
@@ -503,8 +506,10 @@ public class CaseFinder {
 	 * Calculate the distance based measure for all the top user pairs
 	 */
 	public static void writeOutDifferentMeasures() {
+		System.out.println("Start writeOutDifferentMeasures");
+		long t_start = System.currentTimeMillis();
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freq.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
 			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label.txt"));
 			String l = null;
 			double[] dbm = null;
@@ -527,6 +532,8 @@ public class CaseFinder {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Process writeOutDifferentMeasures finished in %d seconds", (t_end - t_start) / 1000));
 	}
 	
 	
@@ -571,7 +578,7 @@ public class CaseFinder {
 	
 	@SuppressWarnings("unused")
 	private static ArrayList<double[]> meetingWeight( User ua, User ub ) {
-		return meetingWeight(ua, ub, 0.05);
+		return meetingWeight(ua, ub, CaseFinder.distance_threshold);
 	}
 	
 	
@@ -621,7 +628,6 @@ public class CaseFinder {
 //		
 //		cf.nonFriendsMeetingFreq();
 //		cf.writeNonFriendsMeeting();
-//		test_distance();
 		
 		
 //		int[][] friend_pair = {{19404, 350}, {3756, 4989}, {819, 3328}, {588, 401}, {551, 3340}};

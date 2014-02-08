@@ -15,6 +15,7 @@ public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
 	static HashMap<Integer, User> frequentUserSet = new HashMap<>();
 	static String dirPath = "../../dataset/sorteddata";
+	static double para_c = 20;
 	
 	
 	int userID;
@@ -80,7 +81,7 @@ public class User {
 		
 		for (Record r : records) {
 			dist = rt.distanceTo(r);
-			dist = Math.exp(- dist);
+			dist = Math.exp(- User.para_c * dist);
 			weight += dist;
 		}
 		

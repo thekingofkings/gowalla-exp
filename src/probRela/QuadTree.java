@@ -14,10 +14,12 @@ public class QuadTree  {
     // helper node data type
     private class Node {
     	static int capacity = 100;
+    	
         double latiLL, longiLL, latiUR, longiUR;
         Node NW, NE, SE, SW;   // four subtrees
         Record[] records;           // associated data
         int count;
+        boolean leafFlag;
         
 
         Node(double x1, double y1, double x2, double y2, Record r) {
@@ -28,29 +30,40 @@ public class QuadTree  {
             this.longiUR = y2;
             this.records = new Record[capacity];
             this.records[count] = r;
+            count ++;
+            leafFlag = true;
         }
         
         
         public boolean insertable(Record r) {
         	return (latiLL <= r.latitude && longiLL <= r.longitude && latiUR >= r.latitude && longiUR >= r.latitude && count < capacity);
         }
+        
+        public void insert(Record r) {
+        	this.records[count] = r;
+        	count ++;
+        }
+        
     }
 
 
   /***********************************************************************
     *  Insert (x, y) into appropriate quadrant
     ***********************************************************************/
-    public void insert(double x, double y, Record r) {
-        root = insert(root, x, y, r);
+    public void insert(Record r) {
+        root = insert(root, r);
     }
 
-    private Node insert(Node h, double x, double y, Record value) {
+    private Node insert(Node h, Record r) {
         if (h == null)
-        	return new Node(-180, -90, 180, 90, value);
-        else if ( root.insertable(value) ) h.SW = insert(h.SW, x, y, value);
-        else if ( less(x, h.x) && !less(y, h.y)) h.NW = insert(h.NW, x, y, value);
-        else if (!less(x, h.x) &&  less(y, h.y)) h.SE = insert(h.SE, x, y, value);
-        else if (!less(x, h.x) && !less(y, h.y)) h.NE = insert(h.NE, x, y, value);
+        	return new Node(-180, -90, 180, 90, r);
+        if (h.leafFlag == true) {
+        	h.insert(r);
+        }
+        else if ( h.insertable(r) ) h.SW = insert(h.SW, x, y, r);
+        else if ( less(x, h.x) && !less(y, h.y)) h.NW = insert(h.NW, x, y, r);
+        else if (!less(x, h.x) &&  less(y, h.y)) h.SE = insert(h.SE, x, y, r);
+        else if (!less(x, h.x) && !less(y, h.y)) h.NE = insert(h.NE, x, y, r);
         return h;
     }
     
