@@ -15,7 +15,7 @@ public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
 	static HashMap<Integer, User> frequentUserSet = new HashMap<>();
 	static String dirPath = "../../dataset/sorteddata";
-	static double para_c = 3;
+	static double para_c = 0.1;
 	
 	
 	double totalweight;
@@ -83,7 +83,7 @@ public class User {
 		double dist = 0;
 		
 		for (Record r : records) {
-			dist = rt.distanceTo(r);
+			dist = rt.hyperDistanceTo(r);
 			dist = Math.exp(- User.para_c * dist);
 			weight += dist;
 		}
@@ -99,7 +99,7 @@ public class User {
 		double dist = 0;
 		for (int i = 0; i < records.size(); i++ ) {
 			for (int j = i+1; j < records.size(); j++) {
-				dist = records.get(i).distanceTo(records.get(j));
+				dist = records.get(i).hyperDistanceTo(records.get(j));
 				dist = Math.exp( - User.para_c * dist);
 				weight += dist;
 			}

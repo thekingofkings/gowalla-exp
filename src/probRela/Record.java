@@ -101,7 +101,17 @@ public class Record implements Comparable<Record> {
 			e.printStackTrace();	
 		}
 		return distance;
-		
+	}
+	
+	/**
+	 * Hyper distance to another record
+	 * @param o  -- another record 
+	 * @return
+	 */
+	public double hyperDistanceTo(Record o) {
+		double dist = this.distanceTo(o);
+		double gapT = (double) ((this.timestamp - o.timestamp) / 3600.0 / 24.0);
+		return Math.sqrt(dist * dist + gapT * gapT);
 	}
 	
 

@@ -91,7 +91,7 @@ public class CaseFinder {
 
 				for (int i = 0; i < u.records.size(); i++) {
 					for (int j = i + 1; j < u.records.size(); j++ ) {
-						double d = u.records.get(i).distanceTo(u.records.get(j));
+						double d = u.records.get(i).hyperDistanceTo(u.records.get(j));
 						fout.write(Double.toString(d) + "\n");
 					}
 				}
@@ -487,7 +487,7 @@ public class CaseFinder {
 	/**
 	 * Analyze pair of users using distance to judge co-locating and eliminating consecutive meeting
 	 * Our new measure is </br>
-	 * 		measure = sum ( log(a) * log(b) )
+	 * 		measure = sum ( log(a) + log(b) )
 	 * @param uaid
 	 * @param ubid
 	 * @return two numbers, the first is the distance based measure, the second is the meeting frequency
@@ -528,7 +528,7 @@ public class CaseFinder {
 	 * Calculate the distance based measure for all the top user pairs
 	 */
 	public static void writeOutDifferentMeasures() {
-		System.out.println("Start writeOutDifferentMeasures");
+		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
@@ -676,11 +676,11 @@ public class CaseFinder {
 //		}
 //		
 		
-//		distanceBasedSumLogMeasure( 103924   ,   138741, true);
+		distanceBasedSumLogMeasure( 103924   ,   138741, true);
 		distanceBasedSumLogMeasure(  3574        , 2241   , true);
 		
 		
-//		writeOutDifferentMeasures();
+		writeOutDifferentMeasures();
 	}
 
 

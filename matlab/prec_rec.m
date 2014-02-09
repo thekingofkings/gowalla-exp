@@ -170,6 +170,7 @@ if num_thresh < 0
 end
 
 qvals = (1:(num_thresh-1))/num_thresh;
+
 thresh = [min(score) quantile(score,qvals)];
 % remove identical bins
 thresh = sort(unique(thresh),2,'descend');
