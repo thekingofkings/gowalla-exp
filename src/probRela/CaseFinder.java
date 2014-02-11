@@ -84,19 +84,23 @@ public class CaseFinder {
 	
 	
 	public void locationDistancePowerLaw( ) {
+		for (int id : topKUser) {
+			CaseFinder.locationDistancePowerLaw(id);
+		}
+	}
+	
+	public static void locationDistancePowerLaw( int uid ) {
 		try {
-			for (int id : topKUser) {
-				User u = User.allUserSet.get(id);
-				BufferedWriter fout = new BufferedWriter( new FileWriter (String.format("dists/distance-top200%d.txt", u.userID)));
+			User u = new User(uid);
+			BufferedWriter fout = new BufferedWriter( new FileWriter (String.format("dists/distance-top200%d.txt", u.userID)));
 
-				for (int i = 0; i < u.records.size(); i++) {
-					for (int j = i + 1; j < u.records.size(); j++ ) {
-						double d = u.records.get(i).hyperDistanceTo(u.records.get(j));
-						fout.write(Double.toString(d) + "\n");
-					}
+			for (int i = 0; i < u.records.size(); i++) {
+				for (int j = i + 1; j < u.records.size(); j++ ) {
+					double d = u.records.get(i).distanceTo(u.records.get(j));
+					fout.write(Double.toString(d) + "\n");
 				}
-				fout.close();
 			}
+			fout.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -451,6 +455,7 @@ public class CaseFinder {
 	 * @param meetingEvent    	a map from meeting location ID to how many times meet here
 	 * @return   the sum log measure and the total meeting frequency
 	 */
+	@SuppressWarnings("unused")
 	private static double[] locIDBasedSumLogMeasure(int uaid, int ubid) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
@@ -484,6 +489,65 @@ public class CaseFinder {
 	}
 	
 	
+	private static double[] locIDBasedARCTANweightEvent(int uaid, int ubid) {
+		User ua = new User(uaid);
+		User ub = new User(ubid);
+		LinkedList<Record> meetingEvent = new LinkedList<Record>();
+		LinkedList<Double> meetingRawWeight = new LinkedList<Double>();
+		int aind = 0;
+		int bind = 0;
+		long lastMeet = 0;
+		double freq = 0;
+		double measure = 0;
+		while (aind < ua.records.size() && bind < ub.records.size()) {
+			Record ra = ua.records.get(aind);
+			Record rb = ub.records.get(bind);
+			
+			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+				bind ++;
+				continue;
+			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+				aind ++;
+				continue;
+			} else {
+				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
+					freq ++;
+					measure = -(Math.log10(ua.locationWeight(ra)) + Math.log10(ub.locationWeight(rb)));
+					meetingEvent.add(ra);
+					meetingRawWeight.add(measure);
+					lastMeet = ra.timestamp;
+				}
+				aind ++;
+				bind ++;
+			}
+		}
+		
+		double[] rt = new double[2];
+		double w = 0;
+		measure = 0;
+		if (meetingEvent.size() == 1) {
+			for (double m : meetingRawWeight)
+				rt[0] += m;
+			rt[1] = freq;
+		} else if (meetingEvent.size() > 1) {
+			for (int i = 0; i < meetingEvent.size(); i++) {
+				for (int j = i+1; j < meetingEvent.size(); j++) {
+					Record r1 = meetingEvent.get(i);
+					Record r2 = meetingEvent.get(j);
+					w = 2 / Math.PI * Math.atan(Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
+					measure += (meetingRawWeight.get(i) + meetingRawWeight.get(j)) * w;
+				}
+			}
+			measure = measure * 2 / (meetingEvent.size() - 1);
+			rt[0] = measure;
+			rt[1] = freq;
+		}
+		
+
+		return rt;
+	}
+	
+	
 	/**
 	 * Analyze pair of users using distance to judge co-locating and eliminating consecutive meeting
 	 * Our new measure is </br>
@@ -510,7 +574,7 @@ public class CaseFinder {
 			System.out.println(String.format("User %d and %d meet %d times.\nA.weight\t\tB.weight\t\tA.lati\t\tA.longi\t\tB.lati\t\tB.longi", 
 					ua.userID, ub.userID, coloEnt.size()));
 			for (double[] a : coloEnt) {
-				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%.12f", a[0], a[1], a[2], a[3], a[4], a[5], a[6] /60 /60));
+				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%.12f\t\t%.12f", a[0], a[1], a[2], a[3], a[4], a[5], a[6] /3600, a[7]/3600));
 			}
 			System.out.println(String.format("User pair %d and %d has measure %g", uaid, ubid, M));
 		}
@@ -544,7 +608,7 @@ public class CaseFinder {
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = locIDBasedSumLogMeasure(uaid, ubid);
+					locidm = locIDBasedARCTANweightEvent(uaid, ubid);
 					fout.write(String.format("%d\t%d\t%g\t%d\t%g\t%d\t%d%n", uaid, ubid, dbm[0], (int) dbm[1], locidm[0], (int) locidm[1], friflag));
 				}
 			}
@@ -579,7 +643,7 @@ public class CaseFinder {
 			if (ra.timestamp - rb.timestamp > 3600 * 4) {
 				bind ++;
 				continue;
-			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+			} else if (rb.timestamp - ra.timestamp > 3600 * 4) {
 				aind ++;
 				continue;
 			} else {
@@ -593,7 +657,7 @@ public class CaseFinder {
 				if (ra.locID == rb.locID && ra.timestamp - time_lastMeet >= 3600 ) {
 					double wta = ua.locationWeight(ra);
 					double wtb = ub.locationWeight(rb);					
-					double[] evnt = {wta, wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude, ra.timestamp };
+					double[] evnt = {wta, wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude, ra.timestamp, rb.timestamp };
 					coloEnt.add(evnt);
 					time_lastMeet = ra.timestamp;
 				}
@@ -648,14 +712,14 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-//		CaseFinder cf = new CaseFinder(200);
+		CaseFinder cf = new CaseFinder(5000);
 //		cf.locationDistancePowerLaw();
-//		cf.allPairMeetingFreq();
-//		cf.writeTopKFreq();
-//		
+		cf.allPairMeetingFreq();
+		cf.writeTopKFreq();
+		
 //		cf.remoteFriends();
 //		cf.writeRemoteFriend();
-//		
+		
 //		cf.nonFriendsMeetingFreq();
 //		cf.writeNonFriendsMeeting();
 		
@@ -676,11 +740,13 @@ public class CaseFinder {
 //		}
 //		
 		
-		distanceBasedSumLogMeasure( 103924   ,   138741, true);
-		distanceBasedSumLogMeasure(  3574        , 2241   , true);
+//		distanceBasedSumLogMeasure(573       ,   335   ,true);
+//		distanceBasedSumLogMeasure(  384    ,      174, true);
 		
 		
-		writeOutDifferentMeasures();
+//		writeOutDifferentMeasures();
+		
+//		locationDistancePowerLaw(2241);
 	}
 
 

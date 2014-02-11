@@ -15,7 +15,7 @@ public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
 	static HashMap<Integer, User> frequentUserSet = new HashMap<>();
 	static String dirPath = "../../dataset/sorteddata";
-	static double para_c = 0.1;
+	static double para_c = 2;
 	
 	
 	double totalweight;
@@ -81,14 +81,18 @@ public class User {
 	public double locationWeight( Record rt ) {
 		double weight = 0;
 		double dist = 0;
+//		int cnt = 0;
 		
 		for (Record r : records) {
-			dist = rt.hyperDistanceTo(r);
+			dist = rt.distanceTo(r);
 			dist = Math.exp(- User.para_c * dist);
+//			if (dist > 0)
+//				cnt ++;
 			weight += dist;
 		}
-		
+//		System.out.println(String.format("User %d  Cnt: %d, records size %d, weight %g", userID, cnt, records.size(), weight));
 		weight /= records.size();
+
 //		weight = weight / totalweight;
 		
 		return weight;
@@ -99,7 +103,7 @@ public class User {
 		double dist = 0;
 		for (int i = 0; i < records.size(); i++ ) {
 			for (int j = i+1; j < records.size(); j++) {
-				dist = records.get(i).hyperDistanceTo(records.get(j));
+				dist = records.get(i).distanceTo(records.get(j));
 				dist = Math.exp( - User.para_c * dist);
 				weight += dist;
 			}
@@ -188,11 +192,12 @@ public class User {
 	
 
 	public static void main (String argv[] ) {
-		TDD_allUserConstruct();
+//		TDD_allUserConstruct();
 //		TDD_records_sorting();
-		findFrequentUsers(400);
-		System.out.println(String.format("Active user number: %d", User.frequentUserSet.size()));
-		writeOutSortedResult();
+//		findFrequentUsers(400);
+//		System.out.println(String.format("Active user number: %d", User.frequentUserSet.size()));
+//		writeOutSortedResult();
+
 	}
 	
 	
@@ -201,6 +206,7 @@ public class User {
 	
 	
 	// TDD
+	@SuppressWarnings("unused")
 	private static void TDD_allUserConstruct() { 
 		addAllUser();
 		// statistics
