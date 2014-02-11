@@ -1,8 +1,24 @@
 c = 2;
 
 for condition = 0:5;
+    
+    dml4 = importdata('../distanceMeasure_label-arctan50m5000u.txt');
+    [~, ind] = sort(dml4(:,5));
+    dml4 = dml4(ind, :);
 
-    dml5 = importdata('../distanceMeasure_label-randomtest.txt');
+    mem_dml4 = dml4;
+    dml4 = dml4(dml4(:,6)> condition,:);
+   
+
+
+    % dml5 = dml5(dml5(:,6)>2,:);
+
+    locm4 = dml4(:,5);
+    locf4 = dml4(:,6);
+    dl4 = dml4(:,7);
+%     
+
+    dml5 = importdata('../distanceMeasure_label-minuxExpc05u5000.txt');
     [~, ind] = sort(dml5(:,5));
     dml5 = dml5(ind, :);
 
@@ -23,9 +39,13 @@ for condition = 0:5;
     figure();
     % prec_rec( dm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'r--' );
     % prec_rec( df5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'g-' );
+    prec_rec( locm4, dl4, 'plotROC', 0, 'holdFigure', 1, 'style', 'r--' );
+hold on;        
+%     prec_rec( locf4, dl4, 'plotROC', 0, 'holdFigure', 1, 'style', 'g-' );
+    
     prec_rec( locm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
-    hold on;
-    prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c-' );
+
+    prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c--' );
 
 
     title(num2str(condition));
@@ -37,11 +57,11 @@ for condition = 0:5;
     xlabel('Recall', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);
     set(gca, 'linewidth', 2, 'fontsize', 18);
-    %legend({'baseline', 'Distance based (50m) measure', 'Distance based (50m) frequency', ...
+    legend({'arctan measure', '1 - exp measure', 'freq'}, 'location', 'best');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
     % print(['prl-50m', num2str(c), 'c1000u.eps'], '-dpsc');
     % system(['epstopdf prl-50m', num2str(c), 'c1000u.eps']);
-    saveas(gcf, ['freq-c2u1000fgt',num2str(condition),'-atan.png']);
-    saveas(gcf, ['freq-c2u1000fgt',num2str(condition),'-atan.fig']);
+    saveas(gcf, ['freq-atan_exp_c05u5000fgt',num2str(condition),'-atan.png']);
+    saveas(gcf, ['freq-atan_exp_c05u5000fgt',num2str(condition),'-atan.fig']);
 end

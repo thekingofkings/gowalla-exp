@@ -14,6 +14,8 @@ import java.util.TreeMap;
 
 public class CaseFinder {
 	public static double distance_threshold = 0.05;	 // in km 
+
+	static double event_time_exp_para_c = 0.5;	// 0.5 is better than 1, when pairwise
 	
 	
 	int K;
@@ -489,6 +491,7 @@ public class CaseFinder {
 	}
 	
 	
+	@SuppressWarnings("unused")
 	private static double[] locIDBasedARCTANweightEvent(int uaid, int ubid) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
@@ -542,11 +545,153 @@ public class CaseFinder {
 			rt[0] = measure;
 			rt[1] = freq;
 		}
-		
-
 		return rt;
 	}
 	
+	
+	
+	/**
+	 * use 1 - exp(- c * x)
+	 * event pairwise distance
+	 * @param uaid
+	 * @param ubid
+	 * @return
+	 */
+	private static double[] locIDBasedOneMinusExpPAIRWISEweightEvent(int uaid, int ubid) {
+		User ua = new User(uaid);
+		User ub = new User(ubid);
+		LinkedList<Record> meetingEvent = new LinkedList<Record>();
+		LinkedList<Double> meetingRawWeight = new LinkedList<Double>();
+		int aind = 0;
+		int bind = 0;
+		long lastMeet = 0;
+		double freq = 0;
+		double measure = 0;
+		while (aind < ua.records.size() && bind < ub.records.size()) {
+			Record ra = ua.records.get(aind);
+			Record rb = ub.records.get(bind);
+			
+			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+				bind ++;
+				continue;
+			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+				aind ++;
+				continue;
+			} else {
+				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
+					freq ++;
+					measure = -(Math.log10(ua.locationWeight(ra)) + Math.log10(ub.locationWeight(rb)));
+					meetingEvent.add(ra);
+					meetingRawWeight.add(measure);
+					lastMeet = ra.timestamp;
+				}
+				aind ++;
+				bind ++;
+			}
+		}
+		
+		double[] rt = new double[2];
+		double w = 0;
+		measure = 0;
+		if (meetingEvent.size() == 1) {
+			for (double m : meetingRawWeight)
+				rt[0] += m;
+			rt[1] = freq;
+		} else if (meetingEvent.size() > 1) {
+			for (int i = 0; i < meetingEvent.size(); i++) {
+				for (int j = i+1; j < meetingEvent.size(); j++) {
+					Record r1 = meetingEvent.get(i);
+					Record r2 = meetingEvent.get(j);
+					w = 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
+					measure += (meetingRawWeight.get(i) + meetingRawWeight.get(j)) * w;
+				}
+			}
+			measure = measure * 2 / (meetingEvent.size() - 1);
+			rt[0] = measure;
+			rt[1] = freq;
+		}
+		return rt;
+	}
+	
+	
+	/**
+	 * w = 1 - exp( - c * x )
+	 * only consecutive event is weighted </br>
+	 * ====================================================================</br>
+	 * It is proved to perform worse. Because when a pair of users consecutively meet for 100 times, the total 
+	 * weight may be too small, due to the heavy penalize. </br>
+	 * ====================================================================
+	 * @param uaid
+	 * @param ubid
+	 * @return
+	 */
+	@SuppressWarnings("unused")
+	private static double[] locIDBasedOneMinusExpCONSECUTIVEweightEvent(int uaid, int ubid) {
+		User ua = new User(uaid);
+		User ub = new User(ubid);
+		LinkedList<Record> meetingEvent = new LinkedList<Record>();
+		LinkedList<Double> meetingRawWeight = new LinkedList<Double>();
+		int aind = 0;
+		int bind = 0;
+		long lastMeet = 0;
+		double freq = 0;
+		double measure = 0;
+		while (aind < ua.records.size() && bind < ub.records.size()) {
+			Record ra = ua.records.get(aind);
+			Record rb = ub.records.get(bind);
+			
+			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+				bind ++;
+				continue;
+			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+				aind ++;
+				continue;
+			} else {
+				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
+					freq ++;
+					measure = -(Math.log10(ua.locationWeight(ra)) + Math.log10(ub.locationWeight(rb)));
+					meetingEvent.add(ra);
+					meetingRawWeight.add(measure);
+					lastMeet = ra.timestamp;
+				}
+				aind ++;
+				bind ++;
+			}
+		}
+		
+		double[] rt = new double[2];
+		double w = 0;
+		measure = 0;
+		int cnt = 0;
+		if (meetingEvent.size() == 1) {
+			for (double m : meetingRawWeight)
+				rt[0] += m;
+			rt[1] = freq;
+		} else if (meetingEvent.size() > 1) {
+			for (int i = 0; i < meetingEvent.size(); i++) {
+					long t1 = 0, t2 = 0;
+					if (i == 0) 
+						t1 = Long.MAX_VALUE;
+					else
+						t1 = meetingEvent.get(i).timestamp - meetingEvent.get(i-1).timestamp;
+					if (i == meetingEvent.size()-1)
+						t2 = Long.MAX_VALUE;
+					else
+						t2 = meetingEvent.get(i+1).timestamp - meetingEvent.get(i).timestamp;
+					long t = Math.min(t1, t2);
+					w =  1 - Math.exp(- event_time_exp_para_c * t / 3600.0 / 24);
+//					w =  2 / Math.PI * Math.atan(t / 3600.0 / 24);
+					System.out.println(Double.toString(w) + "\t" + Double.toString(t/3600.0 / 24));
+					measure += meetingRawWeight.get(i) * w;
+					cnt ++;
+			}
+			if  ( cnt != meetingRawWeight.size())
+				System.out.println("Error in calculate events total weight, missing event");
+			rt[0] = measure;
+			rt[1] = freq;
+		}
+		return rt;
+	}
 	
 	/**
 	 * Analyze pair of users using distance to judge co-locating and eliminating consecutive meeting
@@ -595,7 +740,7 @@ public class CaseFinder {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-5000.txt"));
 			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-randomtest.txt"));
 			String l = null;
 			double[] dbm = {0, 0};
@@ -608,7 +753,7 @@ public class CaseFinder {
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = locIDBasedARCTANweightEvent(uaid, ubid);
+					locidm = locIDBasedOneMinusExpPAIRWISEweightEvent(uaid, ubid);
 					fout.write(String.format("%d\t%d\t%g\t%d\t%g\t%d\t%d%n", uaid, ubid, dbm[0], (int) dbm[1], locidm[0], (int) locidm[1], friflag));
 				}
 			}
@@ -712,10 +857,10 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(5000);
+//		CaseFinder cf = new CaseFinder(5000);
 //		cf.locationDistancePowerLaw();
-		cf.allPairMeetingFreq();
-		cf.writeTopKFreq();
+//		cf.allPairMeetingFreq();
+//		cf.writeTopKFreq();
 		
 //		cf.remoteFriends();
 //		cf.writeRemoteFriend();
@@ -741,7 +886,7 @@ public class CaseFinder {
 //		
 		
 //		distanceBasedSumLogMeasure(573       ,   335   ,true);
-//		distanceBasedSumLogMeasure(  384    ,      174, true);
+		distanceBasedSumLogMeasure(  4390     ,    1999, true);
 		
 		
 //		writeOutDifferentMeasures();
