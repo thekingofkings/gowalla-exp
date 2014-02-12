@@ -15,7 +15,7 @@ public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
 	static HashMap<Integer, User> frequentUserSet = new HashMap<>();
 	static String dirPath = "../../dataset/sorteddata";
-	static double para_c = 2;
+	static double para_c = 1.5;
 	
 	
 	double totalweight;

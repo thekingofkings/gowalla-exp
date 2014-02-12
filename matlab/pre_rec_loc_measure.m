@@ -1,27 +1,27 @@
 c = 2;
 
-for condition = 0:5;
+for condition = 1;
     
-    dml4 = importdata('../weightedFrequency.txt');
+    dml4 = importdata('../weightedFrequency-1000u.txt');
     [~, ind] = sort(dml4(:,5));
     dml4 = dml4(ind, :);
 
     mem_dml4 = dml4;
-    dml4 = dml4(dml4(:,4)> condition,:);
+    dml4 = dml4(dml4(:,4) == condition,:);
    
 
-    locm4 = dml4(:,3);
+    locwf4 = dml4(:,3);
     locf4 = dml4(:,4);
     colcEnt = dml4(:,5);
     dl4 = dml4(:,6);
    
 
-    dml5 = importdata('../distanceMeasure_label-minuxExpc05u5000.txt');
+    dml5 = importdata('../distanceMeasure_label-nc1p5u1000.txt');
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
     mem_dml5 = dml5;
-    dml5 = dml5(dml5(:,6)> condition,:);
+    dml5 = dml5(dml5(:,6) == condition,:);
     sum(dml5(:,7)==1)
 
 
@@ -37,13 +37,13 @@ for condition = 0:5;
     figure();
     % prec_rec( dm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'r--' );
     % prec_rec( df5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'g-' );
-    prec_rec( locm4, dl4, 'plotROC', 0, 'holdFigure', 1, 'style', 'r--' );
+    prec_rec( locwf4, dl4, 'plotROC', 0, 'holdFigure', 1, 'style', 'r--' );
 hold on;        
-    prec_rec( colcEnt, dl4, 'plotROC', 0, 'holdFigure', 1, 'style', 'g-' );
+%     prec_rec( colcEnt, dl4, 'plotROC', 0, 'holdFigure', 1, 'style', 'g-' );
     
     prec_rec( locm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
 
-    prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c--' );
+%     prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c--' );
 
 
     title(num2str(condition));
@@ -55,11 +55,11 @@ hold on;
     xlabel('Recall', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);
     set(gca, 'linewidth', 2, 'fontsize', 18);
-    legend({'weighted frequency', 'colocation entropy', '1 - exp measure', 'freq'}, 'location', 'best');
+%     legend({'weighted frequency', 'colocation entropy', '1 - exp measure', 'freq'}, 'location', 'best');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
     % print(['prl-50m', num2str(c), 'c1000u.eps'], '-dpsc');
     % system(['epstopdf prl-50m', num2str(c), 'c1000u.eps']);
-    saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.png']);
-    saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
+%     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.png']);
+%     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end

@@ -581,6 +581,7 @@ public class CaseFinder {
 				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
 					freq ++;
 					measure = -(Math.log10(ua.locationWeight(ra)) + Math.log10(ub.locationWeight(rb)));
+//					measure = ( 1 - ua.locationWeight(ra) ) * ( 1- ub.locationWeight(rb));
 					meetingEvent.add(ra);
 					meetingRawWeight.add(measure);
 					lastMeet = ra.timestamp;
@@ -741,7 +742,7 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-randomtest1000.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-nc1p5u1000.txt"));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
@@ -885,11 +886,11 @@ public class CaseFinder {
 //		}
 //		
 		
-//		distanceBasedSumLogMeasure(573       ,   335   ,true);
-//		distanceBasedSumLogMeasure(  4390     ,    1999, true);
+		distanceBasedSumLogMeasure(      1146         ,              304    ,true);
+//		distanceBasedSumLogMeasure(   490   , 419, true);
 		
 		
-		writeOutDifferentMeasures();
+//		writeOutDifferentMeasures();
 		
 //		locationDistancePowerLaw(2241);
 	}

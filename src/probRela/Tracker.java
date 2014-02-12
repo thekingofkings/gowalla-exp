@@ -349,6 +349,10 @@ public class Tracker {
 		return weightedFreq;
 	}
 	
+//	public static double coLocationWeightedFreq(int uaid, int ubid) {
+//		
+//	}
+	
 	
 	private static void writePairMeasure() {
 		System.out.println("Start writeWeightedFreq");
@@ -415,7 +419,7 @@ public class Tracker {
 			loc_entro.put(locid, locEntropy);
 		}
 		// 3. return the entropy
-		System.out.println("Size of loc_entropy" + Integer.toString(loc_entro.size()));
+		System.out.println("Size of loc_entropy " + Integer.toString(loc_entro.size()));
 		return loc_entro;
 	}
 
@@ -1094,18 +1098,7 @@ public class Tracker {
 		
 //		writeOutPairColocations();
 		
-	/*	try {
-			BufferedReader fin = new BufferedReader(new FileReader("colocation-cnt.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter("colocation-cnt2.txt"));
-			int c = 0;
-			while (( c = fin.read()) != -1) {
-				fout.write(Integer.toString(c) + "\n");				
-			}
-			fin.close();
-			fout.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
+
 	}
 
 }
