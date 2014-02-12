@@ -1,6 +1,8 @@
 package probRela;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,7 +67,9 @@ public class Tracker {
 		User.addAllUser();
 		long t_mid = System.currentTimeMillis();
 		System.out.println(String.format("Initialize all users in %d seconds", (t_mid - t_start)/1000));
-		User.findFrequentUsers(1612);
+		// User.findFrequentUsersByFreq(637);	
+		// top 1000 users
+		User.findFrequentUsersTopK(1000);
 		HashMap<Integer, User> users = User.frequentUserSet;
 		int cnt = 0;
 		
@@ -126,6 +130,36 @@ public class Tracker {
 		return numOfColocations;
 	}
 	
+	
+	@SuppressWarnings("unused")
+	private static void writeOutPairColocations() {
+		System.out.println("Start writeOutPairColocations.");
+		try {
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_colocations-5000.txt"));
+			String l = null;
+			while ( (l=fin.readLine()) != null ) {
+				String[] ls = l.split("\\s+");
+				int uaid = Integer.parseInt(ls[0]);
+				int ubid = Integer.parseInt(ls[1]);
+				User ua = new User(uaid);
+				User ub = new User(ubid);
+				// get intersection of two sets
+				HashSet<Long> ua_loc = ua.getLocations();
+				HashSet<Long> ub_loc = ub.getLocations();
+				ua_loc.retainAll(ub_loc);
+				for (long loc : ua_loc)
+					fout.write(loc + "\t");
+				fout.write("\n");
+			}
+			fin.close();
+			fout.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("Process writeOutPairColocations ends.");
+	}
+	
 	/*
 	 * ===============================================================
 	 * The first feature: diversity
@@ -177,18 +211,19 @@ public class Tracker {
 	
 	/**
 	 * Assistant function for Renyi entropy based diversity.
-	 * calculate the colocation frequency given two user IDs and the location
+	 * calculate the colocation frequency given two user IDs and the location.
 	 * 
 	 * the cnt[] is the meeting frequency at each different locations
 	 * the return value (sum) is the totoal meeting frequency
 	 */
 	private static int coLocationFreq( int user_a_id, int user_b_id, ArrayList<Long> loc_list, int cnt[] ) {
-		LinkedList<Record> ras = User.frequentUserSet.get(user_a_id).records;
-		LinkedList<Record> rbs = User.frequentUserSet.get(user_b_id).records;
+		LinkedList<Record> ras = User.allUserSet.get(user_a_id).records;
+		LinkedList<Record> rbs = User.allUserSet.get(user_b_id).records;
 		int sum = 0;
 		// find records of user_a in colocating places
 		int aind = 0;
 		int bind = 0;
+		long last_Meet = 0;
 		while (aind < ras.size() && bind < rbs.size()) {
 			Record ra = ras.get(aind);
 			Record rb = rbs.get(bind);
@@ -201,10 +236,11 @@ public class Tracker {
 				aind ++;
 				continue;
 			} else {
-				if (ra.locID == rb.locID) {
+				if (ra.locID == rb.locID && ra.timestamp  - last_Meet >= 3600) {
 					int lid = loc_list.indexOf(ra.locID);
 					cnt[lid] ++;
 					sum ++;
+					last_Meet = ra.timestamp;
 				}
 				aind ++;
 				bind ++;
@@ -221,6 +257,51 @@ public class Tracker {
 	 * ===============================================================
 	 * 
 	 */
+	
+	
+	private static void initialTopKPair() {
+		System.out.println("Start initialTopKPair.");
+		try {
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
+			String l = null;
+			BufferedReader fin2 = new BufferedReader(new FileReader("topk_colocations-5000.txt"));
+			String l2 = null;
+			int c1 = 0;
+			int c2 = 0;
+			while ( (l=fin.readLine()) != null ) {
+				c1 ++;
+				String[] ls = l.split("\\s+");
+				if (Integer.parseInt(ls[2]) > 0) {
+					int uaid = Integer.parseInt(ls[0]);
+					int ubid = Integer.parseInt(ls[1]);
+					new User(uaid);
+					new User(ubid);
+					int friFlag = Integer.parseInt(ls[3]);
+					int[] fp = {uaid, ubid, friFlag};
+					FrequentPair.add(fp);
+					
+					while (c2 < c1) {
+						c2 ++;
+						l2 = fin2.readLine();
+						if (c2 == c1) {
+							HashSet<Long> colocs = new HashSet<Long>();
+							String[] ls2 = l2.split("\\s+");
+							for (String s : ls2)
+								colocs.add(Long.parseLong(s));
+							FrequentPair_CoLocations.add(colocs);
+						}
+					}
+				}
+			}
+			fin.close();
+			fin2.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("Process initialTopKPair ends.");
+	}
+	
+	
 	
 	/**
 	 * Implement the second feature of SIGMOD'13
@@ -240,22 +321,25 @@ public class Tracker {
 			int ubid = FrequentPair.get(i)[1];
 			// 1. calculate the frequency of co-occurrence on each co-locating places
 			HashSet<Long> coloc = FrequentPair_CoLocations.get(i);
-			ArrayList<Long> clarray = new ArrayList<Long>(coloc);
-			int coloc_num = coloc.size();
-			int[] freq = new int[coloc_num];
-			int frequen = coLocationFreq (uaid, ubid, clarray, freq);
-			frequency.add(frequen);
 			
-			// 2. calculate location entropy
-			double weightedFrequency = 0;
-			
-			for (int j = 0; j < coloc_num; j++) {
-				long locid = clarray.get(j);
-				weightedFrequency += freq[j] * Math.exp(- locsEntro.get(locid));
+			// only consider people with meeting events
+			if (coloc.size() > 0) {
+				double weightedFrequency = 0;
+				ArrayList<Long> clarray = new ArrayList<Long>(coloc);
+				int coloc_num = coloc.size();
+				int[] freq = new int[coloc_num];
+				int frequen = coLocationFreq (uaid, ubid, clarray, freq);
+				frequency.add(frequen);
+				
+				// 2. calculate location entropy
+				for (int j = 0; j < coloc_num; j++) {
+					long locid = clarray.get(j);
+					weightedFrequency += freq[j] * Math.exp(- locsEntro.get(locid));
+				}
+				weightedFreq.add(weightedFrequency);
 			}
-			weightedFreq.add(weightedFrequency);
 			
-			
+				
 			// monitor the process
 			if (i % (FrequentPair.size()/10) == 0)
 				System.out.println(String.format("Process - weightedFrequency finished %d0%%", i/(FrequentPair.size()/10)));
@@ -263,6 +347,24 @@ public class Tracker {
 		long t_end = System.currentTimeMillis();
 		System.out.println(String.format("Weighted frequency found in %d seconds", (t_end - t_start)/1000));
 		return weightedFreq;
+	}
+	
+	
+	private static void writePairMeasure() {
+		System.out.println("Start writeWeightedFreq");
+		try {
+			BufferedWriter fout = new BufferedWriter(new FileWriter("weightedFrequency.txt"));
+			for (int i = 0; i < FrequentPair.size(); i++) {
+				int uaid = FrequentPair.get(i)[0];
+				int ubid = FrequentPair.get(i)[1];
+				// id_a, id_b, weighted frequency, frequency, co-locatoin entropy, friends flag
+				fout.write(String.format("%d\t%d\t%g\t%d\t%g\t%d\n", uaid, ubid, weightedFreq.get(i), frequency.get(i), renyiDiversity.get(i), FrequentPair.get(i)[2]));
+			}
+			fout.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("Start writeWeightedFreq");
 	}
 
 	
@@ -276,7 +378,7 @@ public class Tracker {
 		HashMap<Long, Integer> loc_total_visit = new HashMap<Long, Integer>();
 		
 		// 1. get the location visiting frequency
-		for (User u : User.frequentUserSet.values()) {
+		for (User u : User.allUserSet.values()) {
 			for (Record r : u.records) {
 				// count individual user visiting
 				if (loc_user_visit.containsKey(r.locID)) {
@@ -970,11 +1072,13 @@ public class Tracker {
 	
 	public static void main(String argv[]) {
 		// 1. find frequent user pair
-		shareLocationCount();
+//		shareLocationCount();
+		initialTopKPair();
 		// 2. calculate feature one -- Renyi entropy based diversity
-//		RenyiEntropyDiversity();
+		RenyiEntropyDiversity();
 //		// 3. calculate feature two -- weighted frequency, and frequency
-//		weightedFrequency();
+		weightedFrequency();
+		writePairMeasure();
 //		// 4. calculate feature three -- mutual information
 //		mutualInformation();
 //		mutualInformation_v2();
@@ -982,13 +1086,13 @@ public class Tracker {
 //		interestingnessPAKDD();
 //		// 6. calculate mutual information over colocations
 ////		mutualEntropyOnColocation();
-		mutualEntropyOnColocation_v2();
+//		mutualEntropyOnColocation_v2();
 //		mutualEntropyOnColocation_v3();
-		relativeMutualEntropy();
+//		relativeMutualEntropy();
 		// 6. write the results
-		writeThreeMeasures("feature-vectors-rme.txt");
+//		writeThreeMeasures("feature-vectors-rme.txt");
 		
-		
+//		writeOutPairColocations();
 		
 	/*	try {
 			BufferedReader fin = new BufferedReader(new FileReader("colocation-cnt.txt"));

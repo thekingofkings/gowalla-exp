@@ -740,8 +740,8 @@ public class CaseFinder {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-randomtest.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-randomtest1000.txt"));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
@@ -886,10 +886,10 @@ public class CaseFinder {
 //		
 		
 //		distanceBasedSumLogMeasure(573       ,   335   ,true);
-		distanceBasedSumLogMeasure(  4390     ,    1999, true);
+//		distanceBasedSumLogMeasure(  4390     ,    1999, true);
 		
 		
-//		writeOutDifferentMeasures();
+		writeOutDifferentMeasures();
 		
 //		locationDistancePowerLaw(2241);
 	}

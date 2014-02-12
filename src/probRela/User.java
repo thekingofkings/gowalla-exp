@@ -129,11 +129,34 @@ public class User {
 	/*
 	 * Calculate the active user from all users.
 	 */
-	public static void findFrequentUsers( int freq ) {
+	public static void findFrequentUsersByFreq( int freq ) {
 		for (int i : allUserSet.keySet()) {
 			User cur = allUserSet.get(i);
 			if (cur.records.size() >= freq)
 				frequentUserSet.put(i, cur);
+		}
+	}
+	
+	
+	/*
+	 * Calculate the active user from all users.
+	 */
+	public static void findFrequentUsersTopK( int k ) {
+		try {
+			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/userCount.txt"));
+			String l = null;
+			int c = 0;
+			while ( (l=fin.readLine()) != null) {
+				if (c==k)
+					break;
+				String[] ls = l.split("\\s+");
+				int uid = Integer.parseInt(ls[0]);
+				frequentUserSet.put(uid, allUserSet.get(uid));
+				c++;
+			}
+			fin.close();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 	
