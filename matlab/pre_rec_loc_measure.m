@@ -1,13 +1,13 @@
 c = 2;
 
-for condition = 1;
+for condition = 0:5;
     
     dml4 = importdata('../weightedFrequency-1000u.txt');
     [~, ind] = sort(dml4(:,5));
     dml4 = dml4(ind, :);
 
     mem_dml4 = dml4;
-    dml4 = dml4(dml4(:,4) == condition,:);
+    dml4 = dml4(dml4(:,4) > condition,:);
    
 
     locwf4 = dml4(:,3);
@@ -16,12 +16,12 @@ for condition = 1;
     dl4 = dml4(:,6);
    
 
-    dml5 = importdata('../distanceMeasure_label-nc1p5u1000.txt');
+    dml5 = importdata('../distanceMeasure_label-u1000.txt');
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
     mem_dml5 = dml5;
-    dml5 = dml5(dml5(:,6) == condition,:);
+    dml5 = dml5(dml5(:,6) > condition,:);
     sum(dml5(:,7)==1)
 
 
@@ -33,6 +33,7 @@ for condition = 1;
     locf5 = dml5(:,6);
     dl5 = dml5(:,7);
 
+    prod_wf_m = locwf4 .* locm5;
 
     figure();
     % prec_rec( dm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'r--' );
@@ -43,7 +44,8 @@ hold on;
     
     prec_rec( locm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
 
-%     prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c--' );
+    prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c--' );
+%     prec_rec( locm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
 
 
     title(num2str(condition));

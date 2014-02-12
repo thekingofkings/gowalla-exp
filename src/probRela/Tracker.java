@@ -348,10 +348,7 @@ public class Tracker {
 		System.out.println(String.format("Weighted frequency found in %d seconds", (t_end - t_start)/1000));
 		return weightedFreq;
 	}
-	
-//	public static double coLocationWeightedFreq(int uaid, int ubid) {
-//		
-//	}
+
 	
 	
 	private static void writePairMeasure() {
@@ -421,6 +418,11 @@ public class Tracker {
 		// 3. return the entropy
 		System.out.println("Size of loc_entropy " + Integer.toString(loc_entro.size()));
 		return loc_entro;
+	}
+	
+	
+	public static void writeLocationEntropy(int numUser) {
+		
 	}
 
 	

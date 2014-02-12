@@ -591,26 +591,37 @@ public class CaseFinder {
 			}
 		}
 		
+		int option = 1; // 1 - sum; 2 - weighted sum
+		
 		double[] rt = new double[2];
-		double w = 0;
+
 		measure = 0;
-		if (meetingEvent.size() == 1) {
-			for (double m : meetingRawWeight)
-				rt[0] += m;
-			rt[1] = freq;
-		} else if (meetingEvent.size() > 1) {
-			for (int i = 0; i < meetingEvent.size(); i++) {
-				for (int j = i+1; j < meetingEvent.size(); j++) {
-					Record r1 = meetingEvent.get(i);
-					Record r2 = meetingEvent.get(j);
-					w = 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
-					measure += (meetingRawWeight.get(i) + meetingRawWeight.get(j)) * w;
-				}
+		if (option == 1)
+		{
+			for (double m : meetingRawWeight) {
+				measure += m;
 			}
-			measure = measure * 2 / (meetingEvent.size() - 1);
-			rt[0] = measure;
-			rt[1] = freq;
 		}
+		else 
+		{
+			if (meetingEvent.size() == 1) {
+				for (double m : meetingRawWeight)
+					rt[0] += m;
+				rt[1] = freq;
+			} else if (meetingEvent.size() > 1) {
+				for (int i = 0; i < meetingEvent.size(); i++) {
+					for (int j = i+1; j < meetingEvent.size(); j++) {
+						Record r1 = meetingEvent.get(i);
+						Record r2 = meetingEvent.get(j);
+						double w = 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
+						measure += (meetingRawWeight.get(i) + meetingRawWeight.get(j)) * w;
+					}
+				}
+				measure = measure * 2 / (meetingEvent.size() - 1);
+			}
+		}
+		rt[0] = measure;
+		rt[1] = freq;
 		return rt;
 	}
 	
@@ -742,7 +753,7 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-nc1p5u1000.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-u1000.txt"));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
@@ -886,11 +897,11 @@ public class CaseFinder {
 //		}
 //		
 		
-		distanceBasedSumLogMeasure(      1146         ,              304    ,true);
+//		distanceBasedSumLogMeasure(      1146         ,              304    ,true);
 //		distanceBasedSumLogMeasure(   490   , 419, true);
 		
 		
-//		writeOutDifferentMeasures();
+		writeOutDifferentMeasures();
 		
 //		locationDistancePowerLaw(2241);
 	}

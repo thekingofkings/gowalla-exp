@@ -13,4 +13,8 @@ disp('Sort by weighted frequency');
 [~, ind] = sort(omc(:,3));
 omc = omc(ind, :);
 
-omc
+omc(:,6) = omc(:,3) .* omc(:,4);
+
+prec_rec( omc(:,6), omc(:,5), 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
+prec_rec( omc(:,3), omc(:,5), 'plotROC', 0, 'holdFigure', 1, 'style', 'r:' );
+prec_rec( omc(:,4), omc(:,5), 'plotROC', 0, 'holdFigure', 1, 'style', 'k:' );
