@@ -648,6 +648,7 @@ public class CaseFinder {
 		long lastMeet = 0;
 		double freq = 0;
 		double measure = 0;
+		// weight each meeting event by user personal mobility background
 		while (aind < ua.records.size() && bind < ub.records.size()) {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
@@ -671,6 +672,9 @@ public class CaseFinder {
 			}
 		}
 		
+		
+		
+		// combine each meeting event into one measure by using the temporal dependence in the meeting events
 		double[] rt = new double[2];
 		double w = 0;
 		measure = 0;

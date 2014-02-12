@@ -2,6 +2,7 @@ package probRela;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -45,6 +46,7 @@ public class Tracker {
 	 */
 	static ArrayList<int[]> FrequentPair = new ArrayList<int[]>();
 	static ArrayList<HashSet<Long>> FrequentPair_CoLocations = new ArrayList<HashSet<Long>>();
+	static HashMap<Long, Double> locationEntropy = new HashMap<Long, Double>();
 
 	// results on three features
 	static LinkedList<Double> renyiDiversity = new LinkedList<Double>();
@@ -315,7 +317,7 @@ public class Tracker {
 		 * After we factor out the location entropy calculation, 
 		 * now the execution time in HP is 4s.
 		 */
-		HashMap<Long, Double> locsEntro = locationEntropy();
+		locationEntropy = readLocationEntropy(1000);
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -334,7 +336,7 @@ public class Tracker {
 				// 2. calculate location entropy
 				for (int j = 0; j < coloc_num; j++) {
 					long locid = clarray.get(j);
-					weightedFrequency += freq[j] * Math.exp(- locsEntro.get(locid));
+					weightedFrequency += freq[j] * Math.exp(- locationEntropy.get(locid));
 				}
 				weightedFreq.add(weightedFrequency);
 			}
@@ -369,11 +371,13 @@ public class Tracker {
 	}
 
 	
+	//===============================location entropy begins===================================
 	/**
 	 * Assistant function
 	 * -- calculate location entropy for one specific location (Shannon Entropy)
 	 */
 	private static HashMap<Long, Double> locationEntropy() {
+		long t_start = System.currentTimeMillis();
 		HashMap<Long, Double> loc_entro = new HashMap<Long, Double>();
 		HashMap<Long, HashMap<Integer, Integer>> loc_user_visit = new HashMap<Long, HashMap<Integer, Integer>>();
 		HashMap<Long, Integer> loc_total_visit = new HashMap<Long, Integer>();
@@ -416,16 +420,73 @@ public class Tracker {
 			loc_entro.put(locid, locEntropy);
 		}
 		// 3. return the entropy
-		System.out.println("Size of loc_entropy " + Integer.toString(loc_entro.size()));
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Size of loc_entropy: %d\n. Process finished in %d seconds.", loc_entro.size(), (t_end - t_start)/1000));
 		return loc_entro;
 	}
 	
 	
+	/**
+	 * calculate the location entropy using the records of given number of top users
+	 * @param numUser
+	 */
 	public static void writeLocationEntropy(int numUser) {
-		
+		// initialize users
+		try {
+			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/userCount.txt"));
+			String l = null;
+			int c = 0;
+			while ( (l=fin.readLine()) != null && c < numUser) {
+				c++;
+				String[] ls = l.split("\\s+");
+				int uid = Integer.parseInt(ls[0]);
+				new User(uid);
+			}
+			fin.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		// calculate location entropy
+		locationEntropy = locationEntropy();
+		// write out location entropy
+		try {
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%d.txt", numUser)));
+			for (long loc : locationEntropy.keySet())
+				fout.write(String.format("%d\t%g\n", loc, locationEntropy.get(loc)));
+			fout.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
 	}
-
 	
+	/**
+	 * read in the location entropy from corresponding file</br>
+	 * If we have the location entropy file of given number of users, then this function will work, otherwise
+	 * it will throw an exception.
+	 * @param numUser
+	 * @return
+	 */
+	public static HashMap<Long, Double> readLocationEntropy(int numUser) {
+		try {
+			BufferedReader fin = new BufferedReader( new FileReader(String.format("locationEntropy-%d.txt", numUser)));
+			String l = null;
+			while ((l = fin.readLine()) != null) {
+				String[] ls = l.split("\\s+");
+				long loc = Long.parseLong(ls[0]);
+				double entropy = Double.parseDouble(ls[1]);
+				if (locationEntropy.containsKey(loc))
+					locationEntropy.put(loc, entropy);
+			}
+			fin.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("No location entropy file found. Generate new one ...");
+			writeLocationEntropy(numUser);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return locationEntropy;
+	}
+	//===================================location entropy ends=======================================
 	
 	/*
 	 * ===============================================================
@@ -1079,19 +1140,19 @@ public class Tracker {
 	public static void main(String argv[]) {
 		// 1. find frequent user pair
 //		shareLocationCount();
-		initialTopKPair();
+//		initialTopKPair();
 		// 2. calculate feature one -- Renyi entropy based diversity
-		RenyiEntropyDiversity();
+//		RenyiEntropyDiversity();
 //		// 3. calculate feature two -- weighted frequency, and frequency
-		weightedFrequency();
-		writePairMeasure();
+//		weightedFrequency();
+//		writePairMeasure();
 //		// 4. calculate feature three -- mutual information
 //		mutualInformation();
 //		mutualInformation_v2();
 //		// 5. calculate feature four -- interestingness
 //		interestingnessPAKDD();
 //		// 6. calculate mutual information over colocations
-////		mutualEntropyOnColocation();
+//		mutualEntropyOnColocation();
 //		mutualEntropyOnColocation_v2();
 //		mutualEntropyOnColocation_v3();
 //		relativeMutualEntropy();
@@ -1099,8 +1160,7 @@ public class Tracker {
 //		writeThreeMeasures("feature-vectors-rme.txt");
 		
 //		writeOutPairColocations();
-		
-
+		writeLocationEntropy(1000);
 	}
 
 }
