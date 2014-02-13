@@ -557,7 +557,7 @@ public class CaseFinder {
 	 * @param ubid
 	 * @return
 	 */
-	private static double[] locIDBasedOneMinusExpPAIRWISEweightEvent(int uaid, int ubid) {
+	private static double[] locIDBasedOneMinusExpPAIRWISEweightEvent(int uaid, int ubid, int frined_flag) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		LinkedList<Record> meetingEvent = new LinkedList<Record>();
@@ -615,10 +615,32 @@ public class CaseFinder {
 		measure = 0;
 		locent = 0;
 		double pmlc = 0;
+		
+//		try {
+//			BufferedWriter fout = new BufferedWriter(new FileWriter("ten-meeting-case.txt", true));
+//			
+//			if (meetingEvent.size() ==10 ) {
+//				for (double m : mw_le) {
+//					fout.write(Double.toString(m) + "\t");
+//				}
+//				for (double m : mw_pbg) {
+//					fout.write(Double.toString(m) + "\t");
+//				}
+//				fout.write(Integer.toString(frined_flag) + "\n");
+//			}
+//			
+//			fout.close();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+
+			
+			
+		
 		if (option == 1)
 		{
 			for (double m : mw_pbg) {
-				measure += m;
+				measure += m + 1000;
 			}
 			for (double m : mw_pbg_le) {
 				locent += m;
@@ -638,6 +660,7 @@ public class CaseFinder {
 						Record r2 = meetingEvent.get(j);
 						double w = 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
 						measure += (mw_pbg.get(i) + mw_pbg.get(j)) * w;
+//						measure += w;
 					}
 				}
 				measure = measure * 2 / (meetingEvent.size() - 1);
@@ -647,6 +670,7 @@ public class CaseFinder {
 		rt[1] = freq;
 		rt[2] = locent;
 		rt[3] = pmlc;
+		
 		return rt;
 	}
 	
@@ -721,7 +745,7 @@ public class CaseFinder {
 						t2 = meetingEvent.get(i+1).timestamp - meetingEvent.get(i).timestamp;
 					long t = Math.min(t1, t2);
 					w =  1 - Math.exp(- event_time_exp_para_c * t / 3600.0 / 24);
-//					w =  2 / Math.PI * Math.atan(t / 3600.0 / 24);
+	//						w =  2 / Math.PI * Math.atan(t / 3600.0 / 24);
 					System.out.println(Double.toString(w) + "\t" + Double.toString(t/3600.0 / 24));
 					measure += meetingRawWeight.get(i) * w;
 					cnt ++;
@@ -782,7 +806,7 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("distanceMeasure_label-u1000c%g.txt", para_c )));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("delete_this-u1000c%g.txt", para_c )));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
@@ -794,7 +818,7 @@ public class CaseFinder {
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = locIDBasedOneMinusExpPAIRWISEweightEvent(uaid, ubid);
+					locidm = locIDBasedOneMinusExpPAIRWISEweightEvent(uaid, ubid, friflag);
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], friflag));
 				}
 			}
@@ -929,10 +953,12 @@ public class CaseFinder {
 //		distanceBasedSumLogMeasure(      1146         ,              304    ,true);
 //		distanceBasedSumLogMeasure(   490   , 419, true);
 		
-		for (int i = 0; i < 10; i++) {
-			User.para_c = 1 + i * 0.1;
-			writeOutDifferentMeasures(User.para_c);
-		}
+//		for (int i = 0; i < 10; i++) {
+//			User.para_c = 10 + i * 10;
+//			writeOutDifferentMeasures(User.para_c);
+//		}
+		
+		writeOutDifferentMeasures(User.para_c);
 		
 		
 //		locationDistancePowerLaw(2241);

@@ -1,10 +1,10 @@
 
-for condition = 0:5
+for condition = 1
 
 dml4 = importdata('../weightedFrequency-1000u.txt');
 [~, ind] = sort(dml4(:,4));
 dml4 = dml4(ind, :);
-dml5 = importdata('../distanceMeasure_label-u1000.txt');
+dml5 = importdata('../delete_this-u1000c1.50000.txt');
 [~, ind] = sort(dml5(:,6));
 dml5 = dml5(ind, :);
 
@@ -14,7 +14,7 @@ omc(:,4) = dml4(:,3);
 
 % omc 
 % ua, ub, product, location entropy, 1 - exp, frequency, friend flag
-omc = omc(omc(:,6) > condition,:);
+omc = omc(omc(:,6) == condition,:);
 
 disp('Total number of user pairs');
 size(omc)
@@ -27,9 +27,10 @@ omc = omc(ind, :);
 
 
 figure();
-prec_rec( omc(:,6), omc(:,7), 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
+% prec_rec( omc(:,6), omc(:,7), 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
 hold on;
 prec_rec( omc(:,5), omc(:,7), 'plotROC', 0, 'holdFigure', 1, 'style', 'g-' );
+hold on;
 prec_rec( omc(:,3), omc(:,7), 'plotROC', 0, 'holdFigure', 1, 'style', 'r:' );
 prec_rec( omc(:,4), omc(:,7), 'plotROC', 0, 'holdFigure', 1, 'style', 'k:' );
 title(num2str(condition));

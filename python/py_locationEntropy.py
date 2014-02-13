@@ -1,4 +1,4 @@
-f = open('locationEntropy-1000.txt')
+f = open('../locationEntropy-1000.txt')
 c = 0
 n = 0
 for l in f:
