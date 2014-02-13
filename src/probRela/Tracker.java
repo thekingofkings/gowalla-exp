@@ -264,9 +264,9 @@ public class Tracker {
 	private static void initialTopKPair() {
 		System.out.println("Start initialTopKPair.");
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
 			String l = null;
-			BufferedReader fin2 = new BufferedReader(new FileReader("topk_colocations-5000.txt"));
+			BufferedReader fin2 = new BufferedReader(new FileReader("topk_colocations-1000.txt"));
 			String l2 = null;
 			int c1 = 0;
 			int c2 = 0;
@@ -467,23 +467,27 @@ public class Tracker {
 	 * @return
 	 */
 	public static HashMap<Long, Double> readLocationEntropy(int numUser) {
-		try {
-			BufferedReader fin = new BufferedReader( new FileReader(String.format("locationEntropy-%d.txt", numUser)));
-			String l = null;
-			while ((l = fin.readLine()) != null) {
-				String[] ls = l.split("\\s+");
-				long loc = Long.parseLong(ls[0]);
-				double entropy = Double.parseDouble(ls[1]);
-				if (locationEntropy.containsKey(loc))
-					locationEntropy.put(loc, entropy);
+		if (locationEntropy.isEmpty()) {
+			try {
+				BufferedReader fin = new BufferedReader( new FileReader(String.format("locationEntropy-%d.txt", numUser)));
+				String l = null;
+				while ((l = fin.readLine()) != null) {
+					String[] ls = l.split("\\s+");
+					long loc = Long.parseLong(ls[0]);
+					double entropy = Double.parseDouble(ls[1]);
+					if (!locationEntropy.containsKey(loc))
+						locationEntropy.put(loc, entropy);
+				}
+				fin.close();
+			} catch (FileNotFoundException e) {
+				System.out.println("No location entropy file found. Generate new one ...");
+				writeLocationEntropy(numUser);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			fin.close();
-		} catch (FileNotFoundException e) {
-			System.out.println("No location entropy file found. Generate new one ...");
-			writeLocationEntropy(numUser);
-		} catch (Exception e) {
-			e.printStackTrace();
+			System.out.println(String.format("Location entropy size %d.", locationEntropy.size()));
 		}
+		
 		return locationEntropy;
 	}
 	//===================================location entropy ends=======================================
@@ -1140,12 +1144,12 @@ public class Tracker {
 	public static void main(String argv[]) {
 		// 1. find frequent user pair
 //		shareLocationCount();
-//		initialTopKPair();
+		initialTopKPair();
 		// 2. calculate feature one -- Renyi entropy based diversity
-//		RenyiEntropyDiversity();
+		RenyiEntropyDiversity();
 //		// 3. calculate feature two -- weighted frequency, and frequency
-//		weightedFrequency();
-//		writePairMeasure();
+		weightedFrequency();
+		writePairMeasure();
 //		// 4. calculate feature three -- mutual information
 //		mutualInformation();
 //		mutualInformation_v2();
@@ -1160,7 +1164,7 @@ public class Tracker {
 //		writeThreeMeasures("feature-vectors-rme.txt");
 		
 //		writeOutPairColocations();
-		writeLocationEntropy(1000);
+//		writeLocationEntropy(1000);
 	}
 
 }

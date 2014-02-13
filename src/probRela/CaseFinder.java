@@ -561,12 +561,18 @@ public class CaseFinder {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		LinkedList<Record> meetingEvent = new LinkedList<Record>();
-		LinkedList<Double> meetingRawWeight = new LinkedList<Double>();
+		LinkedList<Double> mw_pbg = new LinkedList<Double>();		// meeting weight _ personal background
+		LinkedList<Double> mw_le = new LinkedList<Double>(); 		// meeting weight _ location entropy
+		LinkedList<Double> mw_pbg_le = new LinkedList<Double>();  	// meeting weight _ personal background _ location entropy
+		
+		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropy(1000);
+		
 		int aind = 0;
 		int bind = 0;
 		long lastMeet = 0;
 		double freq = 0;
 		double measure = 0;
+		double locent = 0;
 		while (aind < ua.records.size() && bind < ub.records.size()) {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
@@ -580,10 +586,21 @@ public class CaseFinder {
 			} else {
 				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
 					freq ++;
+					// measure 1:  - log (rho_1 * rho_2)
 					measure = -(Math.log10(ua.locationWeight(ra)) + Math.log10(ub.locationWeight(rb)));
+					mw_pbg.add(measure);
+					// measure 2:  (1 - rho_1) * (1 - rho_2)
 //					measure = ( 1 - ua.locationWeight(ra) ) * ( 1- ub.locationWeight(rb));
+					// measure 3:  use location entropy to weight the meeting frequency
+					locent = Math.exp( - locationEntropy.get(ra.locID));
+					if (locationEntropy.containsKey(ra.locID))
+						mw_le.add(locent);
+					else
+						System.out.println(String.format("User %d and %d, location ID %d", ra.userID, rb.userID, ra.locID));
+					// measure 4:  further 
+					measure *= locent;
+					mw_pbg_le.add(measure);
 					meetingEvent.add(ra);
-					meetingRawWeight.add(measure);
 					lastMeet = ra.timestamp;
 				}
 				aind ++;
@@ -593,19 +610,25 @@ public class CaseFinder {
 		
 		int option = 1; // 1 - sum; 2 - weighted sum
 		
-		double[] rt = new double[2];
+		double[] rt = new double[4];
 
 		measure = 0;
+		locent = 0;
+		double pmlc = 0;
 		if (option == 1)
 		{
-			for (double m : meetingRawWeight) {
+			for (double m : mw_pbg) {
 				measure += m;
 			}
-		}
-		else 
-		{
+			for (double m : mw_pbg_le) {
+				locent += m;
+			}
+			for (double m : mw_le) {
+				pmlc += m;
+			}
+		} else {
 			if (meetingEvent.size() == 1) {
-				for (double m : meetingRawWeight)
+				for (double m : mw_pbg)
 					rt[0] += m;
 				rt[1] = freq;
 			} else if (meetingEvent.size() > 1) {
@@ -614,7 +637,7 @@ public class CaseFinder {
 						Record r1 = meetingEvent.get(i);
 						Record r2 = meetingEvent.get(j);
 						double w = 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
-						measure += (meetingRawWeight.get(i) + meetingRawWeight.get(j)) * w;
+						measure += (mw_pbg.get(i) + mw_pbg.get(j)) * w;
 					}
 				}
 				measure = measure * 2 / (meetingEvent.size() - 1);
@@ -622,6 +645,8 @@ public class CaseFinder {
 		}
 		rt[0] = measure;
 		rt[1] = freq;
+		rt[2] = locent;
+		rt[3] = pmlc;
 		return rt;
 	}
 	
@@ -752,12 +777,12 @@ public class CaseFinder {
 	/**
 	 * Calculate the distance based measure for all the top user pairs
 	 */
-	public static void writeOutDifferentMeasures() {
+	public static void writeOutDifferentMeasures(double para_c) {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter("distanceMeasure_label-u1000.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("distanceMeasure_label-u1000c%g.txt", para_c )));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
@@ -770,7 +795,7 @@ public class CaseFinder {
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
 					locidm = locIDBasedOneMinusExpPAIRWISEweightEvent(uaid, ubid);
-					fout.write(String.format("%d\t%d\t%g\t%d\t%g\t%d\t%d%n", uaid, ubid, dbm[0], (int) dbm[1], locidm[0], (int) locidm[1], friflag));
+					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], friflag));
 				}
 			}
 			
@@ -904,8 +929,11 @@ public class CaseFinder {
 //		distanceBasedSumLogMeasure(      1146         ,              304    ,true);
 //		distanceBasedSumLogMeasure(   490   , 419, true);
 		
+		for (int i = 0; i < 10; i++) {
+			User.para_c = 1 + i * 0.1;
+			writeOutDifferentMeasures(User.para_c);
+		}
 		
-		writeOutDifferentMeasures();
 		
 //		locationDistancePowerLaw(2241);
 	}

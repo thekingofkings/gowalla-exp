@@ -1,13 +1,13 @@
 c = 2;
 
-for condition = 0:5;
+for condition = 1 ;
     
     dml4 = importdata('../weightedFrequency-1000u.txt');
-    [~, ind] = sort(dml4(:,5));
+    [~, ind] = sort(dml4(:,4));
     dml4 = dml4(ind, :);
 
     mem_dml4 = dml4;
-    dml4 = dml4(dml4(:,4) > condition,:);
+    dml4 = dml4(dml4(:,4) == condition,:);
    
 
     locwf4 = dml4(:,3);
@@ -21,7 +21,7 @@ for condition = 0:5;
     dml5 = dml5(ind, :);
 
     mem_dml5 = dml5;
-    dml5 = dml5(dml5(:,6) > condition,:);
+    dml5 = dml5(dml5(:,6) == condition,:);
     sum(dml5(:,7)==1)
 
 
@@ -44,7 +44,7 @@ hold on;
     
     prec_rec( locm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
 
-    prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c--' );
+%     prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c--' );
 %     prec_rec( locm5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'b:' );
 
 
