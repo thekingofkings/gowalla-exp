@@ -557,7 +557,7 @@ public class CaseFinder {
 	 * @param ubid
 	 * @return
 	 */
-	private static double[] locIDBasedOneMinusExpPAIRWISEweightEvent(int uaid, int ubid, int frined_flag) {
+	private static double[] locIDBasedOneMinusExpPAIRWISEweightEvent(int uaid, int ubid, int friend_flag) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		LinkedList<Record> meetingEvent = new LinkedList<Record>();
@@ -573,6 +573,11 @@ public class CaseFinder {
 		double freq = 0;
 		double measure = 0;
 		double locent = 0;
+		
+		
+		try {
+			BufferedWriter fout = new BufferedWriter(new FileWriter("meeting-cases.txt", true));
+			
 		while (aind < ua.records.size() && bind < ub.records.size()) {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
@@ -587,12 +592,14 @@ public class CaseFinder {
 				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
 					freq ++;
 					// measure 1:  - log (rho_1 * rho_2)
-					measure = -(Math.log10(ua.locationWeight(ra)) + Math.log10(ub.locationWeight(rb)));
+					double prob = ua.locationWeight(ra) * ub.locationWeight(rb);
+					measure = -(Math.log10(prob));
 					mw_pbg.add(measure);
 					// measure 2:  (1 - rho_1) * (1 - rho_2)
 //					measure = ( 1 - ua.locationWeight(ra) ) * ( 1- ub.locationWeight(rb));
 					// measure 3:  use location entropy to weight the meeting frequency
-					locent = Math.exp( - locationEntropy.get(ra.locID));
+					double entro = locationEntropy.get(ra.locID);
+					locent = Math.exp( - entro );
 					if (locationEntropy.containsKey(ra.locID))
 						mw_le.add(locent);
 					else
@@ -602,10 +609,17 @@ public class CaseFinder {
 					mw_pbg_le.add(measure);
 					meetingEvent.add(ra);
 					lastMeet = ra.timestamp;
+					fout.write(String.format("%g\t%g\t%d\n", prob, entro, friend_flag));
 				}
 				aind ++;
 				bind ++;
 			}
+		}
+		
+		
+			fout.close();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
 		int option = 1; // 1 - sum; 2 - weighted sum
@@ -616,8 +630,7 @@ public class CaseFinder {
 		locent = 0;
 		double pmlc = 0;
 		
-//		try {
-//			BufferedWriter fout = new BufferedWriter(new FileWriter("ten-meeting-case.txt", true));
+
 //			
 //			if (meetingEvent.size() ==10 ) {
 //				for (double m : mw_le) {
@@ -626,13 +639,10 @@ public class CaseFinder {
 //				for (double m : mw_pbg) {
 //					fout.write(Double.toString(m) + "\t");
 //				}
-//				fout.write(Integer.toString(frined_flag) + "\n");
+//				fout.write(Integer.toString(friend_flag) + "\n");
 //			}
 //			
-//			fout.close();
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
+
 
 			
 			
@@ -640,7 +650,7 @@ public class CaseFinder {
 		if (option == 1)
 		{
 			for (double m : mw_pbg) {
-				measure += m + 1000;
+				measure += m;
 			}
 			for (double m : mw_pbg_le) {
 				locent += m;
