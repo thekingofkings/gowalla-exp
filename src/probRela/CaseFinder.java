@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -556,15 +557,17 @@ public class CaseFinder {
 	 * @param uaid
 	 * @param ubid
 	 * @return
+	 * @throws IOException 
 	 */
-	private static double[] locIDBasedOneMinusExpPAIRWISEweightEvent(int uaid, int ubid, int friend_flag) {
+	private static double[] locIDBasedOneMinusExpPAIRWISEweightEvent(int uaid, int ubid, BufferedWriter fout, int friend_flag) throws IOException {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		LinkedList<Record> meetingEvent = new LinkedList<Record>();
 		LinkedList<Double> mw_pbg = new LinkedList<Double>();		// meeting weight _ personal background
 		LinkedList<Double> mw_le = new LinkedList<Double>(); 		// meeting weight _ location entropy
 		LinkedList<Double> mw_pbg_le = new LinkedList<Double>();  	// meeting weight _ personal background _ location entropy
-		
+		LinkedList<Double> probs = new LinkedList<>();
+		LinkedList<Double> entros = new LinkedList<>();
 		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropy(1000);
 		
 		int aind = 0;
@@ -573,10 +576,6 @@ public class CaseFinder {
 		double freq = 0;
 		double measure = 0;
 		double locent = 0;
-		
-		
-		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter("meeting-cases.txt", true));
 			
 		while (aind < ua.records.size() && bind < ub.records.size()) {
 			Record ra = ua.records.get(aind);
@@ -593,33 +592,32 @@ public class CaseFinder {
 					freq ++;
 					// measure 1:  - log (rho_1 * rho_2)
 					double prob = ua.locationWeight(ra) * ub.locationWeight(rb);
+					probs.add(prob);
 					measure = -(Math.log10(prob));
 					mw_pbg.add(measure);
 					// measure 2:  (1 - rho_1) * (1 - rho_2)
 //					measure = ( 1 - ua.locationWeight(ra) ) * ( 1- ub.locationWeight(rb));
 					// measure 3:  use location entropy to weight the meeting frequency
 					double entro = locationEntropy.get(ra.locID);
+					entros.add(entro);
 					locent = Math.exp( - entro );
 					if (locationEntropy.containsKey(ra.locID))
 						mw_le.add(locent);
 					else
 						System.out.println(String.format("User %d and %d, location ID %d", ra.userID, rb.userID, ra.locID));
+					
+//					fout.write(String.format("%g\t%g\t%g\t%g\t%d\n", prob, entro, measure, locent, friend_flag));
+					
 					// measure 4:  further 
 					measure *= locent;
 					mw_pbg_le.add(measure);
 					meetingEvent.add(ra);
 					lastMeet = ra.timestamp;
-					fout.write(String.format("%g\t%g\t%d\n", prob, entro, friend_flag));
+					
 				}
 				aind ++;
 				bind ++;
 			}
-		}
-		
-		
-			fout.close();
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		
 		int option = 1; // 1 - sum; 2 - weighted sum
@@ -631,17 +629,11 @@ public class CaseFinder {
 		double pmlc = 0;
 		
 
-//			
-//			if (meetingEvent.size() ==10 ) {
-//				for (double m : mw_le) {
-//					fout.write(Double.toString(m) + "\t");
-//				}
-//				for (double m : mw_pbg) {
-//					fout.write(Double.toString(m) + "\t");
-//				}
-//				fout.write(Integer.toString(friend_flag) + "\n");
-//			}
-//			
+			if (meetingEvent.size() > 5 ) {
+				for (int i = 0; i < mw_pbg.size(); i++ ) {
+					fout.write(String.format("%g\t%g\t%g\t%g\t%d\n", probs.get(i), entros.get(i), mw_pbg.get(i), mw_le.get(i),  friend_flag));
+				}
+			}
 
 
 			
@@ -820,6 +812,9 @@ public class CaseFinder {
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
+			
+			BufferedWriter fout2 = new BufferedWriter(new FileWriter("meeting-cases.txt"));
+				
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
 				int uaid = Integer.parseInt(ls[0]);
@@ -828,13 +823,14 @@ public class CaseFinder {
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = locIDBasedOneMinusExpPAIRWISEweightEvent(uaid, ubid, friflag);
+					locidm = locIDBasedOneMinusExpPAIRWISEweightEvent(uaid, ubid, fout2, friflag);
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], friflag));
 				}
 			}
 			
 			fin.close();
 			fout.close();
+			fout2.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

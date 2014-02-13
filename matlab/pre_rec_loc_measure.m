@@ -7,7 +7,7 @@ dml5 = importdata('../delete_this-u1000c1.50000.txt');
 [~, ind] = sort(dml5(:,6));
 dml5 = dml5(ind, :);
 
-for condition = 0:5 ;
+for condition = 1 ;
     
 
 %     dml4 = dml4(dml4(:,4) > condition,:);
@@ -18,7 +18,7 @@ for condition = 0:5 ;
    
 
 
-    dml5 = dml5(dml5(:,6) > condition,:);
+    dml5 = dml5(dml5(:,6) == condition,:);
 
     prod_colcEnt_cm = dml5(:,3);
     locwf5 = dml5(:,4);
