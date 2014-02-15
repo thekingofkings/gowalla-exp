@@ -11,8 +11,16 @@ function [prec, recl] = precisionRecallPlot( score, label, varargin )
         end
 
         n = length(score);
-        data = [score, label];
-        [~, ind] = sort(score, 'descend');
+        data = zeros(n, 2);
+        data(:,1) = score;
+        data(:,2) = label;
+                
+        % randomize the vector first
+        ind = randperm( length(score) );
+        data = data(ind,:);
+
+        
+        [~, ind] = sort(data(:,1), 'descend');
         data = data(ind, :);
 
         step = max( round(n / 100), 1);

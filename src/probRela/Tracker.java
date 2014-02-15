@@ -1144,12 +1144,12 @@ public class Tracker {
 	public static void main(String argv[]) {
 		// 1. find frequent user pair
 //		shareLocationCount();
-		initialTopKPair();
+//		initialTopKPair();
 		// 2. calculate feature one -- Renyi entropy based diversity
-		RenyiEntropyDiversity();
+//		RenyiEntropyDiversity();
 //		// 3. calculate feature two -- weighted frequency, and frequency
-		weightedFrequency();
-		writePairMeasure();
+//		weightedFrequency();
+//		writePairMeasure();
 //		// 4. calculate feature three -- mutual information
 //		mutualInformation();
 //		mutualInformation_v2();
@@ -1163,8 +1163,8 @@ public class Tracker {
 		// 6. write the results
 //		writeThreeMeasures("feature-vectors-rme.txt");
 		
-//		writeOutPairColocations();
-//		writeLocationEntropy(1000);
+		writeOutPairColocations();
+//		writeLocationEntropy(5000);
 	}
 
 }

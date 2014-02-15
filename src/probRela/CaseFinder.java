@@ -568,7 +568,7 @@ public class CaseFinder {
 		LinkedList<Double> mw_pbg_le = new LinkedList<Double>();  	// meeting weight _ personal background _ location entropy
 		LinkedList<Double> probs = new LinkedList<>();
 		LinkedList<Double> entros = new LinkedList<>();
-		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropy(1000);
+		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropy(5000);
 		
 		int aind = 0;
 		int bind = 0;
@@ -591,6 +591,7 @@ public class CaseFinder {
 				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
 					freq ++;
 					// measure 1:  - log (rho_1 * rho_2)
+//					double prob = Math.min( ua.locationWeight(ra) , ub.locationWeight(rb));
 					double prob = ua.locationWeight(ra) * ub.locationWeight(rb);
 					probs.add(prob);
 					measure = -(Math.log10(prob));
@@ -628,28 +629,33 @@ public class CaseFinder {
 		locent = 0;
 		double pmlc = 0;
 		
-
-			if (meetingEvent.size() > 5 ) {
-				for (int i = 0; i < mw_pbg.size(); i++ ) {
-					fout.write(String.format("%g\t%g\t%g\t%g\t%d\n", probs.get(i), entros.get(i), mw_pbg.get(i), mw_le.get(i),  friend_flag));
-				}
-			}
-
-
-			
-			
+		double min_prob = Double.MAX_VALUE;
+		double avg_entro = Double.MAX_VALUE;
+		double avg_le = Double.MAX_VALUE;
+		double avg_pbg = Double.MAX_VALUE;
 		
 		if (option == 1)
 		{
-			for (double m : mw_pbg) {
-				measure += m;
-			}
+			for (double m : probs)
+				if (min_prob > m)
+					min_prob = m;
+			// min_prob *= probs.size();
+			measure =  - Math.log10(min_prob) * probs.size();
+			for (double m : entros)
+				avg_entro += m;
+			avg_entro /= entros.size();
+//			for (double m : mw_pbg) {
+//				measure += m;
+//			}
+			avg_pbg = measure / mw_pbg.size();
 			for (double m : mw_pbg_le) {
-				locent += m;
-			}
-			for (double m : mw_le) {
 				pmlc += m;
 			}
+			for (double m : mw_le) {
+				locent += m;
+			}
+			avg_le = locent / mw_le.size();
+			fout.write(String.format("%g\t%g\t%g\t%g\t%d\t%d\n", min_prob, avg_entro, avg_pbg, avg_le, (int)freq, friend_flag));
 		} else {
 			if (meetingEvent.size() == 1) {
 				for (double m : mw_pbg)
@@ -670,8 +676,8 @@ public class CaseFinder {
 		}
 		rt[0] = measure;
 		rt[1] = freq;
-		rt[2] = locent;
-		rt[3] = pmlc;
+		rt[2] = pmlc;
+		rt[3] = locent;
 		
 		return rt;
 	}
@@ -807,13 +813,13 @@ public class CaseFinder {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("delete_this-u1000c%g.txt", para_c )));
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("delete_this-org-u5000c%g.txt", para_c )));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
 			
-			BufferedWriter fout2 = new BufferedWriter(new FileWriter("meeting-cases.txt"));
+			BufferedWriter fout2 = new BufferedWriter(new FileWriter("meeting-cases-u5000.txt"));
 				
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
@@ -956,7 +962,7 @@ public class CaseFinder {
 //		}
 //		
 		
-//		distanceBasedSumLogMeasure(      1146         ,              304    ,true);
+//		distanceBasedSumLogMeasure(      4678   ,      4634  ,true);
 //		distanceBasedSumLogMeasure(   490   , 419, true);
 		
 //		for (int i = 0; i < 10; i++) {

@@ -3,12 +3,12 @@ dml4 = importdata('../weightedFrequency-1000u.txt');
 [~, ind] = sort(dml4(:,4));
 dml4 = dml4(ind, :);
 
-dml5 = importdata('../delete_this-u1000c1.50000.txt');
-[~, ind] = sort(dml5(:,6));
-dml5 = dml5(ind, :);
 
-for condition = 1 ;
-    
+
+for condition = 0:5 ;
+    dml5 = importdata('../delete_this-min-u5000c1.50000.txt');
+    [~, ind] = sort(dml5(:,6));
+    dml5 = dml5(ind, :);
 
 %     dml4 = dml4(dml4(:,4) > condition,:);
 %     locwf4 = dml4(:,3);
@@ -18,7 +18,7 @@ for condition = 1 ;
    
 
 
-    dml5 = dml5(dml5(:,6) == condition,:);
+    dml5 = dml5(dml5(:,6) > condition,:);
 
     prod_colcEnt_cm = dml5(:,3);
     locwf5 = dml5(:,4);
@@ -57,6 +57,6 @@ for condition = 1 ;
     set(gcf, 'PaperUnits', 'inches');
     % print(['prl-50m', num2str(c), 'c1000u.eps'], '-dpsc');
     % system(['epstopdf prl-50m', num2str(c), 'c1000u.eps']);
-%     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.png']);
+    saveas(gcf, ['freq-MINu5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end

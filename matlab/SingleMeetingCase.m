@@ -29,7 +29,10 @@ nonfri_denst = interest_nonfri(:,2);
 %}
 
 
-omc = importdata('../meeting-cases.txt');
+for freq = 1:5
+
+omc = importdata('../meeting-cases-u5000.txt');
+omc = omc(omc(:,5)==freq,:);
 n = size(omc,2);
 interest_fri = omc(omc(:,n)==1,:);
 interest_nonfri = omc(omc(:,n)==0,:);
@@ -51,10 +54,10 @@ nonfri_entroW = interest_nonfri(:,4);
 
 f = figure();
 hold on;
-l1 = cdfplot(fri_entro);
-l2 = cdfplot(nonfri_entro);
-set(l1, 'color', 'blue', 'linestyle', '-');
-set(l2, 'color', 'red', 'linestyle', '-');
+% l1 = cdfplot(fri_entro);
+% l2 = cdfplot(nonfri_entro);
+% set(l1, 'color', 'blue', 'linestyle', '-');
+% set(l2, 'color', 'red', 'linestyle', '-');
 
 
 l3 = cdfplot(fri_denst);
@@ -62,27 +65,31 @@ l4 = cdfplot(nonfri_denst);
 set(l3, 'color', 'cyan', 'linestyle', '--');
 set(l4, 'color', 'magenta', 'linestyle', '--');
 
-
-l5 = cdfplot(fri_entroW);
-l6 = cdfplot(nonfri_entroW);
-set(l5, 'color', 'blue', 'linestyle', '--');
-set(l6, 'color', 'red', 'linestyle', '--');
-
-l7 = cdfplot(fri_measure);
-l8 = cdfplot(nonfri_measure);
-set(l7, 'color', 'yellow', 'linestyle', '-');
-set(l8, 'color', 'green', 'linestyle', '-');
+% 
+% l5 = cdfplot(fri_entroW);
+% l6 = cdfplot(nonfri_entroW);
+% set(l5, 'color', 'blue', 'linestyle', '--');
+% set(l6, 'color', 'red', 'linestyle', '--');
+% 
+% 
+% l7 = cdfplot(fri_measure);
+% l8 = cdfplot(nonfri_measure);
+% set(l7, 'color', 'yellow', 'linestyle', '-');
+% set(l8, 'color', 'green', 'linestyle', '-');
 
 
 hline = findobj(gcf, 'type', 'line');
 set(hline, 'linewidth', 3);
 ylabel('CDF', 'fontsize', 16);
 xlabel('Location entropy (solid) / Density (dashed)', 'fontsize', 16);
+set(gca, 'xscale', 'log');
 legend({ 'Fri entropy', 'Nonfri entropy', ...
     'Fri density', 'Nonfri density', ...
     'Fri entro weight', 'Nonfri entro weight', 'Fri - log', 'Nonfri - log'}, ...
     'location', 'best', 'fontsize', 12);
-title('Distribution of All Meeting Pair (friends/non-friends)', 'fontsize', 16);
+title(['Distribution of == ', num2str(freq), ' Meeting Pair (friends/non-friends)'], 'fontsize', 16);
 set(gca, 'fontsize', 12);
-saveas(f, 'MeetingDistgt5.png');
+% saveas(f, ['MeetingDistc1p5EQmin', num2str(freq), '.png']);
 % saveas(f, 'MeetingDist.fig');
+
+end

@@ -1,6 +1,6 @@
 
 
-for condition = 1
+for condition = 0:5
 
 dml4 = importdata('../weightedFrequency-1000u.txt');
 [~, ind] = sort(dml4(:,4));
@@ -10,7 +10,7 @@ dml5 = importdata('../delete_this-u1000c1.50000.txt');
 dml5 = dml5(ind, :);
 
 omc = dml5;
-omc(:,4) = dml4(:,3);
+% omc(:,4) = dml4(:,3);
 
 
 % omc 
@@ -28,8 +28,8 @@ disp('Total number of friend pairs');
 sum(omc(:,5)==1)
 
 disp('Sort by weighted frequency');
-[~, ind] = sort(omc(:,3));
-omc = omc(ind, :);
+% [~, ind] = sort(omc(:,3));
+% omc = omc(ind, :);
 
 
 
