@@ -14,7 +14,7 @@ import java.util.TreeMap;
 
 
 public class CaseFinder {
-	public static double distance_threshold = 0.05;	 // in km 
+	public static double distance_threshold = 0.00001;	 // in km 
 
 	static double event_time_exp_para_c = 0.5;	// 0.5 is better than 1, when pairwise
 	
@@ -588,7 +588,7 @@ public class CaseFinder {
 				aind ++;
 				continue;
 			} else {
-				if (ra.locID == rb.locID && ra.timestamp - lastMeet >= 3600) {
+				if (ra.distanceTo(rb) < CaseFinder.distance_threshold && ra.timestamp - lastMeet >= 3600) {
 					freq ++;
 					// measure 1:  - log (rho_1 * rho_2)
 //					double prob = Math.min( ua.locationWeight(ra) , ub.locationWeight(rb));
@@ -606,8 +606,6 @@ public class CaseFinder {
 						mw_le.add(locent);
 					else
 						System.out.println(String.format("User %d and %d, location ID %d", ra.userID, rb.userID, ra.locID));
-					
-//					fout.write(String.format("%g\t%g\t%g\t%g\t%d\n", prob, entro, measure, locent, friend_flag));
 					
 					// measure 4:  further 
 					measure *= locent;
@@ -630,17 +628,19 @@ public class CaseFinder {
 		double pmlc = 0;
 		
 		double min_prob = Double.MAX_VALUE;
-		double avg_entro = Double.MAX_VALUE;
-		double avg_le = Double.MAX_VALUE;
-		double avg_pbg = Double.MAX_VALUE;
+		double avg_entro = 0;
+		double avg_le = 0;
+		double avg_pbg = 0;
 		
 		if (option == 1)
 		{
+			////////////// measure  min  /////////////////////////////////////////
 			for (double m : probs)
-				if (min_prob > m)
+				if ( min_prob > m )
 					min_prob = m;
-			// min_prob *= probs.size();
+//			min_prob *= probs.size();
 			measure =  - Math.log10(min_prob) * probs.size();
+			//////////////////////////////////////////////////////////////////////
 			for (double m : entros)
 				avg_entro += m;
 			avg_entro /= entros.size();
@@ -814,12 +814,12 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("delete_this-org-u5000c%g.txt", para_c )));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("distance-d30-u5000c%g.txt", para_c )));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
 			
-			BufferedWriter fout2 = new BufferedWriter(new FileWriter("meeting-cases-u5000.txt"));
+			BufferedWriter fout2 = new BufferedWriter(new FileWriter("dist-meeting-cases-u5000.txt"));
 				
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
@@ -869,20 +869,20 @@ public class CaseFinder {
 				aind ++;
 				continue;
 			} else {
-//				if (ra.distanceTo(rb) < dist_threshold && ra.timestamp - time_lastMeet >= 3600) {
-//					double wta = ua.locationWeight(ra);
-//					double wtb = ub.locationWeight(rb);
-//					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude };
-//					coloEnt.add(evnt);
-//					time_lastMeet = ra.timestamp;
-//				}
-				if (ra.locID == rb.locID && ra.timestamp - time_lastMeet >= 3600 ) {
+				if (ra.distanceTo(rb) < dist_threshold && ra.timestamp - time_lastMeet >= 3600) {
 					double wta = ua.locationWeight(ra);
-					double wtb = ub.locationWeight(rb);					
-					double[] evnt = {wta, wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude, ra.timestamp, rb.timestamp };
+					double wtb = ub.locationWeight(rb);
+					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude, ra.timestamp, rb.timestamp };
 					coloEnt.add(evnt);
 					time_lastMeet = ra.timestamp;
 				}
+//				if (ra.locID == rb.locID && ra.timestamp - time_lastMeet >= 3600 ) {
+//					double wta = ua.locationWeight(ra);
+//					double wtb = ub.locationWeight(rb);					
+//					double[] evnt = {wta, wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude, ra.timestamp, rb.timestamp };
+//					coloEnt.add(evnt);
+//					time_lastMeet = ra.timestamp;
+//				}
 				aind ++;
 				bind ++;
 			}

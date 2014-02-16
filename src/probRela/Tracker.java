@@ -376,7 +376,7 @@ public class Tracker {
 	 * Assistant function
 	 * -- calculate location entropy for one specific location (Shannon Entropy)
 	 */
-	private static HashMap<Long, Double> locationEntropy() {
+	private static HashMap<Long, Double> locationEntropyIDbased() {
 		long t_start = System.currentTimeMillis();
 		HashMap<Long, Double> loc_entro = new HashMap<Long, Double>();
 		HashMap<Long, HashMap<Integer, Integer>> loc_user_visit = new HashMap<Long, HashMap<Integer, Integer>>();
@@ -426,6 +426,13 @@ public class Tracker {
 	}
 	
 	
+	private static HashMap<Long, Double> locationEntropyDistanceBased(Long locid) {
+		// 1. 5
+		
+		
+	}
+	
+	
 	/**
 	 * calculate the location entropy using the records of given number of top users
 	 * @param numUser
@@ -447,7 +454,7 @@ public class Tracker {
 			e.printStackTrace();
 		}
 		// calculate location entropy
-		locationEntropy = locationEntropy();
+		locationEntropy = locationEntropyIDbased();
 		// write out location entropy
 		try {
 			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%d.txt", numUser)));

@@ -5,8 +5,8 @@ dml4 = dml4(ind, :);
 
 
 
-for condition = 0:5 ;
-    dml5 = importdata('../delete_this-min-u5000c1.50000.txt');
+for condition = 0 ;
+    dml5 = importdata('../distance-d30-u5000c1.50000.txt');
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
@@ -19,6 +19,9 @@ for condition = 0:5 ;
 
 
     dml5 = dml5(dml5(:,6) > condition,:);
+    sum(dml5(:,7)==1)
+    sum(dml5(:,7)==0)
+    size(dml5)
 
     prod_colcEnt_cm = dml5(:,3);
     locwf5 = dml5(:,4);
@@ -57,6 +60,6 @@ for condition = 0:5 ;
     set(gcf, 'PaperUnits', 'inches');
     % print(['prl-50m', num2str(c), 'c1000u.eps'], '-dpsc');
     % system(['epstopdf prl-50m', num2str(c), 'c1000u.eps']);
-    saveas(gcf, ['freq-MINu5000fgt',num2str(condition),'.png']);
+    saveas(gcf, ['dist-d0-u5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end

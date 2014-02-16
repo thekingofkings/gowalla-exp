@@ -31,7 +31,7 @@ nonfri_denst = interest_nonfri(:,2);
 
 for freq = 1:5
 
-omc = importdata('../meeting-cases-u5000.txt');
+omc = importdata('../dist-meeting-cases-u5000.txt');
 omc = omc(omc(:,5)==freq,:);
 n = size(omc,2);
 interest_fri = omc(omc(:,n)==1,:);
@@ -89,7 +89,7 @@ legend({ 'Fri entropy', 'Nonfri entropy', ...
     'location', 'best', 'fontsize', 12);
 title(['Distribution of == ', num2str(freq), ' Meeting Pair (friends/non-friends)'], 'fontsize', 16);
 set(gca, 'fontsize', 12);
-% saveas(f, ['MeetingDistc1p5EQmin', num2str(freq), '.png']);
+ saveas(f, ['dist-MeetingDistc1p5EQavg', num2str(freq), '.png']);
 % saveas(f, 'MeetingDist.fig');
 
 end
