@@ -114,6 +114,10 @@ public class Record implements Comparable<Record> {
 		return Math.sqrt(dist * dist + gapT * gapT);
 	}
 	
+	public String GPS() {
+		return String.format("%.12f%.12f", latitude, longitude);
+	}
+	
 
 
 	// TDD

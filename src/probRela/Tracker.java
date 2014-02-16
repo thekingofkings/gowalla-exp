@@ -47,6 +47,7 @@ public class Tracker {
 	static ArrayList<int[]> FrequentPair = new ArrayList<int[]>();
 	static ArrayList<HashSet<Long>> FrequentPair_CoLocations = new ArrayList<HashSet<Long>>();
 	static HashMap<Long, Double> locationEntropy = new HashMap<Long, Double>();
+	static HashMap<String, Double> GPSEntropy = new HashMap<String, Double>();
 
 	// results on three features
 	static LinkedList<Double> renyiDiversity = new LinkedList<Double>();
@@ -133,7 +134,6 @@ public class Tracker {
 	}
 	
 	
-	@SuppressWarnings("unused")
 	private static void writeOutPairColocations() {
 		System.out.println("Start writeOutPairColocations.");
 		try {
@@ -317,7 +317,7 @@ public class Tracker {
 		 * After we factor out the location entropy calculation, 
 		 * now the execution time in HP is 4s.
 		 */
-		locationEntropy = readLocationEntropy(1000);
+		locationEntropy = readLocationEntropyIDbased(1000);
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -410,8 +410,8 @@ public class Tracker {
 		for (Long locid : loc_user_visit.keySet()) {
 			double locEntropy = 0;
 			for (int uid : loc_user_visit.get(locid).keySet()) {
-				if (loc_user_visit.get(locid).get(uid) > 0) {
-					if (loc_total_visit.get(locid) > 0) {
+				if (loc_user_visit.get(locid).size() > 1) {	// if there is only one user visit this locatin, then its entropy is 0, and there won't be any meeting events.
+					if (loc_user_visit.get(locid).get(uid) > 0) {
 						double prob = (double) loc_user_visit.get(locid).get(uid) / loc_total_visit.get(locid);
 						locEntropy += - prob * Math.log(prob);
 					}
@@ -421,23 +421,66 @@ public class Tracker {
 		}
 		// 3. return the entropy
 		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("Size of loc_entropy: %d\n. Process finished in %d seconds.", loc_entro.size(), (t_end - t_start)/1000));
+		System.out.println(String.format("Size of loc_entropy: %d.\n locationEntropyIDbased finished in %d seconds.", loc_entro.size(), (t_end - t_start)/1000));
 		return loc_entro;
 	}
 	
 	
-	private static HashMap<Long, Double> locationEntropyDistanceBased(Long locid) {
-		// 1. 5
-		
-		
+	private static HashMap<String, Double> locationEntropyGPSbased() {
+		long t_start = System.currentTimeMillis();
+		HashMap<String, Double> loc_entro = new HashMap<String, Double>();
+		HashMap<String, HashMap<Integer, Integer>> loc_user_visit = new HashMap<String, HashMap<Integer, Integer>>();
+		HashMap<String, Integer> loc_total_visit = new HashMap<String, Integer>();
+
+		// 1. get the GPS visiting frequency
+		for (User u : User.allUserSet.values()) {
+			for (Record r : u.records) {
+				// count individual user visiting
+				if (loc_user_visit.containsKey(r.GPS())) {
+					if (loc_user_visit.get(r.GPS()).containsKey(u.userID)) {
+						int freq = loc_user_visit.get(r.GPS()).get(u.userID);
+						loc_user_visit.get(r.GPS()).put(u.userID, freq + 1);
+					} else {
+						loc_user_visit.get(r.GPS()).put(u.userID, 1);
+					}
+				} else {
+					loc_user_visit.put(r.GPS(), new HashMap<Integer, Integer>());
+					loc_user_visit.get(r.GPS()).put(u.userID, 1);
+				}
+				// count total visiting for on location
+				if (loc_total_visit.containsKey(r.GPS())) {
+					int f = loc_total_visit.get(r.GPS());
+					loc_total_visit.put(r.GPS(), f+1);
+				} else {
+					loc_total_visit.put(r.GPS(), 1);
+				}
+			}
+		}
+		// 2. calculate the per user probability
+		for (String gps : loc_user_visit.keySet()) {
+			double locEntropy = 0;
+			for (int uid : loc_user_visit.get(gps).keySet()) {
+				if (loc_user_visit.get(gps).size() > 1)
+					if (loc_user_visit.get(gps).get(uid) > 0) {
+						double prob = (double) loc_user_visit.get(gps).get(uid) / loc_total_visit.get(gps);
+						locEntropy += - prob * Math.log(prob);
+					}
+			}
+			loc_entro.put(gps, locEntropy);
+		}
+		// 3. return the entropy
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Size of loc_entropy: %d.\n locationEntropyGPSbased finished in %d seconds.", loc_entro.size(), (t_end - t_start)/1000));
+		return loc_entro;
 	}
 	
 	
 	/**
 	 * calculate the location entropy using the records of given number of top users
 	 * @param numUser
+	 * @param IDflag -- true to use location ID, false to use GPS 
 	 */
-	public static void writeLocationEntropy(int numUser) {
+	public static void writeLocationEntropy(int numUser, boolean IDflag) {
 		// initialize users
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/userCount.txt"));
@@ -453,13 +496,24 @@ public class Tracker {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		// calculate location entropy
-		locationEntropy = locationEntropyIDbased();
+		if (IDflag == true) {
+			// calculate location entropy
+			locationEntropy = locationEntropyIDbased();
+		} else {
+			GPSEntropy = locationEntropyGPSbased();
+		}
 		// write out location entropy
 		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%d.txt", numUser)));
-			for (long loc : locationEntropy.keySet())
-				fout.write(String.format("%d\t%g\n", loc, locationEntropy.get(loc)));
+			BufferedWriter fout;
+			if (IDflag == true) {
+				fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%d.txt", numUser)));
+				for (long loc : locationEntropy.keySet())
+					fout.write(String.format("%d\t%g\n", loc, locationEntropy.get(loc)));
+			} else {
+				fout = new BufferedWriter(new FileWriter(String.format("GPSEntropy-%d.txt", numUser)));
+				for (String gps : GPSEntropy.keySet())
+					fout.write(String.format("%s\t%g\n", gps, GPSEntropy.get(gps)));
+			}
 			fout.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -473,7 +527,7 @@ public class Tracker {
 	 * @param numUser
 	 * @return
 	 */
-	public static HashMap<Long, Double> readLocationEntropy(int numUser) {
+	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser) {
 		if (locationEntropy.isEmpty()) {
 			try {
 				BufferedReader fin = new BufferedReader( new FileReader(String.format("locationEntropy-%d.txt", numUser)));
@@ -488,7 +542,7 @@ public class Tracker {
 				fin.close();
 			} catch (FileNotFoundException e) {
 				System.out.println("No location entropy file found. Generate new one ...");
-				writeLocationEntropy(numUser);
+				writeLocationEntropy(numUser, true);	// true use location ID, false to use GPS
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -496,6 +550,31 @@ public class Tracker {
 		}
 		
 		return locationEntropy;
+	}
+	
+	
+	public static HashMap<String, Double> readLocationEntropyGPSbased( int numUser ) {
+		if (GPSEntropy.isEmpty()) {
+			try {
+				BufferedReader fin = new BufferedReader( new FileReader(String.format("GPSEntropy-%d.txt", numUser)));
+				String l = null;
+				while ( (l=fin.readLine()) != null) {
+					String[] ls = l.split("\\s+");
+					String gps = ls[0];
+					double entropy = Double.parseDouble(ls[1]);
+					if (! GPSEntropy.containsKey(gps))
+						GPSEntropy.put(gps, entropy);
+				}
+				fin.close();
+			} catch (FileNotFoundException e) {
+				System.out.println("No GPS entropy file found. Generate a new one ...");
+				writeLocationEntropy(numUser, false);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			System.out.println(String.format("GPS location size %d.", GPSEntropy.size()));
+		}
+		return GPSEntropy;
 	}
 	//===================================location entropy ends=======================================
 	
@@ -1170,8 +1249,8 @@ public class Tracker {
 		// 6. write the results
 //		writeThreeMeasures("feature-vectors-rme.txt");
 		
-		writeOutPairColocations();
-//		writeLocationEntropy(5000);
+//		writeOutPairColocations();
+		writeLocationEntropy(5000, false);
 	}
 
 }

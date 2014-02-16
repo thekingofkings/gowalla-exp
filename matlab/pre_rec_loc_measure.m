@@ -5,7 +5,7 @@ dml4 = dml4(ind, :);
 
 
 
-for condition = 0 ;
+for condition = 0:5 ;
     dml5 = importdata('../distance-d30-u5000c1.50000.txt');
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
@@ -60,6 +60,6 @@ for condition = 0 ;
     set(gcf, 'PaperUnits', 'inches');
     % print(['prl-50m', num2str(c), 'c1000u.eps'], '-dpsc');
     % system(['epstopdf prl-50m', num2str(c), 'c1000u.eps']);
-    saveas(gcf, ['dist-d0-u5000fgt',num2str(condition),'.png']);
+    saveas(gcf, ['dist-entro-d30-u5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end
