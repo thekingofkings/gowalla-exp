@@ -5,7 +5,7 @@ for condition = 0:5
 dml4 = importdata('../weightedFrequency-1000u.txt');
 [~, ind] = sort(dml4(:,4));
 dml4 = dml4(ind, :);
-dml5 = importdata('../delete_this-u1000c1.50000.txt');
+dml5 = importdata('../distance-d30-u5000c1.50000.txt');
 [~, ind] = sort(dml5(:,6));
 dml5 = dml5(ind, :);
 
