@@ -561,12 +561,13 @@ public class CaseFinder {
 	 * @param IDorDist -- true: location ID, false: GPS location
 	 * @param RhoMethod -- min / prod
 	 * @param weightMethod -- min / sum
+	 * @param prodMethod -- min / each
 	 * 
 	 * @return
 	 * @throws IOException 
 	 */
-	private static double[] PAIRWISEweightEvent(int uaid, int ubid, BufferedWriter fout, int friend_flag, boolean IDorDist, String RhoMethod,
-			String weightMethod) throws IOException {
+	private static double[] PAIRWISEweightEvent(int uaid, int ubid, BufferedWriter fout, int friend_flag, boolean IDorDist, boolean entroIDorDist, String RhoMethod,
+			String weightMethod, String prodMethod) throws IOException {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		LinkedList<Record> meetingEvent = new LinkedList<Record>();
@@ -577,7 +578,7 @@ public class CaseFinder {
 		LinkedList<Double> entros = new LinkedList<>();
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
-		if (IDorDist) {
+		if (entroIDorDist) {
 			locationEntropy = Tracker.readLocationEntropyIDbased(5000);
 		} else {
 			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000);
@@ -626,8 +627,8 @@ public class CaseFinder {
 //					measure = ( 1 - ua.locationWeight(ra) ) * ( 1- ub.locationWeight(rb));
 					/** different methods to calculate location entropy **/
 					double entro = 0;
-					if ( IDorDist ) {
-						entro = locationEntropy.get(ra.locID);
+					if ( entroIDorDist ) {
+						entro = (locationEntropy.get(ra.locID) + locationEntropy.get(rb.locID));
 					} else {
 						entro = GPSEntropy.get(ra.GPS());
 					}
@@ -635,10 +636,12 @@ public class CaseFinder {
 					locent = Math.exp( - entro );
 					mw_le.add(locent);
 					
-					// measure 4:  further 
-					measure *= locent;
-					mw_pbg_le.add(measure);
-					meetingEvent.add(ra);
+					/** different method to calculate the product of two **/
+					if (prodMethod == "each") {
+						measure *= locent;
+						mw_pbg_le.add(measure);
+						meetingEvent.add(ra);
+					}
 					lastMeet = ra.timestamp;
 					
 				}
@@ -663,15 +666,17 @@ public class CaseFinder {
 		
 		if (option == 1)
 		{
+			for (double m : probs)
+				if ( min_prob > m )
+					min_prob = m;
+			
 			if (weightMethod == "min") {
-				for (double m : probs)
-					if ( min_prob > m )
-						min_prob = m;
 				measure =  - Math.log10(min_prob) * probs.size();
 			} else if (weightMethod == "sum") {
 				for (double m : mw_pbg)
 					measure += m;
 			}
+			
 			/** average measure **/
 			for (double m : entros)
 				avg_entro += m;
@@ -680,12 +685,17 @@ public class CaseFinder {
 				measure_sum += m;
 			}
 			avg_pbg = measure_sum / mw_pbg.size();
-			for (double m : mw_pbg_le) {
-				pmlc += m;
-			}
 			for (double m : mw_le) {
 				locent += m;
 			}
+			if (prodMethod == "min") {
+				pmlc = - Math.log10(min_prob) * locent;
+			} else if (prodMethod == "each") {
+				for (double m : mw_pbg_le) {
+					pmlc += m;
+				}
+			}
+			
 			avg_le = locent / mw_le.size();
 			fout.write(String.format("%g\t%g\t%g\t%g\t%d\t%d\n", min_prob, avg_entro, avg_pbg, avg_le, (int)freq, friend_flag));
 		} else {
@@ -700,6 +710,7 @@ public class CaseFinder {
 						Record r2 = meetingEvent.get(j);
 						double w = 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
 						measure += (mw_pbg.get(i) + mw_pbg.get(j)) * w;
+						locent += (mw_le.get(i) + mw_le.get(j)) * w;
 //						measure += w;
 					}
 				}
@@ -861,7 +872,7 @@ public class CaseFinder {
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false,  "min", "sum");
+					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "min", "min", "min");
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], friflag));
 				}
 			}
