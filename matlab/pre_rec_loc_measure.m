@@ -5,7 +5,7 @@ dml4 = dml4(ind, :);
 
 
 
-for condition = 0:5 ;
+for condition = 0:5;
     dml5 = importdata('../distance-d30-u5000c1.50000.txt');
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
@@ -40,13 +40,14 @@ for condition = 0:5 ;
     % My own precision-recall plot function    
     figure();
     hold on;
-    precisionRecallPlot( locwf5, dl5, 'r--' );
-    precisionRecallPlot( prod_colcEnt_cm, dl5, 'k:' );
-    precisionRecallPlot( locm5, dl5, 'g-' );
-    precisionRecallPlot( locf5, dl5, 'c--' );
+    precisionRecallPlot( locf5, dl5, 'linestyle', '-', 'color', [0, 0, 0.8] );
+    precisionRecallPlot( locwf5, dl5, 'linestyle', '--', 'color', [0, 0.75, 0] );
+    precisionRecallPlot( locm5, dl5, 'r--' );
+    precisionRecallPlot( prod_colcEnt_cm, dl5, 'k--' );
+ 
 
 
-    title(num2str(condition));
+%     title(num2str(condition));
     box on;
     grid on;
 %     axis([0,1,0.5,1]);
@@ -55,11 +56,11 @@ for condition = 0:5 ;
     xlabel('Recall', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);
     set(gca, 'linewidth', 2, 'fontsize', 18);
-    legend({'weighted frequency', 'product', '1 - exp measure', 'freq'}, 'location', 'best');
+    legend({'Frequency', 'Entropy', 'Density', 'Combination'}, 'location', 'best');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
-    % print(['prl-50m', num2str(c), 'c1000u.eps'], '-dpsc');
-    % system(['epstopdf prl-50m', num2str(c), 'c1000u.eps']);
-    saveas(gcf, ['dist-wsum-d30-u5000fgt',num2str(condition),'.png']);
+    print(['pr-', num2str(condition), 'c1000u.eps'], '-dpsc');
+    system(['epstopdf pr-', num2str(condition), 'c1000u.eps']);
+%     saveas(gcf, ['dist-wsum-d30-u5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end

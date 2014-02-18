@@ -583,9 +583,9 @@ public class CaseFinder {
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
 		if (entroIDorDist) {
-			locationEntropy = Tracker.readLocationEntropyIDbased(1000);
+			locationEntropy = Tracker.readLocationEntropyIDbased(5000);
 		} else {
-			GPSEntropy = Tracker.readLocationEntropyGPSbased(1000);
+			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000);
 		}
 		
 		int aind = 0;
@@ -702,7 +702,7 @@ public class CaseFinder {
 				pmlc = alpha * measure + beta * locent;
 			}
 
-			fout.write(String.format("%g\t%g\t%d\n", measure, locent, friend_flag));
+//			fout.write(String.format("%g\t%g\t%d\n", measure, locent, friend_flag));
 			avg_le = locent / mw_le.size();
 //			fout.write(String.format("%g\t%g\t%g\t%g\t%d\t%d\n", min_prob, avg_entro, avg_pbg, avg_le, (int)freq, friend_flag));
 		} else {
@@ -735,6 +735,15 @@ public class CaseFinder {
 				}
 //				pmlc = pmlc / (meetingEvent.size() - 1);
 //				pmlc = alpha * measure + beta * locent;
+			}
+			
+			/** write out the distance between consecutive meeting **/
+			if (meetingEvent.size() == 5) {
+				fout.write(String.format("%d\t%d\t", uaid, ubid));
+				for (int l = 0; l < 4; l++) {
+					fout.write(String.format("%g\t", meetingEvent.get(l).distanceTo(meetingEvent.get(l+1))));
+				}
+				fout.write(String.format("%d\n", friend_flag));
 			}
 		}
 		rt[0] = measure;
@@ -892,7 +901,7 @@ public class CaseFinder {
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, false,  "prod", "min", "min", 1);
+					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "prod", "min", "min", 1);
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], friflag));
 				}
 			}
@@ -1025,15 +1034,15 @@ public class CaseFinder {
 //		}
 //		
 		
-//		distanceBasedSumLogMeasure(      4678   ,      4634  ,true);
-//		distanceBasedSumLogMeasure(   490   , 419, true);
+		distanceBasedSumLogMeasure(    267 , 510 ,true);
+		distanceBasedSumLogMeasure(   350, 6138, true);
 		
 //		for (int i = 0; i < 10; i++) {
 //			User.para_c = 10 + i * 10;
 //			writeOutDifferentMeasures(User.para_c);
 //		}
 		
-		writeOutDifferentMeasures(User.para_c);
+//		writeOutDifferentMeasures(User.para_c);
 		
 		
 //		locationDistancePowerLaw(2241);
