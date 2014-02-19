@@ -1084,7 +1084,7 @@ public class CaseFinder {
 //		}
 		
 //		for (int i = 1; i < 11; i++ )
-			writeOutDifferentMeasures(User.para_c, 2);
+			writeOutDifferentMeasures(User.para_c, 100);
 		
 		
 //		locationDistancePowerLaw(2241);
