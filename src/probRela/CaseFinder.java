@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -570,8 +571,8 @@ public class CaseFinder {
 	 * @return
 	 * @throws IOException 
 	 */
-	private static double[] PAIRWISEweightEvent(int uaid, int ubid, BufferedWriter fout, int friend_flag, boolean IDorDist, boolean entroIDorDist, String RhoMethod,
-			String weightMethod, String combMethod, int dependence) throws IOException {
+	private static double[] PAIRWISEweightEvent(int uaid, int ubid, BufferedWriter fout, int friend_flag, boolean IDorDist, 
+			boolean entroIDorDist, String RhoMethod, String weightMethod, String combMethod, int dependence) throws IOException {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		LinkedList<Record> meetingEvent = new LinkedList<Record>();
@@ -737,11 +738,11 @@ public class CaseFinder {
 //				pmlc = alpha * measure + beta * locent;
 			}
 			
-			/** write out the distance between consecutive meeting **/
+			/** write out the distance / time between consecutive meeting **/
 			if (meetingEvent.size() == 5) {
 				fout.write(String.format("%d\t%d\t", uaid, ubid));
 				for (int l = 0; l < 4; l++) {
-					fout.write(String.format("%g\t", meetingEvent.get(l).distanceTo(meetingEvent.get(l+1))));
+					fout.write(String.format("%d\t", meetingEvent.get(l+1).timestamp - meetingEvent.get(l).timestamp));
 				}
 				fout.write(String.format("%d\n", friend_flag));
 			}
@@ -849,26 +850,58 @@ public class CaseFinder {
 	public static double[] distanceBasedSumLogMeasure(int uaid, int ubid, boolean printFlag) {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
+		Calendar cal1 = Calendar.getInstance();
+		Calendar cal2 = Calendar.getInstance();
 		
 		// get the co-locating event
 		ArrayList<double[]> coloEnt = meetingWeight(ua, ub, CaseFinder.distance_threshold);
 		
 		// aggregate the measure
-		double M = 0;
+		// location entropy
+		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropyIDbased(5000);
+		double M = Double.MAX_VALUE;
+		double entro = 0;
 		for (double[] a : coloEnt) {
-			M -= Math.log10(a[0]) + Math.log10(a[1]);
+			if ( M > a[0] * a[1]) 
+				M = a[0] * a[1];
+//			System.out.println(locationEntropy.get((long) a[4]));
+			entro += Math.exp(- locationEntropy.get((long) a[4]));
 		}
+		double minMeasure = - Math.log10(M) * coloEnt.size();
+		
+		//  calculate the temporal correlation
+		double minTC = 0;
+		for (int i = 0; i < coloEnt.size(); i++) {
+			double[] a = coloEnt.get(i);
+			double[] b = null;
+			double w = 0;
+			for (int j = 0; j < coloEnt.size(); j++) {
+				b = coloEnt.get(j);
+				if (i != j) {
+					double deltaT = Math.abs( b[7] - a[7] ) / 3600 / 24;
+					w += 1 - Math.exp(- 0.3 * deltaT);
+//					System.out.println(String.format("%g\t%g\t%g", w, 1-Math.exp(-1.5* deltaT) , deltaT));
+				}
+			}
+			
+			minTC += w * (- Math.log10(M)) / (coloEnt.size() - 1);
+		}
+		
+		
 
 		// print out the probability
 		if (printFlag) {
-			System.out.println(String.format("User %d and %d meet %d times.\nA.weight\t\tB.weight\t\tA.lati\t\tA.longi\t\tB.lati\t\tB.longi", 
+			System.out.println(String.format("User %d and %d meet %d times.\nA.weight\t\tB.weight\t\tA.lati\t\tA.longi\t\tA.locID\t\tB.lati\t\tB.longi", 
 					ua.userID, ub.userID, coloEnt.size()));
 			for (double[] a : coloEnt) {
-				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%.12f\t\t%.12f", a[0], a[1], a[2], a[3], a[4], a[5], a[6] /3600, a[7]/3600));
+				cal1.setTimeInMillis((long) a[7] * 1000);
+				cal2.setTimeInMillis((long) a[8] * 1000);
+				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%8$tF %8$tT\t\t%9$tF %9$tT", a[0], a[1], a[2], 
+						a[3], a[4], a[5], a[6], cal1, cal2));
 			}
-			System.out.println(String.format("User pair %d and %d has measure %g", uaid, ubid, M));
+			System.out.println(String.format("User pair %d and %d has min personal measure %g, global measure %g, temporal dependence measure %g", uaid, ubid, minMeasure, entro, minTC));
 		}
-		double[] rt = {M, (double) coloEnt.size()};
+		double[] rt = {minMeasure, (double) coloEnt.size()};
 		return rt;
 	}
 	
@@ -944,7 +977,7 @@ public class CaseFinder {
 				if (ra.distanceTo(rb) < dist_threshold && ra.timestamp - time_lastMeet >= 3600) {
 					double wta = ua.locationWeight(ra);
 					double wtb = ub.locationWeight(rb);
-					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, rb.latitude, rb.longitude, ra.timestamp, rb.timestamp };
+					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, ra.locID, rb.latitude, rb.longitude, ra.timestamp, rb.timestamp };
 					coloEnt.add(evnt);
 					time_lastMeet = ra.timestamp;
 				}
@@ -1034,8 +1067,9 @@ public class CaseFinder {
 //		}
 //		
 		
-		distanceBasedSumLogMeasure(    267 , 510 ,true);
-		distanceBasedSumLogMeasure(   350, 6138, true);
+		distanceBasedSumLogMeasure(267 , 510 ,true);
+		distanceBasedSumLogMeasure(350 , 6138 ,true);
+		distanceBasedSumLogMeasure(39746, 39584, true);
 		
 //		for (int i = 0; i < 10; i++) {
 //			User.para_c = 10 + i * 10;
