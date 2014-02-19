@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Random;
 
 
 
@@ -478,20 +479,29 @@ public class Tracker {
 	/**
 	 * calculate the location entropy using the records of given number of top users
 	 * @param numUser
-	 * @param IDflag -- true to use location ID, false to use GPS 
+	 * @param IDflag -- true to use location ID, false to use GPS
+	 * @param sampleRate -- integer of n in __%
+	 *  
 	 */
-	public static void writeLocationEntropy(int numUser, boolean IDflag) {
+	public static void writeLocationEntropy(int numUser, boolean IDflag, int sampleRate) {
 		// initialize users
+		Random r = new Random();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/userCount.txt"));
 			String l = null;
+			User.allUserSet.clear();
 			int c = 0;
-			while ( (l=fin.readLine()) != null && c < numUser) {
+			while ( (l=fin.readLine()) != null ) {
 				c++;
-				String[] ls = l.split("\\s+");
-				int uid = Integer.parseInt(ls[0]);
-				new User(uid);
+				if (r.nextDouble() <= sampleRate / 100.0 * numUser / 100000 ) {
+					String[] ls = l.split("\\s+");
+					int uid = Integer.parseInt(ls[0]);
+					new User(uid);
+					if (User.allUserSet.size() == sampleRate / 100.0 * numUser)
+						break;
+				}
 			}
+			System.out.println(String.format("Total user %d\t%d", c, User.allUserSet.size()));
 			fin.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -506,7 +516,7 @@ public class Tracker {
 		try {
 			BufferedWriter fout;
 			if (IDflag == true) {
-				fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%d.txt", numUser)));
+				fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%du-%ds.txt", numUser, sampleRate)));
 				for (long loc : locationEntropy.keySet())
 					fout.write(String.format("%d\t%g\n", loc, locationEntropy.get(loc)));
 			} else {
@@ -520,6 +530,11 @@ public class Tracker {
 		}	
 	}
 	
+	
+	public static void writeLocationEntropy(int numUser, boolean IDflag) {
+		writeLocationEntropy(numUser, IDflag, 1);
+	}
+	
 	/**
 	 * read in the location entropy from corresponding file</br>
 	 * If we have the location entropy file of given number of users, then this function will work, otherwise
@@ -527,22 +542,22 @@ public class Tracker {
 	 * @param numUser
 	 * @return
 	 */
-	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser) {
+	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser, int sampleRate) {
 		if (locationEntropy.isEmpty()) {
 			try {
-				BufferedReader fin = new BufferedReader( new FileReader(String.format("locationEntropy-%d.txt", numUser)));
+				BufferedReader fin = new BufferedReader( new FileReader(String.format("locationEntropy-%du-%ds.txt", numUser, sampleRate)));
+				System.out.println(String.format("File locationEntropy-%du-%ds.txt found!", numUser, sampleRate));
 				String l = null;
 				while ((l = fin.readLine()) != null) {
 					String[] ls = l.split("\\s+");
 					long loc = Long.parseLong(ls[0]);
 					double entropy = Double.parseDouble(ls[1]);
-					if (!locationEntropy.containsKey(loc))
-						locationEntropy.put(loc, entropy);
+					locationEntropy.put(loc, entropy);
 				}
 				fin.close();
 			} catch (FileNotFoundException e) {
 				System.out.println("No location entropy file found. Generate new one ...");
-				writeLocationEntropy(numUser, true);	// true use location ID, false to use GPS
+				writeLocationEntropy(numUser, true, sampleRate);	// true use location ID, false to use GPS
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -550,6 +565,10 @@ public class Tracker {
 		}
 		
 		return locationEntropy;
+	}
+	
+	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser) {
+		return readLocationEntropyIDbased(numUser, 100);
 	}
 	
 	
@@ -1250,7 +1269,8 @@ public class Tracker {
 //		writeThreeMeasures("feature-vectors-rme.txt");
 		
 //		writeOutPairColocations();
-		writeLocationEntropy(5000, false);
+//		for (int i = 1; i < 10; i += 1)
+			writeLocationEntropy(5000, true, 2);
 	}
 
 }

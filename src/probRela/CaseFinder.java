@@ -562,17 +562,20 @@ public class CaseFinder {
 	 * @param ubid
 	 * @param fout -- intermediate variable output file
 	 * @param friend_flag -- 1: they are friends, 2: they are non-friends
-	 * @param IDorDist -- true: location ID, false: GPS location
+	 * @param IDorDist -- define the meeting criteria. true: location ID / false: distance 30 m
+	 * @param entroIDorDist -- true: location ID, false: GPS location
 	 * @param RhoMethod -- min / prod
 	 * @param weightMethod -- min / sum
 	 * @param combMethod -- min / prod / wsum
 	 * @param dependence -- 0: no dependence / 1: temporal dependence / 2: spatial dependence
+	 * @param sampleRate -- how many user are used for entropy estimation. 1 means 10%, 2 means 20%, ....
 	 * 
 	 * @return
 	 * @throws IOException 
 	 */
 	private static double[] PAIRWISEweightEvent(int uaid, int ubid, BufferedWriter fout, int friend_flag, boolean IDorDist, 
-			boolean entroIDorDist, String RhoMethod, String weightMethod, String combMethod, int dependence) throws IOException {
+			boolean entroIDorDist, String RhoMethod, String weightMethod, String combMethod, int dependence, int sampleRate
+			) throws IOException {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
 		LinkedList<Record> meetingEvent = new LinkedList<Record>();
@@ -584,7 +587,7 @@ public class CaseFinder {
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
 		if (entroIDorDist) {
-			locationEntropy = Tracker.readLocationEntropyIDbased(5000);
+			locationEntropy = Tracker.readLocationEntropyIDbased(5000, sampleRate);
 		} else {
 			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000);
 		}
@@ -634,7 +637,10 @@ public class CaseFinder {
 					/** different methods to calculate location entropy **/
 					double entro = 0;
 					if ( entroIDorDist ) {
-						entro = (locationEntropy.get(ra.locID)); // + locationEntropy.get(rb.locID));
+						if (locationEntropy.containsKey(ra.locID))
+							entro = (locationEntropy.get(ra.locID)); // + locationEntropy.get(rb.locID));
+						else
+							entro = 0;
 					} else {
 						if (GPSEntropy.containsKey(ra.GPS()))
 							entro = GPSEntropy.get(ra.GPS());
@@ -738,7 +744,7 @@ public class CaseFinder {
 //				pmlc = alpha * measure + beta * locent;
 			}
 			
-			/** write out the distance / time between consecutive meeting **/
+			/** write out the distance / time between consecutive meeting
 			if (meetingEvent.size() == 5) {
 				fout.write(String.format("%d\t%d\t", uaid, ubid));
 				for (int l = 0; l < 4; l++) {
@@ -746,6 +752,7 @@ public class CaseFinder {
 				}
 				fout.write(String.format("%d\n", friend_flag));
 			}
+			*/
 		}
 		rt[0] = measure;
 		rt[1] = freq;
@@ -914,12 +921,12 @@ public class CaseFinder {
 	/**
 	 * Calculate the distance based measure for all the top user pairs
 	 */
-	public static void writeOutDifferentMeasures(double para_c) {
+	public static void writeOutDifferentMeasures(double para_c, int sampleRate) {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("distance-d30-u5000c%g.txt", para_c )));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("distance-d30-u5000c%g-%ds.txt", para_c, sampleRate)));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
@@ -934,7 +941,7 @@ public class CaseFinder {
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "prod", "min", "min", 1);
+					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "prod", "min", "min", 0, sampleRate);
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], friflag));
 				}
 			}
@@ -1067,16 +1074,17 @@ public class CaseFinder {
 //		}
 //		
 		
-		distanceBasedSumLogMeasure(267 , 510 ,true);
-		distanceBasedSumLogMeasure(350 , 6138 ,true);
-		distanceBasedSumLogMeasure(39746, 39584, true);
+//		distanceBasedSumLogMeasure(267 , 510 ,true);
+//		distanceBasedSumLogMeasure(350 , 6138 ,true);
+//		distanceBasedSumLogMeasure(39746, 39584, true);
 		
 //		for (int i = 0; i < 10; i++) {
 //			User.para_c = 10 + i * 10;
 //			writeOutDifferentMeasures(User.para_c);
 //		}
 		
-//		writeOutDifferentMeasures(User.para_c);
+//		for (int i = 1; i < 11; i++ )
+			writeOutDifferentMeasures(User.para_c, 2);
 		
 		
 //		locationDistancePowerLaw(2241);
