@@ -190,6 +190,8 @@ public class Tracker {
 	 */
 	public static LinkedList<Double> RenyiEntropyDiversity() {
 		long t_start = System.currentTimeMillis();
+		int c1 = 0, c2 = 0;
+		double avg_freq1 = 0, avg_freq2 = 0;
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -208,17 +210,26 @@ public class Tracker {
 				prob[ind] = (double) f / sum;
 				ind ++;
 			}
+			
 			// 3. calculate the Renyi Entropy (q = 0.1)
 			double renyiEntropy = 0;
 			for (int j = 0; j < coloc.size(); j++) {
-					renyiEntropy += Math.pow(prob[j], 0.1);
+				renyiEntropy += Math.pow(prob[j], 0.1);
 			}
 			renyiEntropy = Math.log(renyiEntropy) / 0.9;
 			// 4. calculate diversity
 			double divs = Math.exp(renyiEntropy);
+			if (sum > 1)
+				if (sum != coloc.size()) {
+					c1 ++;
+					avg_freq2 += sum;
+				} else {
+					c2 ++;
+					avg_freq1 += sum;
+				}
 			renyiDiversity.add(divs);
-			// System.out.println(divs);
 		}
+		System.out.println(String.format("uniform: %d pair, %g\t non-unif %d pairs, %g", c2, avg_freq2 / (double)c2, c1, avg_freq1 / (double) c1));
 		long t_end = System.currentTimeMillis();
 		System.out.println(String.format("Renyi entropy based diversity (%d pair) found in %d seconds!", renyiDiversity.size(), (t_end - t_start)/1000));
 		return renyiDiversity;
@@ -258,7 +269,7 @@ public class Tracker {
 				if (ra.distanceTo(rb) < CaseFinder.distance_threshold && ra.timestamp - last_Meet >= 3600 ) {
 					if (loc_cnts.containsKey(ra.locID)) {
 						int f = loc_cnts.get(ra.locID);
-						loc_cnts.put(ra.locID, f);
+						loc_cnts.put(ra.locID, f+1);
 					} else {
 						loc_cnts.put(ra.locID, 1);
 					}

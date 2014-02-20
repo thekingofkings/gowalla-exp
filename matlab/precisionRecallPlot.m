@@ -1,7 +1,20 @@
-function [prec, recl] = precisionRecallPlot( score, label, varargin )
+function [precT, reclT] = precisionRecallPlot( score, label, varargin )
 
     [prec, recl] = precisionRecall( score, label );
-    plot( recl, prec, varargin{:} );
+    if nargin > 2
+        plot( recl, prec, varargin{:} );
+    end
+    
+    precT = zeros(3,1);
+    reclT = [0.3, 0.5, 0.7];
+    for j = 1:length(reclT)
+        for tt = 1:length(recl)
+            if recl(tt) < reclT(j) && recl(tt+1) > reclT(j)
+                precT(j) = interpolate(recl(tt), recl(tt+1), prec(tt), prec(tt+1), reclT(j));
+                break;
+            end
+        end
+    end
 
 
     function [prec, recl] = precisionRecall( score, label )
@@ -41,6 +54,12 @@ function [prec, recl] = precisionRecallPlot( score, label, varargin )
             ind = ind + 1;
         end
     end
+    
+    function [prec] = interpolate( reca, recb, prea, preb, rect )
+        s = (rect - reca) / (recb - reca);
+        prec = prea + s * (preb - prea);
+    end
+        
 
 
 end

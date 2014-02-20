@@ -1,11 +1,22 @@
-condition = 1;
+condition = 2;
 
-alpha = 0.2;
-beta = 0.8;
+alpha = 0.1;
+beta = 0.9;
 % load sigmod results
 % ua, ub, co-location entropy, weighted frequency, frequency, friend label
 sigmod = importdata('../sigmod13.txt');
 sigmod = sigmod(sigmod(:,5) > condition,:); % meeting frequency > condition
+% normorlize
+min_entro = min(sigmod(:,3));
+delta_entro = max(sigmod(:,3)) - min(sigmod(:,3));
+sigmod(:,3) = sigmod(:,3) - min_entro * ones(size(sigmod, 1), 1);
+sigmod(:,3) = sigmod(:,3) / delta_entro;
+
+min_w = min(sigmod(:,4));
+delta_w = max(sigmod(:,4)) - min(sigmod(:,4));
+sigmod(:,4) = sigmod(:,4) - min_w * ones(size(sigmod, 1), 1);
+sigmod(:,4) = sigmod(:,4) / delta_w;
+
 sigmod_score = alpha * sigmod(:,3) + beta * sigmod(:,4);
 sigmod_label = sigmod(:,6);
 
@@ -22,18 +33,20 @@ f = figure();
 hold on;
 box on;
 grid on;
-precisionRecallPlot(sigmod_score, sigmod_label, 'b-');
-precisionRecallPlot(we_score, we_label, 'r--');
+set(0, 'defaultlinelinewidth', 3');
+precisionRecallPlot(sigmod(:,5), sigmod_label, 'linestyle', '-.', 'color', [0,0.7,0] );
+precisionRecallPlot(sigmod_score, sigmod_label, 'linestyle', '--', 'color', [0.7 ,0,0] );
+precisionRecallPlot(we_score, we_label, 'linestyle', '-', 'color', [0,0,0.7] );
 % precisionRecallPlot(we(:,4), we_label, 'y--');
-% precisionRecallPlot(sigmod(:,4), sigmod_label, 'y-');
+precisionRecallPlot(sigmod(:,4), sigmod_label, 'm:', 'linewidth', 5);   % weighted freq
+precisionRecallPlot(sigmod(:,3), sigmod_label, 'k-');   % co-location entropy
 % precisionRecallPlot(we(:,6), we_label, 'g--');
-% precisionRecallPlot(sigmod(:,5), sigmod_label, 'g-');
-a = findobj(gcf, 'type', 'line');
-set(a, 'linewidth', 3);
+
+
 set(gca, 'linewidth', 2, 'fontsize', 20);
 xlabel('Recall', 'fontsize', 20);
 ylabel('Precision', 'fontsize', 20);
-legend({'P+G+T', 'EBM'}, 'location', 'southwest');
+legend({'Frequency', 'EBM', 'Our Method', 'Weighted Frequency', 'Diversity'}, 'location', 'southwest');
 print('compare.eps', '-dpsc');
 system('epstopdf compare.eps');
 

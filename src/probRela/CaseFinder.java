@@ -732,8 +732,9 @@ public class CaseFinder {
 
 //			fout.write(String.format("%g\t%g\t%d\n", measure, locent, friend_flag));
 			avg_le = locent / mw_le.size();
-			fout.write(String.format("%g\t%d\t%d\n", measure_sum, (int)freq, friend_flag));
+			fout.write(String.format("%g\t%d\t%d\n", avg_le, (int)freq, friend_flag));
 		} else {
+			double avg_w = 0;
 			if (meetingEvent.size() == 1) {
 				measure = mw_pbg.get(0);
 				locent = mw_le.get(0);
@@ -758,6 +759,7 @@ public class CaseFinder {
 					w /= (meetingEvent.size() - 1);
 					measure += mw_pbg.get(i) * w;
 					locent += mw_le.get(i) * w;
+					avg_w += w;
 					if (combMethod == "min")
 						pmlc += - Math.log10(min_prob) * mw_le.get(i) * w;
 					else if (combMethod == "prod")
@@ -766,11 +768,12 @@ public class CaseFinder {
 						pmlc += (alpha * mw_pbg.get(i) + beta * mw_le.get(i)) * w;
 //					measure += w;
 				}
+				avg_w /= meetingEvent.size();
 //				pmlc = pmlc / (meetingEvent.size() - 1);
 //				pmlc = alpha * measure + beta * locent;
 			}
 			
-			fout.write(String.format("%g\t%d\t%d\n", pmlc, (int)freq, friend_flag));
+			fout.write(String.format("%g\t%d\t%d\n", avg_w, (int)freq, friend_flag));
 			
 			/** write out the distance / time between consecutive meeting
 			if (meetingEvent.size() == 5) {
@@ -954,12 +957,12 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("distance-d30-u5000c%g-%ds.txt", para_c, sampleRate)));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("distance-d30-u5000c%g-%ds.txt", event_time_exp_para_c, sampleRate)));
 			String l = null;
 			double[] dbm = {0, 0};
 			double[] locidm = null;
 			
-			BufferedWriter fout2 = new BufferedWriter(new FileWriter("Pair-pavg-measure.txt"));
+			BufferedWriter fout2 = new BufferedWriter(new FileWriter("Pair-glob-measure.txt"));
 				
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
@@ -969,7 +972,7 @@ public class CaseFinder {
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
 //					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "prod", "min", "min", 0, sampleRate);
+					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "prod", "min", "min", 1, sampleRate);
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], friflag));
 				}
 			}
@@ -1074,10 +1077,10 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-		CaseFinder cf = new CaseFinder(107092);
+//		CaseFinder cf = new CaseFinder(107092);
 //		cf.locationDistancePowerLaw();
-		cf.allPairMeetingFreq();
-		cf.writeTopKFreq();
+//		cf.allPairMeetingFreq();
+//		cf.writeTopKFreq();
 		
 //		cf.remoteFriends();
 //		cf.writeRemoteFriend();
@@ -1113,6 +1116,7 @@ public class CaseFinder {
 //		}
 		
 //		for (int i = 1; i < 11; i++ )
+		CaseFinder.event_time_exp_para_c = 1;
 			writeOutDifferentMeasures(User.para_c, 101);
 		
 		

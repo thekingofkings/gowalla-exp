@@ -7,6 +7,8 @@ dml4 = dml4(ind, :);
 
 for condition = 0:5;
     dml5 = importdata('../distance-d30-u5000c1.50000.txt');
+    dml6 = importdata('../distance-d30-u5000c1.50000-101s.txt');
+    dml6 = dml6(dml6(:,6) > condition, :);
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
@@ -28,6 +30,8 @@ for condition = 0:5;
     locm5 = dml5(:,5);
     locf5 = dml5(:,6);
     dl5 = dml5(:,7);
+    pgt_score = dml6(:,3);
+    pgt_lable = dml6(:,7);
 
 
     % Use the prec-recal function from Internet.
@@ -41,10 +45,10 @@ for condition = 0:5;
     figure();
     hold on;
     precisionRecallPlot( locf5, dl5, 'linestyle', '-', 'color', [0, 0, 0.8] );
-    precisionRecallPlot( locwf5, dl5, 'linestyle', '--', 'color', [0, 0.75, 0] );
     precisionRecallPlot( locm5, dl5, 'r--' );
-    precisionRecallPlot( prod_colcEnt_cm, dl5, 'k--' );
- 
+    precisionRecallPlot( locwf5, dl5, 'linestyle', '--', 'color', [0, 0.75, 0] );
+    precisionRecallPlot( prod_colcEnt_cm, dl5, 'linestyle', '-', 'color', [0.3, 0.6, 0.9] );
+    precisionRecallPlot( pgt_score, pgt_lable, 'linestyle', '-.', 'color', [0.5, 0.4, 0.9] );
 
 
 %     title(num2str(condition));
@@ -56,11 +60,11 @@ for condition = 0:5;
     xlabel('Recall', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);
     set(gca, 'linewidth', 2, 'fontsize', 18);
-    legend({'Frequency', 'Entropy', 'Density', 'Combination'}, 'location', 'best');
+    legend({'Frequency', 'Personal', 'Global', 'Per+Glo', 'Per+Glo+Tem'}, 'location', 'southwest');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
-%     print(['pr-', num2str(condition), 'c1000u.eps'], '-dpsc');
-%     system(['epstopdf pr-', num2str(condition), 'c1000u.eps']);
+    print(['pr-', num2str(condition), 'c1000u.eps'], '-dpsc');
+    system(['epstopdf pr-', num2str(condition), 'c1000u.eps']);
 %     saveas(gcf, ['dist-wsum-d30-u5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end

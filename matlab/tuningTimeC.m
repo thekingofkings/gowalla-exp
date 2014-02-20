@@ -1,8 +1,4 @@
-color = char('r--', 'g--', 'b--', 'k--', 'y-', 'g-', 'c-', 'm-', 'r-', 'g:', 'b-', ...
-    'k-', 'y--', 'g--', 'c--', 'm--', 'r-.', 'g-.', 'b-.', 'k-.', ...
-    'y-.', 'g-.', 'c-.', 'm-.');
-
-flist = ls('../data_tunningDC/distance-d30-u5000c*-101s.txt');
+flist = ls('../data_tunningTC/distance-d30-u5000c*-101s.txt');
 fn = size(flist,1);
 figure();
 hold on;
@@ -12,7 +8,7 @@ precisions = zeros(fn, 3);
 
 for c = 1:fn
     para_c(c) = sscanf(flist(c,:), 'distance-d30-u5000c%f-101s.txt');
-    dml5 = importdata(['../data_tunningDC/', flist(c,:)]);
+    dml5 = importdata(['../data_tunningTC/', flist(c,:)]);
     dml5 = dml5(dml5(:,6) > 1, :);
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
@@ -42,5 +38,5 @@ end
         'linewidth', 2, 'xscale', 'log');
     legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'northwest');
     set(gcf, 'PaperUnits', 'inches');
-    print('turnDistC.eps', '-dpsc');
-    system('epstopdf turnDistC.eps');
+    print(['turnDistC.eps'], '-dpsc');
+    system(['epstopdf turnDistC.eps']);
