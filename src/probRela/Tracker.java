@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Random;
 
 
 
@@ -59,20 +60,31 @@ public class Tracker {
 	static LinkedList<Double> mutualEntroColoc_v3 = new LinkedList<Double>();
 	static LinkedList<Double> relaMutualEntro = new LinkedList<Double>();
 	
+	
 	/**
-	 * Count the number of co-locations for each pair.
 	 * Initialize two packet private static field:
 	 * 			FrequentPair
 	 * 			FrequentPair_Colocation
+	 * Also initialize the frequent users.
+	 * 
+	 * @param numUser -- number of users to be used in experiments (# frequent users)
 	 */
-	public static LinkedList<Integer> shareLocationCount() {
+	public static void initializeUsers(int numUser) {
 		long t_start = System.currentTimeMillis();
+		System.out.println("Start initializeUsers.");
 		User.addAllUser();
 		long t_mid = System.currentTimeMillis();
 		System.out.println(String.format("Initialize all users in %d seconds", (t_mid - t_start)/1000));
 		// User.findFrequentUsersByFreq(637);	
-		// top 1000 users
-		User.findFrequentUsersTopK(1000);
+		// top numUser users
+		User.findFrequentUsersTopK(numUser);
+	}
+	
+	/**
+	 * Count the number of co-locations for each pair.
+	 */
+	public static LinkedList<Integer> shareLocationCount(int numUser) {
+		long t_start = System.currentTimeMillis();
 		HashMap<Integer, User> users = User.frequentUserSet;
 		int cnt = 0;
 		
@@ -93,7 +105,7 @@ public class Tracker {
 				colocations.retainAll(uj_loc);
 				numOfColocations.add(colocations.size());
 				
-				// record the pair that share more than 10 common locations
+				// record the pair that share more than 1 common locations
 				if (colocations.size() >= 1) {
 					int[] p = new int[3];
 					p[0] = (int) ui.userID;
@@ -109,7 +121,6 @@ public class Tracker {
 			if (cnt % (users.size()/10) == 0)
 				System.out.println(String.format("Process - shareLocationCount finished %d0%%", cnt/(users.size()/10)));
 		}
-		
 		// output
 		try {
 			BufferedWriter fout = new BufferedWriter(new FileWriter("colocation-cnt.txt"));
@@ -129,11 +140,15 @@ public class Tracker {
 				e.printStackTrace();
 		}
 		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("%d frequent pairs are found in %d seconds", FrequentPair.size(), (t_end - t_start)/1000));
+		System.out.println(String.format("Finish shareLocationCount in %d seconds", FrequentPair.size(), (t_end - t_start)/1000));
 		return numOfColocations;
 	}
 	
 	
+	/**
+	 * write out the possible co-locations for each pair
+	 */
+	@SuppressWarnings("unused")
 	private static void writeOutPairColocations() {
 		System.out.println("Start writeOutPairColocations.");
 		try {
@@ -179,34 +194,33 @@ public class Tracker {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
 			// 1. calculate the number of co-occurrence on each co-locating places
-			HashSet<Long> coloc = FrequentPair_CoLocations.get(i);
-			ArrayList<Long> coloc_list = new ArrayList<Long>(coloc);
-			int coloc_num = coloc.size();
-			int[] cnt = new int[coloc_num];
-			// call the assistant function to calcualte the meeting frequency
-			int sum = coLocationFreq (uaid, ubid, coloc_list, cnt);
+			HashMap<Long, Integer> coloc = coLocationFreq (uaid, ubid);
+			
+			int sum = 0;
+			for (int f : coloc.values()) {
+				sum += f;
+			}
 
 			// 2. calculate the probability of co-occurrence
-			double[] prob = new double[coloc_num];
-			for (int j = 0; j < coloc_num; j++) {
-				if (sum > 0)
-					prob[j] = (double) cnt[j] / sum;
-				//else
-					//System.out.println("Sum is 0");
+			double[] prob = new double[coloc.size()];
+			int ind = 0;
+			for (int f : coloc.values()) {
+				prob[ind] = (double) f / sum;
+				ind ++;
 			}
 			// 3. calculate the Renyi Entropy (q = 0.1)
 			double renyiEntropy = 0;
-			for (int j = 0; j < coloc_num; j++) {
+			for (int j = 0; j < coloc.size(); j++) {
 					renyiEntropy += Math.pow(prob[j], 0.1);
 			}
-			renyiEntropy = - Math.log(renyiEntropy) / (-0.9);
+			renyiEntropy = Math.log(renyiEntropy) / 0.9;
 			// 4. calculate diversity
 			double divs = Math.exp(renyiEntropy);
 			renyiDiversity.add(divs);
 			// System.out.println(divs);
 		}
 		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("Renyi entropy based diversity found in %d seconds!", (t_end - t_start)/1000));
+		System.out.println(String.format("Renyi entropy based diversity (%d pair) found in %d seconds!", renyiDiversity.size(), (t_end - t_start)/1000));
 		return renyiDiversity;
 	}
 	
@@ -214,14 +228,16 @@ public class Tracker {
 	/**
 	 * Assistant function for Renyi entropy based diversity.
 	 * calculate the colocation frequency given two user IDs and the location.
+	 * {@meeting criteria: location ID}
 	 * 
 	 * the cnt[] is the meeting frequency at each different locations
 	 * the return value (sum) is the totoal meeting frequency
 	 */
-	private static int coLocationFreq( int user_a_id, int user_b_id, ArrayList<Long> loc_list, int cnt[] ) {
+	private static HashMap<Long, Integer> coLocationFreq( int user_a_id, int user_b_id) {
 		LinkedList<Record> ras = User.allUserSet.get(user_a_id).records;
 		LinkedList<Record> rbs = User.allUserSet.get(user_b_id).records;
-		int sum = 0;
+		HashMap<Long, Integer> loc_cnts = new HashMap<Long, Integer>();
+		
 		// find records of user_a in colocating places
 		int aind = 0;
 		int bind = 0;
@@ -238,10 +254,14 @@ public class Tracker {
 				aind ++;
 				continue;
 			} else {
-				if (ra.locID == rb.locID && ra.timestamp  - last_Meet >= 3600) {
-					int lid = loc_list.indexOf(ra.locID);
-					cnt[lid] ++;
-					sum ++;
+//				if (ra.locID == rb.locID && ra.timestamp  - last_Meet >= 3600) {
+				if (ra.distanceTo(rb) < CaseFinder.distance_threshold && ra.timestamp - last_Meet >= 3600 ) {
+					if (loc_cnts.containsKey(ra.locID)) {
+						int f = loc_cnts.get(ra.locID);
+						loc_cnts.put(ra.locID, f);
+					} else {
+						loc_cnts.put(ra.locID, 1);
+					}
 					last_Meet = ra.timestamp;
 				}
 				aind ++;
@@ -249,7 +269,7 @@ public class Tracker {
 			}
 			
 		}
-		return sum;
+		return loc_cnts;
 	}
 	
 	
@@ -260,13 +280,16 @@ public class Tracker {
 	 * 
 	 */
 	
-	
-	private static void initialTopKPair() {
+	/**
+	 * initial friend pair from external file, which is generated by CaseFinder class
+	 * @param topk
+	 */
+	private static void initialTopKPair(int topk) {
 		System.out.println("Start initialTopKPair.");
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-1000.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader(String.format("topk_freqgt1-%d.txt", topk)));
 			String l = null;
-			BufferedReader fin2 = new BufferedReader(new FileReader("topk_colocations-1000.txt"));
+			BufferedReader fin2 = new BufferedReader(new FileReader(String.format("topk_colocations-%d.txt", topk)));
 			String l2 = null;
 			int c1 = 0;
 			int c2 = 0;
@@ -317,29 +340,28 @@ public class Tracker {
 		 * After we factor out the location entropy calculation, 
 		 * now the execution time in HP is 4s.
 		 */
-		locationEntropy = readLocationEntropyIDbased(1000);
+		locationEntropy = readLocationEntropyIDbased(5000, 101);
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
 			// 1. calculate the frequency of co-occurrence on each co-locating places
-			HashSet<Long> coloc = FrequentPair_CoLocations.get(i);
+			HashMap<Long, Integer> coloc = coLocationFreq (uaid, ubid);
 			
 			// only consider people with meeting events
-			if (coloc.size() > 0) {
+//			if (coloc.size() > 0) {
 				double weightedFrequency = 0;
-				ArrayList<Long> clarray = new ArrayList<Long>(coloc);
-				int coloc_num = coloc.size();
-				int[] freq = new int[coloc_num];
-				int frequen = coLocationFreq (uaid, ubid, clarray, freq);
+				int frequen = 0;
+				for (int f : coloc.values())
+					frequen += f;
 				frequency.add(frequen);
 				
 				// 2. calculate location entropy
-				for (int j = 0; j < coloc_num; j++) {
-					long locid = clarray.get(j);
-					weightedFrequency += freq[j] * Math.exp(- locationEntropy.get(locid));
+				for (long locid : coloc.keySet()) {
+					// the locationEntropy should contain this locid Key, otherwise we should use 0 as its entropy
+					weightedFrequency += coloc.get(locid) * Math.exp(- locationEntropy.get(locid));
 				}
 				weightedFreq.add(weightedFrequency);
-			}
+//			}
 			
 				
 			// monitor the process
@@ -347,27 +369,31 @@ public class Tracker {
 				System.out.println(String.format("Process - weightedFrequency finished %d0%%", i/(FrequentPair.size()/10)));
 		}
 		long t_end = System.currentTimeMillis();
-		System.out.println(String.format("Weighted frequency found in %d seconds", (t_end - t_start)/1000));
+		System.out.println(String.format("Weighted frequency (%d pairs) found in %d seconds", weightedFreq.size(), (t_end - t_start)/1000));
 		return weightedFreq;
 	}
 
 	
 	
+	@SuppressWarnings("unused")
 	private static void writePairMeasure() {
-		System.out.println("Start writeWeightedFreq");
+		System.out.println("Start writePairMeasure");
+		System.out.println(String.format("%d %d %d %d", renyiDiversity.size(), weightedFreq.size(), frequency.size(), FrequentPair.size()));
+		long t_start = System.currentTimeMillis();
 		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter("weightedFrequency.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("sigmod13.txt"));
 			for (int i = 0; i < FrequentPair.size(); i++) {
 				int uaid = FrequentPair.get(i)[0];
 				int ubid = FrequentPair.get(i)[1];
-				// id_a, id_b, weighted frequency, frequency, co-locatoin entropy, friends flag
-				fout.write(String.format("%d\t%d\t%g\t%d\t%g\t%d\n", uaid, ubid, weightedFreq.get(i), frequency.get(i), renyiDiversity.get(i), FrequentPair.get(i)[2]));
+				// id_a, id_b, co-locatoin entropy, weighted frequency, frequency, friends flag
+				fout.write(String.format("%d\t%d\t%g\t%g\t%d\t%d\n", uaid, ubid, renyiDiversity.get(i), weightedFreq.get(i), frequency.get(i), FrequentPair.get(i)[2]));
 			}
 			fout.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("Start writeWeightedFreq");
+		long t_end = System.currentTimeMillis();
+		System.out.println(String.format("Process writePairMeasure finished in %d secondes.", (t_end - t_start)/1000) );
 	}
 
 	
@@ -478,20 +504,29 @@ public class Tracker {
 	/**
 	 * calculate the location entropy using the records of given number of top users
 	 * @param numUser
-	 * @param IDflag -- true to use location ID, false to use GPS 
+	 * @param IDflag -- true to use location ID, false to use GPS
+	 * @param sampleRate -- integer of n in __%
+	 *  
 	 */
-	public static void writeLocationEntropy(int numUser, boolean IDflag) {
+	public static void writeLocationEntropy(int numUser, boolean IDflag, int sampleRate) {
 		// initialize users
-		int c = 0;
+		Random r = new Random();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/userCount.txt"));
 			String l = null;
-			while ( (l=fin.readLine()) != null && c < numUser) {
+			User.allUserSet.clear();
+			int c = 0;
+			while ( (l=fin.readLine()) != null ) {
 				c++;
-				String[] ls = l.split("\\s+");
-				int uid = Integer.parseInt(ls[0]);
-				new User(uid);
+				if (r.nextDouble() <= sampleRate / 100.0 * numUser / 100000 ) {
+					String[] ls = l.split("\\s+");
+					int uid = Integer.parseInt(ls[0]);
+					new User(uid);
+					if (User.allUserSet.size() == sampleRate / 100.0 * numUser)
+						break;
+				}
 			}
+			System.out.println(String.format("Total user %d\t%d", c, User.allUserSet.size()));
 			fin.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -506,11 +541,11 @@ public class Tracker {
 		try {
 			BufferedWriter fout;
 			if (IDflag == true) {
-				fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%d.txt", c)));
+				fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%du-%ds.txt", numUser, sampleRate)));
 				for (long loc : locationEntropy.keySet())
 					fout.write(String.format("%d\t%g\n", loc, locationEntropy.get(loc)));
 			} else {
-				fout = new BufferedWriter(new FileWriter(String.format("GPSEntropy-%d.txt", c)));
+				fout = new BufferedWriter(new FileWriter(String.format("GPSEntropy-%d.txt", numUser)));
 				for (String gps : GPSEntropy.keySet())
 					fout.write(String.format("%s\t%g\n", gps, GPSEntropy.get(gps)));
 			}
@@ -520,29 +555,42 @@ public class Tracker {
 		}	
 	}
 	
+	
+	public static void writeLocationEntropy(int numUser, boolean IDflag) {
+		writeLocationEntropy(numUser, IDflag, 100);
+	}
+	
 	/**
 	 * read in the location entropy from corresponding file</br>
 	 * If we have the location entropy file of given number of users, then this function will work, otherwise
 	 * it will throw an exception.
 	 * @param numUser
+	 * @param sampleRate -- an integer means dd%. if sampleRate > 100, use the 100% of top 5000 users
 	 * @return
 	 */
-	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser) {
+	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser, int sampleRate) {
 		if (locationEntropy.isEmpty()) {
 			try {
-				BufferedReader fin = new BufferedReader( new FileReader(String.format("locationEntropy-%d.txt", numUser)));
+				BufferedReader fin;
+				if (sampleRate <= 100) {
+					fin = new BufferedReader( new FileReader(String.format("locationEntropy-%du-%ds.txt", numUser, sampleRate)));
+					System.out.println(String.format("File locationEntropy-%du-%ds.txt found!", numUser, sampleRate));
+				} else { 
+					fin = new BufferedReader( new FileReader("locationEntropy-t5000u.txt"));
+					System.out.println("File locationEntropy-t5000u.txt found!");
+				}
+				
 				String l = null;
 				while ((l = fin.readLine()) != null) {
 					String[] ls = l.split("\\s+");
 					long loc = Long.parseLong(ls[0]);
 					double entropy = Double.parseDouble(ls[1]);
-					if (!locationEntropy.containsKey(loc))
-						locationEntropy.put(loc, entropy);
+					locationEntropy.put(loc, entropy);
 				}
 				fin.close();
 			} catch (FileNotFoundException e) {
 				System.out.println("No location entropy file found. Generate new one ...");
-				writeLocationEntropy(numUser, true);	// true use location ID, false to use GPS
+				writeLocationEntropy(numUser, true, sampleRate);	// true use location ID, false to use GPS
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -550,6 +598,10 @@ public class Tracker {
 		}
 		
 		return locationEntropy;
+	}
+	
+	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser) {
+		return readLocationEntropyIDbased(numUser, 100);
 	}
 	
 	
@@ -1181,6 +1233,7 @@ public class Tracker {
 	/**
 	 * Assistant function to write out the results
 	 */
+	@SuppressWarnings("unused")
 	private static void writeThreeMeasures(String filename) {
 		try{
 			BufferedWriter fout = new BufferedWriter(new FileWriter(filename));
@@ -1229,8 +1282,8 @@ public class Tracker {
 	
 	public static void main(String argv[]) {
 		// 1. find frequent user pair
-//		shareLocationCount();
-//		initialTopKPair();
+//		shareLocationCount(5000);
+//		initialTopKPair(5000);
 		// 2. calculate feature one -- Renyi entropy based diversity
 //		RenyiEntropyDiversity();
 //		// 3. calculate feature two -- weighted frequency, and frequency
@@ -1250,7 +1303,21 @@ public class Tracker {
 //		writeThreeMeasures("feature-vectors-rme.txt");
 		
 //		writeOutPairColocations();
-		writeLocationEntropy(Integer.MAX_VALUE, true);
+
+//		for (int i = 1; i < 10; i += 1)
+//			writeLocationEntropy(5000, true, 2);
+		
+		evaluateSIGMOD();
+	}
+	
+	public static void evaluateSIGMOD() {
+		// initialize top users
+		initializeUsers(5000);
+		initialTopKPair(5000);
+		RenyiEntropyDiversity();
+		weightedFrequency();
+		writePairMeasure();
+
 	}
 
 }

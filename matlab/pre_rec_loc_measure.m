@@ -59,8 +59,8 @@ for condition = 0:5;
     legend({'Frequency', 'Entropy', 'Density', 'Combination'}, 'location', 'best');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
-    print(['pr-', num2str(condition), 'c1000u.eps'], '-dpsc');
-    system(['epstopdf pr-', num2str(condition), 'c1000u.eps']);
+%     print(['pr-', num2str(condition), 'c1000u.eps'], '-dpsc');
+%     system(['epstopdf pr-', num2str(condition), 'c1000u.eps']);
 %     saveas(gcf, ['dist-wsum-d30-u5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end
