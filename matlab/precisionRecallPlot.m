@@ -9,9 +9,12 @@ function [precT, reclT] = precisionRecallPlot( score, label, varargin )
     reclT = [0.3, 0.5, 0.7];
     for j = 1:length(reclT)
         for tt = 1:length(recl)
-            if recl(tt) < reclT(j) && recl(tt+1) > reclT(j)
-                precT(j) = interpolate(recl(tt), recl(tt+1), prec(tt), prec(tt+1), reclT(j));
-                break;
+            if recl(tt) == reclT(j)
+                precT(j) = prec(tt);
+            else if recl(tt) < reclT(j) && recl(tt+1) > reclT(j)
+                    precT(j) = interpolate(recl(tt), recl(tt+1), prec(tt), prec(tt+1), reclT(j));
+                    break;
+                end
             end
         end
     end

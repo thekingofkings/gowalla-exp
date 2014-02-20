@@ -1116,7 +1116,7 @@ public class CaseFinder {
 //		}
 		
 //		for (int i = 1; i < 11; i++ )
-		CaseFinder.event_time_exp_para_c = 1;
+		CaseFinder.event_time_exp_para_c = 0.2;
 			writeOutDifferentMeasures(User.para_c, 101);
 		
 		

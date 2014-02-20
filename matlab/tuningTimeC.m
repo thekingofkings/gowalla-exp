@@ -32,11 +32,11 @@ end
 %     axis([0,1,0.5,1]);
     hline = findobj(gcf, 'type', 'line');
     set(hline, 'linewidth', 3, 'markersize', 14);
-    xlabel('Distance Parameter C', 'fontsize', 20);
+    xlabel('Temporal Parameter $C_t$', 'fontsize', 20, 'interpreter' ,'latex');
     ylabel('Precision', 'fontsize', 20);
     set(gca, 'linewidth', 2, 'fontsize', 18, 'xtick', [0.01, 0.1, 1, 10, 100], ...
         'linewidth', 2, 'xscale', 'log');
-    legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'northwest');
+    legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'southwest');
     set(gcf, 'PaperUnits', 'inches');
-    print(['turnDistC.eps'], '-dpsc');
-    system(['epstopdf turnDistC.eps']);
+    print(['turnTimeC.eps'], '-dpsc');
+    system(['epstopdf turnTimeC.eps']);
