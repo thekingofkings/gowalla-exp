@@ -675,12 +675,12 @@ public class CaseFinder {
 		double avg_le = 0;
 		double avg_pbg = 0;
 		
+		for (double m : probs)
+			if ( min_prob > m )
+				min_prob = m;
+		
 		if (dependence == 0)
-		{
-			for (double m : probs)
-				if ( min_prob > m )
-					min_prob = m;
-			
+		{			
 			if (weightMethod == "min") {
 				measure =  - Math.log10(min_prob) * probs.size();
 			} else if (weightMethod == "sum") {
@@ -711,7 +711,7 @@ public class CaseFinder {
 
 //			fout.write(String.format("%g\t%g\t%d\n", measure, locent, friend_flag));
 			avg_le = locent / mw_le.size();
-//			fout.write(String.format("%g\t%g\t%g\t%g\t%d\t%d\n", min_prob, avg_entro, avg_pbg, avg_le, (int)freq, friend_flag));
+			fout.write(String.format("%g\t%d\t%d\n", measure_sum, (int)freq, friend_flag));
 		} else {
 			if (meetingEvent.size() == 1) {
 				measure = mw_pbg.get(0);
@@ -737,12 +737,19 @@ public class CaseFinder {
 					w /= (meetingEvent.size() - 1);
 					measure += mw_pbg.get(i) * w;
 					locent += mw_le.get(i) * w;
-					pmlc += mw_pbg_le.get(i) * w;
+					if (combMethod == "min")
+						pmlc += - Math.log10(min_prob) * mw_le.get(i) * w;
+					else if (combMethod == "prod")
+						pmlc += mw_pbg_le.get(i) * w;
+					else if (combMethod == "wsum")
+						pmlc += (alpha * mw_pbg.get(i) + beta * mw_le.get(i)) * w;
 //					measure += w;
 				}
 //				pmlc = pmlc / (meetingEvent.size() - 1);
 //				pmlc = alpha * measure + beta * locent;
 			}
+			
+			fout.write(String.format("%g\t%d\t%d\n", pmlc, (int)freq, friend_flag));
 			
 			/** write out the distance / time between consecutive meeting
 			if (meetingEvent.size() == 5) {
@@ -931,7 +938,7 @@ public class CaseFinder {
 			double[] dbm = {0, 0};
 			double[] locidm = null;
 			
-			BufferedWriter fout2 = new BufferedWriter(new FileWriter("dist-meeting-cases-u5000.txt"));
+			BufferedWriter fout2 = new BufferedWriter(new FileWriter("Pair-pavg-measure.txt"));
 				
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
@@ -1084,7 +1091,7 @@ public class CaseFinder {
 //		}
 		
 //		for (int i = 1; i < 11; i++ )
-			writeOutDifferentMeasures(User.para_c, 100);
+			writeOutDifferentMeasures(User.para_c, 101);
 		
 		
 //		locationDistancePowerLaw(2241);
