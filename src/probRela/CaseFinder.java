@@ -30,8 +30,8 @@ public class CaseFinder {
 	ArrayList<Integer> topKUser;
 	HashMap<Integer, Integer> uid_rank;
 	// a k-by-k matrix, tracking the meeting frequency of top k users.
-	int[][] meetFreq;
-	double[][] avgDistance;
+	HashMap<Integer, HashMap<Integer, Integer>> meetFreq;
+	HashMap<Integer, HashMap<Integer, Double>> avgDistance;
 	
 	CaseFinder(int top_k) {
 		long t_start = System.currentTimeMillis();
@@ -44,8 +44,8 @@ public class CaseFinder {
 		friendMap = new HashMap<Integer, HashSet<Integer>>();
 		topKUser = new ArrayList<Integer>();
 		uid_rank = new HashMap<Integer, Integer>();
-		meetFreq = new int[K][K];
-		avgDistance = new double[K][K];
+		meetFreq = new HashMap<Integer, HashMap<Integer, Integer>>();
+		avgDistance = new HashMap<Integer, HashMap<Integer, Double>>();
 		
 		try {
 			// get the top friends
@@ -178,7 +178,7 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		System.out.println("allPairMeetingFreq starts");
 		for (int i = 0; i < K; i++) {
-			for (int j = i; j < K; j++) {
+			for (int j = i+1; j < K; j++) {
 				User ua = User.allUserSet.get(topKUser.get(i));
 				User ub = User.allUserSet.get(topKUser.get(j));
 				// iterate through their records to find co-location event.
@@ -197,8 +197,19 @@ public class CaseFinder {
 						continue;
 					} else {
 						if (ra.locID == rb.locID ) {
-							meetFreq[i][j] ++;
-							meetFreq[j][i] ++;
+							int first = (i <= j) ? i : j;
+							int second = (i > j) ? i : j;
+							if (meetFreq.containsKey(first)) {
+								if (meetFreq.get(first).containsKey(second)) {
+									int k = meetFreq.get(first).get(second);
+									meetFreq.get(first).put(second, k+1);
+								} else {
+									meetFreq.get(first).put(second, 1);
+								}
+							} else {
+								meetFreq.put(first, new HashMap<Integer, Integer>());
+								meetFreq.get(first).put(second, 1);
+							}
 						}
 						aind ++;
 						bind ++;
@@ -207,8 +218,7 @@ public class CaseFinder {
 			}
 			
 			// monitor the process
-			if (i % (K/10) == 0)
-				System.out.println(String.format("Process - allPairMeetingFreq finished %d0%%", i/(K/10)));
+			System.out.println(String.format("Process - allPairMeetingFreq finished %d out of %d", i, K));
 		}
 		long t_end = System.currentTimeMillis();
 		System.out.println(String.format("Finish in %d seconds", (t_end - t_start)/1000));
@@ -222,10 +232,10 @@ public class CaseFinder {
 	public void writeTopKFreq() {
 		try {
 			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_freq.txt"));
-			for (int i = 0; i < K; i++) {
-				for (int j = i+1; j < K; j++) {
+			for (int i : meetFreq.keySet()) {
+				for (int j : meetFreq.get(i).keySet()) {
 					// write out id_1, id_2, meeting frequency, distance
-					fout.write(String.format("%d\t%d\t%d\t", topKUser.get(i), topKUser.get(j), meetFreq[i][j] ));
+					fout.write(String.format("%d\t%d\t%d\t", topKUser.get(i), topKUser.get(j), meetFreq.get(i).get(j) ));
 					if (inFriendPair(topKUser.get(i), topKUser.get(j)))
 						fout.write("1\n");
 					else
@@ -252,22 +262,33 @@ public class CaseFinder {
 				int rank_a = uid_rank.get(a);
 				int rank_b = uid_rank.get(b);
 				int cnt = 0;
-				for (Record ra : User.allUserSet.get(a).records) {
-					for (Record rb : User.allUserSet.get(b).records) {
-						// 1. calculate the average distance
-						double d = distance(ra, rb);
-						avgDistance[rank_a][rank_b] += d;
-						avgDistance[rank_b][rank_a] += d;
-						cnt ++;
+				if (rank_a <= rank_b) {
+					for (Record ra : User.allUserSet.get(a).records) {
+						for (Record rb : User.allUserSet.get(b).records) {
+							// 1. calculate the average distance
+							double d = distance(ra, rb);
+							if (avgDistance.containsKey(rank_a)) {
+								if (avgDistance.get(rank_a).containsKey(rank_b)) {
+									double ext = avgDistance.get(rank_a).get(rank_b);
+									avgDistance.get(rank_a).put(rank_b, ext + d);
+								} else {
+									avgDistance.get(rank_a).put(rank_b, d);
+								}
+							} else {
+								avgDistance.put(rank_a, new HashMap<Integer, Double>() );
+								avgDistance.get(rank_a).put(rank_b, d);
+							}
+							cnt ++;
+						}
 					}
-				}
-				avgDistance[rank_a][rank_b] /= cnt;
-				avgDistance[rank_b][rank_a] /= cnt;
-				
-				
-				if (avgDistance[rank_a][rank_b] > 100) {
-					int[] tuple = { a, b, (int) avgDistance[rank_a][rank_b] };
-					distantFriend.add(tuple);
+					double total = avgDistance.get(rank_a).get(rank_b);
+					avgDistance.get(rank_a).put(rank_b, total / cnt);
+					
+					
+					if (total > 100) {
+						int[] tuple = { a, b, (int) total };
+						distantFriend.add(tuple);
+					}
 				}
 			}
 			// monitor process
@@ -289,7 +310,7 @@ public class CaseFinder {
 				// write out u_1, u_2, distance, meeting frequency
 				int uaid = distantFriend.get(i)[0];
 				int ubid = distantFriend.get(i)[1];
-				fout.write(String.format("%d\t%d\t%d\t%d\n", distantFriend.get(i)[0], distantFriend.get(i)[1], distantFriend.get(i)[2], meetFreq[uid_rank.get(uaid)][uid_rank.get(ubid)]));
+				fout.write(String.format("%d\t%d\t%d\t%d\n", distantFriend.get(i)[0], distantFriend.get(i)[1], distantFriend.get(i)[2], meetFreq.get(uid_rank.get(uaid)).get(uid_rank.get(ubid))));
 			}
 			fout.close();
 		} catch (Exception e) {
@@ -303,8 +324,8 @@ public class CaseFinder {
 	public ArrayList<int[]> nonFriendsMeetingFreq() {
 		for (int i = 0; i < K; i++ )
 			for (int j = i+1; j < K; j++) {
-				if (nonFriend(topKUser.get(i), topKUser.get(j)) && meetFreq[i][j] > 0) {
-					int[] tuple = {topKUser.get(i), topKUser.get(j), meetFreq[i][j]};
+				if (nonFriend(topKUser.get(i), topKUser.get(j)) && meetFreq.get(i).get(j) > 0) {
+					int[] tuple = {topKUser.get(i), topKUser.get(j), meetFreq.get(i).get(j)};
 					nonFriendMeeting.add(tuple);
 				}
 			}
@@ -1006,10 +1027,10 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-//		CaseFinder cf = new CaseFinder(5000);
+		CaseFinder cf = new CaseFinder(107092);
 //		cf.locationDistancePowerLaw();
-//		cf.allPairMeetingFreq();
-//		cf.writeTopKFreq();
+		cf.allPairMeetingFreq();
+		cf.writeTopKFreq();
 		
 //		cf.remoteFriends();
 //		cf.writeRemoteFriend();
@@ -1034,8 +1055,8 @@ public class CaseFinder {
 //		}
 //		
 		
-		distanceBasedSumLogMeasure(    267 , 510 ,true);
-		distanceBasedSumLogMeasure(   350, 6138, true);
+//		distanceBasedSumLogMeasure(    267 , 510 ,true);
+//		distanceBasedSumLogMeasure(   350, 6138, true);
 		
 //		for (int i = 0; i < 10; i++) {
 //			User.para_c = 10 + i * 10;

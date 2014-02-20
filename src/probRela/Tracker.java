@@ -482,10 +482,10 @@ public class Tracker {
 	 */
 	public static void writeLocationEntropy(int numUser, boolean IDflag) {
 		// initialize users
+		int c = 0;
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/userCount.txt"));
 			String l = null;
-			int c = 0;
 			while ( (l=fin.readLine()) != null && c < numUser) {
 				c++;
 				String[] ls = l.split("\\s+");
@@ -506,11 +506,11 @@ public class Tracker {
 		try {
 			BufferedWriter fout;
 			if (IDflag == true) {
-				fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%d.txt", numUser)));
+				fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%d.txt", c)));
 				for (long loc : locationEntropy.keySet())
 					fout.write(String.format("%d\t%g\n", loc, locationEntropy.get(loc)));
 			} else {
-				fout = new BufferedWriter(new FileWriter(String.format("GPSEntropy-%d.txt", numUser)));
+				fout = new BufferedWriter(new FileWriter(String.format("GPSEntropy-%d.txt", c)));
 				for (String gps : GPSEntropy.keySet())
 					fout.write(String.format("%s\t%g\n", gps, GPSEntropy.get(gps)));
 			}
@@ -1250,7 +1250,7 @@ public class Tracker {
 //		writeThreeMeasures("feature-vectors-rme.txt");
 		
 //		writeOutPairColocations();
-		writeLocationEntropy(5000, false);
+		writeLocationEntropy(Integer.MAX_VALUE, true);
 	}
 
 }

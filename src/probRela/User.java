@@ -193,6 +193,7 @@ public class User {
 		for (User u : allUserSet.values()) {
 			Collections.sort(u.records);
 		}
+		System.out.println("Add All users finished");
 	}
 	
 	
