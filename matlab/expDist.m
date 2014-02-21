@@ -22,10 +22,10 @@ hline = findobj(gcf, 'type', 'line');
 set(hline, 'linewidth', 4);
 legend({'0.01', '0.1', '0.2', '1', '2', '3', '5', '10'}, 'fontsize', 16, ...
     'location', 'northeast');
-set(gca, 'xscale', 'log', 'linewidth', 1, 'fontsize', 20, ...
+set(gca, 'xscale', 'log', 'linewidth', 2, 'fontsize', 18, ...
     'xtick', [0.01, 0.1, 1, 10, 100, 1000]);
-xlabel('Distance (km) or Time (day)', 'fontsize', 20);
-ylabel('Distance Weight or (1 - Time Weight)', 'fontsize', 20);
+xlabel('Distance (km) or Time (day)', 'fontsize', 20, 'interpreter', 'latex');
+ylabel(' ', 'fontsize', 20);
 print('expDecay.eps', '-dpsc');
 system('epstopdf expDecay.eps');
 
