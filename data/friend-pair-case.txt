@@ -1,0 +1,19 @@
+friend-pair-case
+
+
+// austin, 3 places
+Total Meet 7 times between user 19404 and 350.
+loc 	 meeting frequency 	 rank of A 	 frequency of A 	 rank of B 	 frequency of B
+530003 		 1 		 36 		 4 		 146 		 1
+16233 		 1 		 9 		 15 		 6 		 58
+820726 		 1 		 16 		 8 		 11 		 15
+505620 		 4 		 21 		 6 		 21 		 8
+
+
+// seattle
+Total Meet 7 times between user 3756 and 4989.
+loc 	 meeting frequency 	 rank of A 	 frequency of A 	 rank of B 	 frequency of B
+34045 		 2 		 9 		 6 		 4 		 18
+41565 		 1 		 210 		 1 		 49 		 2
+33260 		 3 		 2 		 15 		 2 		 25
+391169 		 1 		 210 		 1 		 165 		 1
