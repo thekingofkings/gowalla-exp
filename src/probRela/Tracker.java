@@ -1019,7 +1019,7 @@ public class Tracker {
 	private static double jointEntropy( int uaid, int ubid, HashSet<Long> locs ) {
 		User a = User.allUserSet.get(uaid);
 		User b = User.allUserSet.get(ubid);
-		HashMap<Long, HashMap<Long, Integer>> locFreq = new HashMap<>();
+		HashMap<Long, HashMap<Long, Integer>> locFreq = new HashMap<Long, HashMap<Long, Integer>>();
 		// 1. count frequency over given location set
 		int totalCase = 0;
 		for (Record ar : a.records) {

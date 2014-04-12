@@ -397,10 +397,10 @@ public class CaseFinder {
 		TreeMap<Long, Integer> loca = locationDistribution(ua);
 		TreeMap<Long, Integer> locb = locationDistribution(ub);
 		// 4. get the ranking
-		LinkedList<Integer> freqa = new LinkedList<>(loca.values());
+		LinkedList<Integer> freqa = new LinkedList<Integer>(loca.values());
 		Collections.sort(freqa);
 		Collections.reverse(freqa);
-		LinkedList<Integer> freqb = new LinkedList<>(locb.values());
+		LinkedList<Integer> freqb = new LinkedList<Integer>(locb.values());
 		Collections.sort(freqb);
 		Collections.reverse(freqb);
 		System.out.println("loc \t meeting frequency \t rank of A \t frequency of A \t rank of B \t frequency of B");
@@ -603,8 +603,8 @@ public class CaseFinder {
 		LinkedList<Double> mw_pbg = new LinkedList<Double>();		// meeting weight _ personal background
 		LinkedList<Double> mw_le = new LinkedList<Double>(); 		// meeting weight _ location entropy
 		LinkedList<Double> mw_pbg_le = new LinkedList<Double>();  	// meeting weight _ personal background _ location entropy
-		LinkedList<Double> probs = new LinkedList<>();
-		LinkedList<Double> entros = new LinkedList<>();
+		LinkedList<Double> probs = new LinkedList<Double>();
+		LinkedList<Double> entros = new LinkedList<Double>();
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
 		if (entroIDorDist) {

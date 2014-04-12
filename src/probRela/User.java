@@ -13,7 +13,7 @@ import java.util.HashSet;
 
 public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
-	static HashMap<Integer, User> frequentUserSet = new HashMap<>();
+	static HashMap<Integer, User> frequentUserSet = new HashMap<Integer, User>();
 	static String dirPath = "../../dataset/sorteddata";
 	static double para_c = 1.5;
 //	static double para_amp = 1;
