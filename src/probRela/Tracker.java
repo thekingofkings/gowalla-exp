@@ -386,7 +386,6 @@ public class Tracker {
 
 	
 	
-	@SuppressWarnings("unused")
 	private static void writePairMeasure() {
 		System.out.println("Start writePairMeasure");
 		System.out.println(String.format("%d %d %d %d", renyiDiversity.size(), weightedFreq.size(), frequency.size(), FrequentPair.size()));
@@ -552,11 +551,17 @@ public class Tracker {
 		try {
 			BufferedWriter fout;
 			if (IDflag == true) {
-				fout = new BufferedWriter(new FileWriter(String.format("locationEntropy-%du-%ds.txt", numUser, sampleRate)));
+				if (sampleRate < 100)
+					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-%du-%ds.txt", numUser, sampleRate)));
+				else
+					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-%du.txt", numUser)));
 				for (long loc : locationEntropy.keySet())
 					fout.write(String.format("%d\t%g\n", loc, locationEntropy.get(loc)));
 			} else {
-				fout = new BufferedWriter(new FileWriter(String.format("GPSEntropy-%d.txt", numUser)));
+				if (sampleRate < 100)
+					fout = new BufferedWriter(new FileWriter(String.format("data/GPSEntropy-%du-%ds.txt", numUser, sampleRate)));
+				else
+					fout = new BufferedWriter(new FileWriter(String.format("data/GPSEntropy-%du.txt", numUser)));
 				for (String gps : GPSEntropy.keySet())
 					fout.write(String.format("%s\t%g\n", gps, GPSEntropy.get(gps)));
 			}
@@ -583,12 +588,12 @@ public class Tracker {
 		if (locationEntropy.isEmpty()) {
 			try {
 				BufferedReader fin;
-				if (sampleRate <= 100) {
-					fin = new BufferedReader( new FileReader(String.format("locationEntropy-%du-%ds.txt", numUser, sampleRate)));
+				if (sampleRate < 100) {
+					fin = new BufferedReader( new FileReader(String.format("data/locationEntropy-%du-%ds.txt", numUser, sampleRate)));
 					System.out.println(String.format("File locationEntropy-%du-%ds.txt found!", numUser, sampleRate));
 				} else { 
-					fin = new BufferedReader( new FileReader("locationEntropy-t5000u.txt"));
-					System.out.println("File locationEntropy-t5000u.txt found!");
+					fin = new BufferedReader( new FileReader(String.format("data/locationEntropy-%du.txt", numUser)));
+					System.out.println(String.format("File data/locationEntropy-%du.txt found!", numUser));
 				}
 				
 				String l = null;
@@ -605,7 +610,7 @@ public class Tracker {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			System.out.println(String.format("Location entropy size %d.", locationEntropy.size()));
+			System.out.println(String.format("Location ID entropy size %d.", locationEntropy.size()));
 		}
 		
 		return locationEntropy;
@@ -616,10 +621,17 @@ public class Tracker {
 	}
 	
 	
-	public static HashMap<String, Double> readLocationEntropyGPSbased( int numUser ) {
+	public static HashMap<String, Double> readLocationEntropyGPSbased( int numUser, int sampleRate ) {
 		if (GPSEntropy.isEmpty()) {
 			try {
-				BufferedReader fin = new BufferedReader( new FileReader(String.format("GPSEntropy-%d.txt", numUser)));
+				BufferedReader fin;
+				if (sampleRate < 100) {
+					fin = new BufferedReader( new FileReader(String.format("data/GPSEntropy-%du-%ds.txt", numUser, sampleRate)));
+					System.out.println(String.format("File GPSEntropy-%du-%ds.txt found!", numUser, sampleRate));
+				} else {
+					fin = new BufferedReader( new FileReader(String.format("data/GPSEntropy-%du.txt", numUser)));
+					System.out.println(String.format("File GPSEntropy-%du.txt found!", numUser));
+				}
 				String l = null;
 				while ( (l=fin.readLine()) != null) {
 					String[] ls = l.split("\\s+");

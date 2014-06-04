@@ -14,7 +14,7 @@ import java.util.HashSet;
 public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
 	static HashMap<Integer, User> frequentUserSet = new HashMap<Integer, User>();
-	static String dirPath = "../../dataset/sorteddata";
+	static String dirPath = "../../dataset/gowalla/sorteddata";
 	static double para_c = 1.5;
 //	static double para_amp = 1;
 	
@@ -166,7 +166,7 @@ public class User {
 	 */
 	public static void addAllUser() {
 		BufferedReader fin = null;
-		String filepath = "../../dataset/Gowalla_totalCheckins.txt";
+		String filepath = "../../dataset/gowalla/Gowalla_totalCheckins.txt";
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {
@@ -196,7 +196,7 @@ public class User {
 		System.out.println("Add All users finished");
 	}
 	
-	
+	// generate trajectory file for individual users.
 	public static void writeOutSortedResult() {
 		File dir = new File(dirPath);
 		dir.mkdir();

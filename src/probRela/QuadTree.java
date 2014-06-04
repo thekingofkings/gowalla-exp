@@ -19,7 +19,8 @@ public class QuadTree  {
         Node NW, NE, SE, SW;   // four subtrees
         Record[] records;           // associated data
         int count;
-        boolean leafFlag;
+        @SuppressWarnings("unused")
+		boolean leafFlag;
         
 
         Node(double x1, double y1, double x2, double y2, Record r) {
@@ -79,7 +80,8 @@ public class QuadTree  {
 
  
 
-    private void query2D(Node h) {
+    @SuppressWarnings("unused")
+	private void query2D(Node h) {
         
     }
 

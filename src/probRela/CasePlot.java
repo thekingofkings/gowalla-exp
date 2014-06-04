@@ -49,7 +49,7 @@ public class CasePlot {
 	private void initializeFriendPair() {
 		friendsPairs = new LinkedList<int[]>();
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("remoteFriend-200.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("data/remoteFriend-200.txt"));
 			String l;
 			while ((l = fin.readLine()) != null) {
 				// the four fields are uaid, ubid, distance, meeting frequency

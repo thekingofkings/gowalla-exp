@@ -1,37 +1,21 @@
-c = 2;
-dml4 = importdata('../weightedFrequency-1000u.txt');
-[~, ind] = sort(dml4(:,4));
-dml4 = dml4(ind, :);
-
-
 
 for condition = 0:5;
-    dml5 = importdata('../distance-d30-u5000c1.50000.txt');
-    dml6 = importdata('../distance-d30-u5000c1.50000-101s.txt');
+    dml6 = importdata('../data/distance-d30-u5000c0.200000-101s.txt');
     dml6 = dml6(dml6(:,6) > condition, :);
-    [~, ind] = sort(dml5(:,6));
-    dml5 = dml5(ind, :);
+    [~, ind] = sort(dml6(:,6));
+    dml6 = dml6(ind, :);  
 
-%     dml4 = dml4(dml4(:,4) > condition,:);
-%     locwf4 = dml4(:,3);
-%     locf4 = dml4(:,4);
-%     colcEnt = dml4(:,5);
-%     dl4 = dml4(:,6);
-   
+%     sum(dml5(:,7)==1)
+%     sum(dml5(:,7)==0)
+    size(dml6)
 
-
-    dml5 = dml5(dml5(:,6) > condition,:);
-    sum(dml5(:,7)==1)
-    sum(dml5(:,7)==0)
-    size(dml5)
-
-    prod_colcEnt_cm = dml5(:,3);
-    locwf5 = dml5(:,4);
-    locm5 = dml5(:,5);
-    locf5 = dml5(:,6);
-    dl5 = dml5(:,7);
-    pgt_score = dml6(:,3);
-    pgt_lable = dml6(:,7);
+    pbg_locen = dml6(:,3);
+    locen = dml6(:,4);
+    pbg = dml6(:,5);
+    freq = dml6(:,6);
+    pbg_locen_td = dml6(:,7);
+    td = dml6(:,8);
+    friflag = dml6(:,9);
 
 
     % Use the prec-recal function from Internet.
@@ -44,11 +28,12 @@ for condition = 0:5;
     % My own precision-recall plot function    
     figure();
     hold on;
-    precisionRecallPlot( locf5, dl5, 'linestyle', '-', 'color', [0, 0, 0.8] );
-    precisionRecallPlot( locm5, dl5, 'r--' );
-    precisionRecallPlot( locwf5, dl5, 'linestyle', '--', 'color', [0, 0.75, 0] );
-    precisionRecallPlot( prod_colcEnt_cm, dl5, 'linestyle', '-', 'color', [0.3, 0.6, 0.9] );
-    precisionRecallPlot( pgt_score, pgt_lable, 'linestyle', '-.', 'color', [0.5, 0.4, 0.9] );
+    precisionRecallPlot( freq, friflag, 'linestyle', '-', 'color', [0, 0, 0.8] );
+    precisionRecallPlot( pbg, friflag, 'r--' );
+    precisionRecallPlot( locen, friflag, 'linestyle', '--', 'color', [0, 0.75, 0] );
+    precisionRecallPlot( td, friflag, 'linestyle', '--', 'color', [255, 215, 0] / 255 );
+    precisionRecallPlot( pbg_locen, friflag, 'linestyle', '-', 'color', [0.3, 0.6, 0.9] );
+    precisionRecallPlot( pbg_locen_td, friflag, 'linestyle', '-.', 'color', [0.5, 0.4, 0.9] );
 
 
 %     title(num2str(condition));
@@ -60,11 +45,11 @@ for condition = 0:5;
     xlabel('Recall', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);
     set(gca, 'linewidth', 2, 'fontsize', 18);
-    legend({'Frequency', 'Personal', 'Global', 'Per+Glo', 'Per+Glo+Tem'}, 'location', 'southwest');
+    legend({'Frequency', 'Personal', 'Global', 'Temp Depen', 'Per+Glo', 'Per+Glo+Tem'}, 'location', 'southwest');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
-    print(['pr-', num2str(condition), 'c1000u.eps'], '-dpsc');
-    system(['epstopdf pr-', num2str(condition), 'c1000u.eps']);
+    print(['pr-', num2str(condition), 'c5000u.eps'], '-dpsc');
+    system(['epstopdf pr-', num2str(condition), 'c5000u.eps']);
 %     saveas(gcf, ['dist-wsum-d30-u5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end

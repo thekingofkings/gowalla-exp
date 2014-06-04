@@ -50,7 +50,7 @@ public class CaseFinder {
 		
 		try {
 			// get the top friends
-			BufferedReader fin1 = new BufferedReader( new FileReader("../../dataset/userCount.txt"));
+			BufferedReader fin1 = new BufferedReader( new FileReader("../../dataset/gowalla/userCount.txt"));
 			for (int i = 0; i < K; i++) {
 				String l = fin1.readLine();
 				String[] ls = l.split("\\s+");
@@ -60,7 +60,7 @@ public class CaseFinder {
 			}
 			fin1.close();
 			// get friends networks
-			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/Gowalla_edges.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/gowalla/Gowalla_edges.txt"));
 			String l;
 			while ((l = fin.readLine()) != null) {
 				String[] ls = l.split("\\s+");
@@ -594,6 +594,7 @@ public class CaseFinder {
 	 * @return
 	 * @throws IOException 
 	 */
+	@SuppressWarnings("unused")
 	private static double[] PAIRWISEweightEvent(int uaid, int ubid, BufferedWriter fout, int friend_flag, boolean IDorDist, 
 			boolean entroIDorDist, String RhoMethod, String weightMethod, String combMethod, int dependence, int sampleRate
 			) throws IOException {
@@ -610,15 +611,15 @@ public class CaseFinder {
 		if (entroIDorDist) {
 			locationEntropy = Tracker.readLocationEntropyIDbased(5000, sampleRate);
 		} else {
-			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000);
+			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000, sampleRate);
 		}
 		
 		int aind = 0;
 		int bind = 0;
 		long lastMeet = 0;
 		double freq = 0;
-		double measure = 0;
-		double locent = 0;
+		double personBg = 0;
+		double loc_entro = 0;
 		double comb = 0;
 			
 		while (aind < ua.records.size() && bind < ub.records.size()) {
@@ -651,8 +652,8 @@ public class CaseFinder {
 						prob = ua.locationWeight(ra) * ub.locationWeight(rb);
 					}
 					probs.add(prob);
-					measure = -(Math.log10(prob));
-					mw_pbg.add(measure);
+					personBg = -(Math.log10(prob));
+					mw_pbg.add(personBg);
 					// measure 2:  (1 - rho_1) * (1 - rho_2)
 //					measure = ( 1 - ua.locationWeight(ra) ) * ( 1- ub.locationWeight(rb));
 					/** different methods to calculate location entropy **/
@@ -669,11 +670,11 @@ public class CaseFinder {
 							entro = 0;
 					}
 					entros.add(entro);
-					locent = Math.exp( - entro );
-					mw_le.add(locent);
+					loc_entro = Math.exp( - entro );
+					mw_le.add(loc_entro);
 					
 					/** different method to calculate the product of two **/
-					comb = measure *  locent;
+					comb = personBg *  loc_entro;
 					mw_pbg_le.add(comb);
 					meetingEvent.add(ra);
 					lastMeet = ra.timestamp;
@@ -684,11 +685,13 @@ public class CaseFinder {
 		}
 		
 		
-		double[] rt = new double[4];
+		double[] rt = new double[6];
 
-		measure = 0;
-		locent = 0;
-		double pmlc = 0;
+		personBg = 0;
+		loc_entro = 0;
+		double pbg_lcen = 0;
+		double temp_dep = 0;
+		double pbg_lcen_td = 0;
 		
 		double min_prob = Double.MAX_VALUE;
 		double measure_sum = 0;
@@ -703,10 +706,10 @@ public class CaseFinder {
 		if (dependence == 0)
 		{			
 			if (weightMethod == "min") {
-				measure =  - Math.log10(min_prob) * probs.size();
+				personBg =  - Math.log10(min_prob) * probs.size();
 			} else if (weightMethod == "sum") {
 				for (double m : mw_pbg)
-					measure += m;
+					personBg += m;
 			}
 			
 			/** average measure **/
@@ -718,28 +721,29 @@ public class CaseFinder {
 			}
 			avg_pbg = measure_sum / mw_pbg.size();
 			for (double m : mw_le) {
-				locent += m;
+				loc_entro += m;
 			}
 			if (combMethod == "min") {
-				pmlc = - Math.log10(min_prob) * locent;
+				pbg_lcen = - Math.log10(min_prob) * loc_entro;
 			} else if (combMethod == "prod") {
 				for (double m : mw_pbg_le) {
-					pmlc += m;
+					pbg_lcen += m;
 				}
 			} else if (combMethod == "wsum") {
-				pmlc = alpha * measure + beta * locent;
+				pbg_lcen = alpha * personBg + beta * loc_entro;
 			}
 
 //			fout.write(String.format("%g\t%g\t%d\n", measure, locent, friend_flag));
-			avg_le = locent / mw_le.size();
+			avg_le = loc_entro / mw_le.size();
 			fout.write(String.format("%g\t%d\t%d\n", avg_le, (int)freq, friend_flag));
 		} else {
 			double avg_w = 0;
 			if (meetingEvent.size() == 1) {
-				measure = mw_pbg.get(0);
-				locent = mw_le.get(0);
-//				pmlc = alpha * measure + beta * locent;
-				pmlc = mw_pbg_le.get(0);
+				personBg = mw_pbg.get(0);
+				loc_entro = mw_le.get(0);
+				pbg_lcen = mw_pbg_le.get(0);
+				temp_dep = 1;
+				pbg_lcen_td = pbg_lcen;
 			} else if (meetingEvent.size() > 1) {
 				for (int i = 0; i < meetingEvent.size(); i++) {
 					double w = 0;
@@ -757,20 +761,20 @@ public class CaseFinder {
 						}
 					}
 					w /= (meetingEvent.size() - 1);
-					measure += mw_pbg.get(i) * w;
-					locent += mw_le.get(i) * w;
-					avg_w += w;
+					personBg += mw_pbg.get(i) * w;
+					loc_entro += mw_le.get(i) * w;
+					temp_dep += w;
+					double tmp = 0;
 					if (combMethod == "min")
-						pmlc += - Math.log10(min_prob) * mw_le.get(i) * w;
+						tmp = - Math.log10(min_prob) * mw_le.get(i);
 					else if (combMethod == "prod")
-						pmlc += mw_pbg_le.get(i) * w;
+						tmp = mw_pbg_le.get(i);
 					else if (combMethod == "wsum")
-						pmlc += (alpha * mw_pbg.get(i) + beta * mw_le.get(i)) * w;
-//					measure += w;
+						tmp = alpha * mw_pbg.get(i) + beta * mw_le.get(i);
+					pbg_lcen += tmp;
+					pbg_lcen_td += tmp * w;
 				}
-				avg_w /= meetingEvent.size();
-//				pmlc = pmlc / (meetingEvent.size() - 1);
-//				pmlc = alpha * measure + beta * locent;
+				avg_w = temp_dep / meetingEvent.size();
 			}
 			
 			fout.write(String.format("%g\t%d\t%d\n", avg_w, (int)freq, friend_flag));
@@ -785,10 +789,12 @@ public class CaseFinder {
 			}
 			*/
 		}
-		rt[0] = measure;
+		rt[0] = personBg;
 		rt[1] = freq;
-		rt[2] = pmlc;
-		rt[3] = locent;
+		rt[2] = pbg_lcen;
+		rt[3] = loc_entro;
+		rt[4] = pbg_lcen_td;
+		rt[5] = temp_dep;
 		
 		return rt;
 	}
@@ -956,13 +962,12 @@ public class CaseFinder {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("distance-d30-u5000c%g-%ds.txt", event_time_exp_para_c, sampleRate)));
+			BufferedReader fin = new BufferedReader(new FileReader("data/topk_freqgt1-5000.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u5000c%g-%ds.txt", event_time_exp_para_c, sampleRate)));
 			String l = null;
-			double[] dbm = {0, 0};
 			double[] locidm = null;
 			
-			BufferedWriter fout2 = new BufferedWriter(new FileWriter("Pair-glob-measure.txt"));
+			BufferedWriter fout2 = new BufferedWriter(new FileWriter("data/Pair-glob-measure.txt"));
 				
 			while ( (l = fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
@@ -971,9 +976,11 @@ public class CaseFinder {
 				int freq = Integer.parseInt(ls[2]);
 				int friflag = Integer.parseInt(ls[3]);
 				if (freq > 0) {
-//					dbm = distanceBasedSumLogMeasure(uaid, ubid);
-					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "prod", "min", "min", 1, sampleRate);
-					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], friflag));
+					// locidm contains:
+					// 		personal bg; frequency; personal bg + location entropy; location entropy; 
+					//		personal bg + location entro + temp dependency; temporal dependency
+					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, false,  "prod", "min", "min", 1, sampleRate);
+					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%g\t%g\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], locidm[4], locidm[5], friflag));
 				}
 			}
 			
@@ -1117,7 +1124,7 @@ public class CaseFinder {
 		
 //		for (int i = 1; i < 11; i++ )
 		CaseFinder.event_time_exp_para_c = 0.2;
-			writeOutDifferentMeasures(User.para_c, 101);
+		writeOutDifferentMeasures(User.para_c, 101);
 		
 		
 //		locationDistancePowerLaw(2241);
