@@ -703,15 +703,21 @@ public class CaseFinder {
 			if ( min_prob > m )
 				min_prob = m;
 		
+		// calculate personal background
+		if (weightMethod == "min") {
+			personBg =  - Math.log10(min_prob) * probs.size();
+		} else if (weightMethod == "sum") {
+			for (double m : mw_pbg)
+				personBg += m;
+		}
+
+		// calculate location entropy
+		for (double m : mw_le) {
+			loc_entro += m;
+		}
+		
 		if (dependence == 0)
-		{			
-			if (weightMethod == "min") {
-				personBg =  - Math.log10(min_prob) * probs.size();
-			} else if (weightMethod == "sum") {
-				for (double m : mw_pbg)
-					personBg += m;
-			}
-			
+		{
 			/** average measure **/
 			for (double m : entros)
 				avg_entro += m;
@@ -720,9 +726,6 @@ public class CaseFinder {
 				measure_sum += m;
 			}
 			avg_pbg = measure_sum / mw_pbg.size();
-			for (double m : mw_le) {
-				loc_entro += m;
-			}
 			if (combMethod == "min") {
 				pbg_lcen = - Math.log10(min_prob) * loc_entro;
 			} else if (combMethod == "prod") {
@@ -739,8 +742,6 @@ public class CaseFinder {
 		} else {
 			double avg_w = 0;
 			if (meetingEvent.size() == 1) {
-				personBg = mw_pbg.get(0);
-				loc_entro = mw_le.get(0);
 				pbg_lcen = mw_pbg_le.get(0);
 				temp_dep = 1;
 				pbg_lcen_td = pbg_lcen;
@@ -761,8 +762,6 @@ public class CaseFinder {
 						}
 					}
 					w /= (meetingEvent.size() - 1);
-					personBg += mw_pbg.get(i) * w;
-					loc_entro += mw_le.get(i) * w;
 					temp_dep += w;
 					double tmp = 0;
 					if (combMethod == "min")
@@ -979,7 +978,7 @@ public class CaseFinder {
 					// locidm contains:
 					// 		personal bg; frequency; personal bg + location entropy; location entropy; 
 					//		personal bg + location entro + temp dependency; temporal dependency
-					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "min", "min", "min", 1, numUser);
+					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "prod", "min", "min", 1, numUser);
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%g\t%g\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], locidm[4], locidm[5], friflag));
 				}
 			}
