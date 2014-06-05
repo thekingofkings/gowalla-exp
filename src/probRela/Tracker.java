@@ -351,7 +351,7 @@ public class Tracker {
 		 * After we factor out the location entropy calculation, 
 		 * now the execution time in HP is 4s.
 		 */
-		locationEntropy = readLocationEntropyIDbased(5000, 101);
+		locationEntropy = readLocationEntropyIDbased(5000, true);
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -512,29 +512,37 @@ public class Tracker {
 	
 	
 	/**
-	 * calculate the location entropy using the records of given number of top users
+	 * calculate the location entropy using the records of given number of top users.
+	 * In this function we can randomly sample a subset of n users to calculate the 
+	 * location entropy.
+	 * 
 	 * @param numUser
 	 * @param IDflag -- true to use location ID, false to use GPS
-	 * @param sampleRate -- integer of n in __%
+	 * @param sampleMethod -- true: use top users / false: user random n users.
 	 *  
 	 */
-	public static void writeLocationEntropy(int numUser, boolean IDflag, int sampleRate) {
+	public static void writeLocationEntropy(int numUser, boolean IDflag, boolean sampleMethod) {
 		// initialize users
 		Random r = new Random();
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/userCount.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/gowalla/userCount.txt"));
 			String l = null;
 			User.allUserSet.clear();
 			int c = 0;
 			while ( (l=fin.readLine()) != null ) {
 				c++;
-				if (r.nextDouble() <= sampleRate / 100.0 * numUser / 100000 ) {
+				int uid = 0;
+				if (sampleMethod) {
 					String[] ls = l.split("\\s+");
-					int uid = Integer.parseInt(ls[0]);
+					uid = Integer.parseInt(ls[0]);
 					new User(uid);
-					if (User.allUserSet.size() == sampleRate / 100.0 * numUser)
-						break;
+				} else if (r.nextDouble() <= numUser / 100000.0 ) {	// total number of users in this data set is around 10,7000.
+					String[] ls = l.split("\\s+");
+					uid = Integer.parseInt(ls[0]);
+					new User(uid);
 				}
+				if (User.allUserSet.size() == numUser)
+					break;
 			}
 			System.out.println(String.format("Total user %d\t%d", c, User.allUserSet.size()));
 			fin.close();
@@ -551,17 +559,17 @@ public class Tracker {
 		try {
 			BufferedWriter fout;
 			if (IDflag == true) {
-				if (sampleRate < 100)
-					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-%du-%ds.txt", numUser, sampleRate)));
+				if (sampleMethod)
+					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-top%du-%ds.txt", numUser)));
 				else
-					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-%du.txt", numUser)));
+					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-rand%du.txt", numUser)));
 				for (long loc : locationEntropy.keySet())
 					fout.write(String.format("%d\t%g\n", loc, locationEntropy.get(loc)));
 			} else {
-				if (sampleRate < 100)
-					fout = new BufferedWriter(new FileWriter(String.format("data/GPSEntropy-%du-%ds.txt", numUser, sampleRate)));
+				if (sampleMethod)
+					fout = new BufferedWriter(new FileWriter(String.format("data/GPSEntropy-top%du.txt", numUser)));
 				else
-					fout = new BufferedWriter(new FileWriter(String.format("data/GPSEntropy-%du.txt", numUser)));
+					fout = new BufferedWriter(new FileWriter(String.format("data/GPSEntropy-rand%du.txt", numUser)));
 				for (String gps : GPSEntropy.keySet())
 					fout.write(String.format("%s\t%g\n", gps, GPSEntropy.get(gps)));
 			}
@@ -573,7 +581,7 @@ public class Tracker {
 	
 	
 	public static void writeLocationEntropy(int numUser, boolean IDflag) {
-		writeLocationEntropy(numUser, IDflag, 100);
+		writeLocationEntropy(numUser, IDflag, true);
 	}
 	
 	/**
@@ -581,19 +589,19 @@ public class Tracker {
 	 * If we have the location entropy file of given number of users, then this function will work, otherwise
 	 * it will throw an exception.
 	 * @param numUser
-	 * @param sampleRate -- an integer means dd%. if sampleRate > 100, use the 100% of top 5000 users
+	 * @param sampleMethod -- true: top n users / false: random n users
 	 * @return
 	 */
-	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser, int sampleRate) {
+	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser, boolean sampleMethod) {
 		if (locationEntropy.isEmpty()) {
 			try {
 				BufferedReader fin;
-				if (sampleRate < 100) {
-					fin = new BufferedReader( new FileReader(String.format("data/locationEntropy-%du-%ds.txt", numUser, sampleRate)));
-					System.out.println(String.format("File locationEntropy-%du-%ds.txt found!", numUser, sampleRate));
+				if (sampleMethod) {
+					fin = new BufferedReader( new FileReader(String.format("data/locationEntropy-top%du.txt", numUser)));
+					System.out.println(String.format("File locationEntropy-top%du.txt found!", numUser));
 				} else { 
-					fin = new BufferedReader( new FileReader(String.format("data/locationEntropy-%du.txt", numUser)));
-					System.out.println(String.format("File data/locationEntropy-%du.txt found!", numUser));
+					fin = new BufferedReader( new FileReader(String.format("data/locationEntropy-rand%du.txt", numUser)));
+					System.out.println(String.format("File data/locationEntropy-rand%du.txt found!", numUser));
 				}
 				
 				String l = null;
@@ -606,7 +614,7 @@ public class Tracker {
 				fin.close();
 			} catch (FileNotFoundException e) {
 				System.out.println("No location entropy file found. Generate new one ...");
-				writeLocationEntropy(numUser, true, sampleRate);	// true use location ID, false to use GPS
+				writeLocationEntropy(numUser, true, sampleMethod);	// true use location ID, false to use GPS
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -617,20 +625,20 @@ public class Tracker {
 	}
 	
 	public static HashMap<Long, Double> readLocationEntropyIDbased(int numUser) {
-		return readLocationEntropyIDbased(numUser, 100);
+		return readLocationEntropyIDbased(numUser, true);
 	}
 	
 	
-	public static HashMap<String, Double> readLocationEntropyGPSbased( int numUser, int sampleRate ) {
+	public static HashMap<String, Double> readLocationEntropyGPSbased( int numUser, boolean sampleMethod ) {
 		if (GPSEntropy.isEmpty()) {
 			try {
 				BufferedReader fin;
-				if (sampleRate < 100) {
-					fin = new BufferedReader( new FileReader(String.format("data/GPSEntropy-%du-%ds.txt", numUser, sampleRate)));
-					System.out.println(String.format("File GPSEntropy-%du-%ds.txt found!", numUser, sampleRate));
+				if (sampleMethod) {
+					fin = new BufferedReader( new FileReader(String.format("data/GPSEntropy-top%du.txt", numUser)));
+					System.out.println(String.format("File GPSEntropy-top%du.txt found!", numUser));
 				} else {
-					fin = new BufferedReader( new FileReader(String.format("data/GPSEntropy-%du.txt", numUser)));
-					System.out.println(String.format("File GPSEntropy-%du.txt found!", numUser));
+					fin = new BufferedReader( new FileReader(String.format("data/GPSEntropy-rand%du.txt", numUser)));
+					System.out.println(String.format("File GPSEntropy-rand%du.txt found!", numUser));
 				}
 				String l = null;
 				while ( (l=fin.readLine()) != null) {
@@ -643,7 +651,7 @@ public class Tracker {
 				fin.close();
 			} catch (FileNotFoundException e) {
 				System.out.println("No GPS entropy file found. Generate a new one ...");
-				writeLocationEntropy(numUser, false);
+				writeLocationEntropy(numUser, false, sampleMethod);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

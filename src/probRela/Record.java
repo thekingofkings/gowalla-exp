@@ -63,7 +63,7 @@ public class Record implements Comparable<Record> {
 	
 	@Override
 	public String toString(){
-		return String.format("%d %s %g %g %d", userID, time, latitude, longitude, locID);
+		return String.format("%d %s %.10f %.10f %d", userID, time, latitude, longitude, locID);
 	}
 	
 
@@ -115,7 +115,7 @@ public class Record implements Comparable<Record> {
 	}
 	
 	public String GPS() {
-		return String.format("%.12f%.12f", latitude, longitude);
+		return String.format("%.10f%.10f", latitude, longitude);
 	}
 	
 
@@ -123,7 +123,7 @@ public class Record implements Comparable<Record> {
 	// TDD
 	private static void TDD_entryParse() {
 		BufferedReader fin = null;
-		String filepath = "../../dataset/Gowalla_totalCheckins.txt";
+		String filepath = "../../dataset/gowalla/Gowalla_totalCheckins.txt";
 		try {
 			fin = new BufferedReader(new FileReader(filepath));
 		} catch (FileNotFoundException e) {

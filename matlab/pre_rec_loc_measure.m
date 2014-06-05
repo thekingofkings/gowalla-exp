@@ -1,6 +1,7 @@
 
+dml6 = importdata('../data/distance-d30-u5000-c0.200000.txt');
+    
 for condition = 0:5;
-    dml6 = importdata('../data/distance-d30-u5000c0.200000-101s.txt');
     dml6 = dml6(dml6(:,6) > condition, :);
     [~, ind] = sort(dml6(:,6));
     dml6 = dml6(ind, :);  

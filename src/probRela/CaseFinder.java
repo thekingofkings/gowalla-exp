@@ -589,14 +589,14 @@ public class CaseFinder {
 	 * @param weightMethod -- min / sum
 	 * @param combMethod -- min / prod / wsum
 	 * @param dependence -- 0: no dependence / 1: temporal dependence / 2: spatial dependence
-	 * @param sampleRate -- how many user are used for entropy estimation. 1 means 10%, 2 means 20%, ....
+	 * @param numUser -- how many user are used for entropy estimation. 1 means 10%, 2 means 20%, ....
 	 * 
 	 * @return
 	 * @throws IOException 
 	 */
 	@SuppressWarnings("unused")
 	private static double[] PAIRWISEweightEvent(int uaid, int ubid, BufferedWriter fout, int friend_flag, boolean IDorDist, 
-			boolean entroIDorDist, String RhoMethod, String weightMethod, String combMethod, int dependence, int sampleRate
+			boolean entroIDorDist, String RhoMethod, String weightMethod, String combMethod, int dependence, int numUser
 			) throws IOException {
 		User ua = new User(uaid);
 		User ub = new User(ubid);
@@ -609,9 +609,9 @@ public class CaseFinder {
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
 		if (entroIDorDist) {
-			locationEntropy = Tracker.readLocationEntropyIDbased(5000, sampleRate);
+			locationEntropy = Tracker.readLocationEntropyIDbased(5000, false);
 		} else {
-			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000, sampleRate);
+			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000, false);
 		}
 		
 		int aind = 0;
@@ -641,7 +641,7 @@ public class CaseFinder {
 					isMeeting = (ra.distanceTo(rb) < CaseFinder.distance_threshold);
 				}
 				
-				if ( isMeeting && ra.timestamp - lastMeet >= 3600) {
+				if ( isMeeting ) {
 					freq ++;
 					double prob = 0;
 					/** different methods to calculate rho **/
@@ -958,12 +958,12 @@ public class CaseFinder {
 	/**
 	 * Calculate the distance based measure for all the top user pairs
 	 */
-	public static void writeOutDifferentMeasures(double para_c, int sampleRate) {
+	public static void writeOutDifferentMeasures(double para_c, int numUser) {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("data/topk_freqgt1-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u5000c%g-%ds.txt", event_time_exp_para_c, sampleRate)));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u%d-c%g.txt", numUser, event_time_exp_para_c)));
 			String l = null;
 			double[] locidm = null;
 			
@@ -979,7 +979,7 @@ public class CaseFinder {
 					// locidm contains:
 					// 		personal bg; frequency; personal bg + location entropy; location entropy; 
 					//		personal bg + location entro + temp dependency; temporal dependency
-					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, false,  "prod", "min", "min", 1, sampleRate);
+					locidm = PAIRWISEweightEvent(uaid, ubid, fout2, friflag, false, true,  "min", "min", "min", 1, numUser);
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%g\t%g\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], locidm[4], locidm[5], friflag));
 				}
 			}
@@ -1124,7 +1124,7 @@ public class CaseFinder {
 		
 //		for (int i = 1; i < 11; i++ )
 		CaseFinder.event_time_exp_para_c = 0.2;
-		writeOutDifferentMeasures(User.para_c, 101);
+		writeOutDifferentMeasures(User.para_c, 5000);
 		
 		
 //		locationDistancePowerLaw(2241);

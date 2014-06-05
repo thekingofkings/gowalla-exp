@@ -195,6 +195,7 @@ public class User {
 		}
 		System.out.println("Add All users finished");
 	}
+
 	
 	// generate trajectory file for individual users.
 	public static void writeOutSortedResult() {
@@ -222,7 +223,10 @@ public class User {
 //		findFrequentUsers(400);
 //		System.out.println(String.format("Active user number: %d", User.frequentUserSet.size()));
 //		writeOutSortedResult();
-
+		
+		User u = new User(1000);
+		for (Record r : u.records)
+			System.out.println(String.format("%.10f%.10f", r.latitude, r.longitude));
 	}
 	
 	
