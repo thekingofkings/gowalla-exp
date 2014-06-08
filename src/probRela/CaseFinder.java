@@ -17,7 +17,7 @@ import java.util.TreeMap;
 public class CaseFinder {
 	public static double distance_threshold = 0.03;	 // in km 
 
-	static double event_time_exp_para_c = 0.5;	// 0.5 is better than 1, when pairwise
+	static double event_time_exp_para_c = 0.2;	// 0.5 is better than 1, when pairwise
 	static double event_space_exp_para_c = 1.5;	// bad choice 0.1, 10, 1.5
 	static double alpha = 0.0011284;
 	static double beta = 0.046567;
@@ -609,7 +609,7 @@ public class CaseFinder {
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
 		if (entroIDorDist) {
-			locationEntropy = Tracker.readLocationEntropyIDbased(5000, false);
+			locationEntropy = Tracker.readLocationEntropyIDbased(5000, true);
 		} else {
 			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000, false);
 		}
@@ -1122,7 +1122,8 @@ public class CaseFinder {
 //		}
 		
 //		for (int i = 1; i < 11; i++ )
-		CaseFinder.event_time_exp_para_c = 0.2;
+//		CaseFinder.event_time_exp_para_c = 0.2;
+		User.recSampleRate = 0.8;
 		writeOutDifferentMeasures(User.para_c, 5000);
 		
 		

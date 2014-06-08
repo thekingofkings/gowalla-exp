@@ -560,7 +560,7 @@ public class Tracker {
 			BufferedWriter fout;
 			if (IDflag == true) {
 				if (sampleMethod)
-					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-top%du-%ds.txt", numUser)));
+					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-top%du.txt", numUser)));
 				else
 					fout = new BufferedWriter(new FileWriter(String.format("data/locationEntropy-rand%du.txt", numUser)));
 				for (long loc : locationEntropy.keySet())

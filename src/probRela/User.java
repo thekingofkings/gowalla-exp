@@ -10,12 +10,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.HashSet;
+import java.util.Random;
 
 public class User {
 	static HashMap<Integer, User> allUserSet = new HashMap<Integer, User>();
 	static HashMap<Integer, User> frequentUserSet = new HashMap<Integer, User>();
 	static String dirPath = "../../dataset/gowalla/sorteddata";
 	static double para_c = 1.5;
+	static double recSampleRate = 1;
 //	static double para_amp = 1;
 	
 	
@@ -45,8 +47,17 @@ public class User {
 			try {
 				BufferedReader fin = new BufferedReader(new FileReader(String.format("%s/%d", dirPath, uid)));
 				String l;
-				while ((l = fin.readLine()) != null) {
-					records.add(new Record(l));
+				if (recSampleRate >= 1.0) {
+					while ((l = fin.readLine()) != null) {
+						records.add(new Record(l));
+					}
+				} else {
+					Random rnd = new Random();
+					while ((l = fin.readLine()) != null) {
+						if (rnd.nextDouble() < recSampleRate) {
+							records.add(new Record(l));
+						}
+					}
 				}
 				fin.close();
 			} catch (Exception e) {
