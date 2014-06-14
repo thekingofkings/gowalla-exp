@@ -155,7 +155,7 @@ public class User {
 	 */
 	public static void findFrequentUsersTopK( int k ) {
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/userCount.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/Gowalla/userCount.txt"));
 			String l = null;
 			int c = 0;
 			while ( (l=fin.readLine()) != null) {
