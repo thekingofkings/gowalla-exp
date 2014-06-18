@@ -609,9 +609,9 @@ public class CaseFinder {
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
 		if (entroIDorDist) {
-			locationEntropy = Tracker.readLocationEntropyIDbased(5000, true);
+			locationEntropy = Tracker.readLocationEntropyIDbased(numUser, true);
 		} else {
-			GPSEntropy = Tracker.readLocationEntropyGPSbased(5000, false);
+			GPSEntropy = Tracker.readLocationEntropyGPSbased(numUser, false);
 		}
 		
 		int aind = 0;
@@ -641,7 +641,7 @@ public class CaseFinder {
 					isMeeting = (ra.distanceTo(rb) < CaseFinder.distance_threshold);
 				}
 				
-				if ( isMeeting ) {
+				if ( isMeeting && ra.timestamp - lastMeet >= 3600) {
 					freq ++;
 					double prob = 0;
 					/** different methods to calculate rho **/
@@ -961,8 +961,9 @@ public class CaseFinder {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
+			User.findFrequentUsersTopK(numUser);
 			BufferedReader fin = new BufferedReader(new FileReader("data/topk_freqgt1-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u%d-c%g.txt", numUser, event_time_exp_para_c)));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u%d-c%.3f.txt", numUser, event_time_exp_para_c)));
 			String l = null;
 			double[] locidm = null;
 			
@@ -974,7 +975,7 @@ public class CaseFinder {
 				int ubid = Integer.parseInt(ls[1]);
 				int freq = Integer.parseInt(ls[2]);
 				int friflag = Integer.parseInt(ls[3]);
-				if (freq > 0) {
+				if (freq > 0 && User.frequentUserSet.containsKey(uaid) && User.frequentUserSet.containsKey(ubid)) {
 					// locidm contains:
 					// 		personal bg; frequency; personal bg + location entropy; location entropy; 
 					//		personal bg + location entro + temp dependency; temporal dependency
@@ -982,6 +983,7 @@ public class CaseFinder {
 					fout.write(String.format("%d\t%d\t%g\t%g\t%g\t%d\t%g\t%g\t%d%n", uaid, ubid, locidm[2], locidm[3], locidm[0], (int) locidm[1], locidm[4], locidm[5], friflag));
 				}
 			}
+			Tracker.locationEntropy.clear();
 			
 			fin.close();
 			fout.close();
@@ -1123,8 +1125,10 @@ public class CaseFinder {
 		
 //		for (int i = 1; i < 11; i++ )
 //		CaseFinder.event_time_exp_para_c = 0.2;
-		User.recSampleRate = 0.8;
-		writeOutDifferentMeasures(User.para_c, 5000);
+//		User.recSampleRate = 1;
+		int[] userN = new int[] { 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000 };
+		for (int i = 0; i < userN.length; i++)
+			writeOutDifferentMeasures(User.para_c, userN[i]);
 		
 		
 //		locationDistancePowerLaw(2241);

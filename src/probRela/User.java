@@ -154,6 +154,7 @@ public class User {
 	 * Calculate the active user from all users.
 	 */
 	public static void findFrequentUsersTopK( int k ) {
+		frequentUserSet.clear();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/Gowalla/userCount.txt"));
 			String l = null;
@@ -163,7 +164,8 @@ public class User {
 					break;
 				String[] ls = l.split("\\s+");
 				int uid = Integer.parseInt(ls[0]);
-				frequentUserSet.put(uid, allUserSet.get(uid));
+				User u = new User(uid);
+				frequentUserSet.put(uid, u);
 				c++;
 			}
 			fin.close();

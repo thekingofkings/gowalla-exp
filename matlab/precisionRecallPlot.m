@@ -1,8 +1,8 @@
-function [precT, reclT] = precisionRecallPlot( score, label, varargin )
+function [prec, recl, line] = precisionRecallPlot( score, label, varargin )
 
     [prec, recl] = precisionRecall( score, label );
     if nargin > 2
-        plot( recl, prec, varargin{:} );
+        line = plot( recl, prec, varargin{:} );
     end
     
     precT = zeros(3,1);
