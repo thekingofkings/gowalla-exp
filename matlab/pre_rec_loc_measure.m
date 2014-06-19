@@ -1,5 +1,5 @@
 
-dml6 = importdata('../data/distance-d30-u5000-c0.200000.txt');
+dml6 = importdata('../data/distance-d30-u5000-c0.200.txt');
     
 for condition = 0:5;
     dml6 = dml6(dml6(:,6) > condition, :);

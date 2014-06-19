@@ -747,21 +747,18 @@ public class CaseFinder {
 				pbg_lcen_td = pbg_lcen;
 			} else if (meetingEvent.size() > 1) {
 				for (int i = 0; i < meetingEvent.size(); i++) {
-					double w = 0;
-					for (int j = 0; j < meetingEvent.size(); j++) {
-						if (i != j) {
-							Record r1 = meetingEvent.get(i);
-							Record r2 = meetingEvent.get(j);
-							if (dependence == 1) { 
-								w += 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
-							} else if (dependence == 2) {
-								double dist = r2.distanceTo(r1);
-								w += 1 - Math.exp(- event_space_exp_para_c * dist);
-	//							fout.write(String.format("%g\t%g\n", dist, w));
-							}
+					double w = 1;
+					if (i != 0) {
+						Record r1 = meetingEvent.get(i);
+						Record r2 = meetingEvent.get(i-1);
+						if (dependence == 1) { 
+							w = 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
+						} else if (dependence == 2) {
+							double dist = r2.distanceTo(r1);
+							w = 1 - Math.exp(- event_space_exp_para_c * dist);
+//							fout.write(String.format("%g\t%g\n", dist, w));
 						}
 					}
-					w /= (meetingEvent.size() - 1);
 					temp_dep += w;
 					double tmp = 0;
 					if (combMethod == "min")
