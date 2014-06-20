@@ -751,8 +751,10 @@ public class CaseFinder {
 					if (i != 0) {
 						Record r1 = meetingEvent.get(i);
 						Record r2 = meetingEvent.get(i-1);
-						if (dependence == 1) { 
-							w = 1 - Math.exp(- event_time_exp_para_c * Math.abs(r2.timestamp - r1.timestamp) / 3600.0 / 24);
+						if (dependence == 1) {
+							double deltaT = Math.abs(r2.timestamp - r1.timestamp) / 3600.00 / 24;
+							w = 1 - Math.exp(- event_time_exp_para_c * deltaT);
+							fout.write(String.format("%g %d %d%n", deltaT, friend_flag, meetingEvent.size()));
 						} else if (dependence == 2) {
 							double dist = r2.distanceTo(r1);
 							w = 1 - Math.exp(- event_space_exp_para_c * dist);
@@ -773,7 +775,6 @@ public class CaseFinder {
 				avg_w = temp_dep / meetingEvent.size();
 			}
 			
-			fout.write(String.format("%g\t%d\t%d\n", avg_w, (int)freq, friend_flag));
 			
 			/** write out the distance / time between consecutive meeting
 			if (meetingEvent.size() == 5) {
@@ -911,19 +912,19 @@ public class CaseFinder {
 		
 		//  calculate the temporal correlation
 		double minTC = 0;
+		double td = 0;
 		for (int i = 0; i < coloEnt.size(); i++) {
 			double[] a = coloEnt.get(i);
 			double[] b = null;
-			double w = 0;
-			for (int j = 0; j < coloEnt.size(); j++) {
-				b = coloEnt.get(j);
-				if (i != j) {
-					double deltaT = Math.abs( b[7] - a[7] ) / 3600 / 24;
-					w += 1 - Math.exp(- 0.3 * deltaT);
+			double w = 1;
+			if (i != 0) {
+				b = coloEnt.get(i-1);
+				double deltaT = Math.abs( b[7] - a[7] ) / 3600 / 24;
+				w = 1 - Math.exp(- event_time_exp_para_c * deltaT);
 //					System.out.println(String.format("%g\t%g\t%g", w, 1-Math.exp(-1.5* deltaT) , deltaT));
-				}
 			}
-			
+			td += w;
+			a[9] = w;
 			minTC += w * (- Math.log10(M)) / (coloEnt.size() - 1);
 		}
 		
@@ -931,15 +932,15 @@ public class CaseFinder {
 
 		// print out the probability
 		if (printFlag) {
-			System.out.println(String.format("User %d and %d meet %d times.\nA.weight\t\tB.weight\t\tA.lati\t\tA.longi\t\tA.locID\t\tB.lati\t\tB.longi", 
+			System.out.println(String.format("User %d and %d meet %d times.\nA.weight\t\tB.weight\t\tA.lati\t\tA.longi\t\tA.locID\t\tB.lati\t\tB.longi\tTD weight", 
 					ua.userID, ub.userID, coloEnt.size()));
 			for (double[] a : coloEnt) {
 				cal1.setTimeInMillis((long) a[7] * 1000);
 				cal2.setTimeInMillis((long) a[8] * 1000);
-				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%8$tF %8$tT\t\t%9$tF %9$tT", a[0], a[1], a[2], 
-						a[3], a[4], a[5], a[6], cal1, cal2));
+				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t%g\t%9$tF %9$tT\t\t%10$tF %10$tT", a[0], a[1], a[2], 
+						a[3], a[4], a[5], a[6], a[9], cal1, cal2));
 			}
-			System.out.println(String.format("User pair %d and %d has min personal measure %g, global measure %g, temporal dependence measure %g", uaid, ubid, minMeasure, entro, minTC));
+			System.out.println(String.format("User pair %d and %d has min personal measure %g, global measure %g, overall measure %g, temporal dep %g", uaid, ubid, minMeasure, entro, minTC, td));
 		}
 		double[] rt = {minMeasure, (double) coloEnt.size()};
 		return rt;
@@ -1020,7 +1021,7 @@ public class CaseFinder {
 				if (ra.distanceTo(rb) < dist_threshold && ra.timestamp - time_lastMeet >= 3600) {
 					double wta = ua.locationWeight(ra);
 					double wtb = ub.locationWeight(rb);
-					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, ra.locID, rb.latitude, rb.longitude, ra.timestamp, rb.timestamp };
+					double[] evnt = { wta,  wtb, ra.latitude, ra.longitude, ra.locID, rb.latitude, rb.longitude, ra.timestamp, rb.timestamp, 0 };
 					coloEnt.add(evnt);
 					time_lastMeet = ra.timestamp;
 				}
@@ -1111,7 +1112,7 @@ public class CaseFinder {
 //		
 		
 
-//		distanceBasedSumLogMeasure(267 , 510 ,true);
+//		distanceBasedSumLogMeasure(776   ,       535,true);
 //		distanceBasedSumLogMeasure(350 , 6138 ,true);
 //		distanceBasedSumLogMeasure(39746, 39584, true);
 		
@@ -1123,9 +1124,9 @@ public class CaseFinder {
 //		for (int i = 1; i < 11; i++ )
 //		CaseFinder.event_time_exp_para_c = 0.2;
 //		User.recSampleRate = 1;
-		int[] userN = new int[] { 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000 };
-		for (int i = 0; i < userN.length; i++)
-			writeOutDifferentMeasures(User.para_c, userN[i]);
+//		int[] userN = new int[] { 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000 };
+//		for (int i = 0; i < userN.length; i++)
+			writeOutDifferentMeasures(User.para_c, 5000);
 		
 		
 //		locationDistancePowerLaw(2241);

@@ -24,9 +24,9 @@ for ind = 1:size(files,1)
 
     pbg_locen = data(:,3);
     locen = data(:,4);
-    pbg = data(:,5);
+    pbg_locen_td = data(:,5);
     freq = data(:,6);
-    pbg_locen_td = data(:,7);
+    pbg = data(:,7);
     td = data(:,8);
     friflag = data(:,9);
 
@@ -49,7 +49,7 @@ for ind = 1:size(files,1)
     
     [pre, rec, l(2)] = precisionRecallPlot( pbg_locen, friflag, 'linestyle', ':', 'color', colors(color_ind,:) );
     auc(ind+1,2) = trapz(rec, pre);
-    [pre, rec, l(3)] = precisionRecallPlot( pbg_locen_td, friflag, 'linestyle', '--', 'color', colors(color_ind,:) );
+    [pre, rec, l(3)] = precisionRecallPlot( pbg, friflag, 'linestyle', '--', 'color', colors(color_ind,:) );
     auc(ind+1,3) = trapz(rec, pre);
     color_ind = color_ind + 1;
 
@@ -73,9 +73,9 @@ end
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 
 
-pbg_base = auc(:,2) - auc(:,1);
-overall_base = auc(:,3) - auc(:,1);
-overall_pbg = auc(:,3) - auc(:,2);
+frequency = auc(:,1);
+pbg = auc(:,2);
+pbg_locen_td = auc(:,3);
 x = 0:51.2:512.75;
 x = round(x);
 
@@ -83,12 +83,12 @@ figure;
 hold on;
 grid on;
 box on;
-plot(x, pbg_base, '-', 'color', [200, 0, 0] / 255, 'linewidth', 3);
-plot(x, overall_base, '--', 'color', [0.3, 0.6, 0.9], 'linewidth', 3);
-plot(x, overall_pbg, '-.', 'color', [0, 100, 0] / 255, 'linewidth', 3);
+plot(x, frequency, '-', 'color', [200, 0, 0] / 255, 'linewidth', 3);
+plot(x, pbg, '--', 'color', [0.3, 0.6, 0.9], 'linewidth', 3);
+plot(x, pbg_locen_td, '-.', 'color', [0, 100, 0] / 255, 'linewidth', 3);
 set(gca, 'linewidth', 2, 'fontsize', 18);
 xlabel('Average #check-ins', 'fontsize', 20);
 ylabel('AUC', 'fontsize', 20);
-legend({'Personal - Frequency', 'Overall - Frequency', 'Overall - Personal'}, 'location', 'northwest');
+legend({'Frequency', 'Personal', 'Per+Glo+Tem'}, 'location', 'northwest');
 print('sensitivity-recs.eps', '-dpsc');
 system('epstopdf sensitivity-recs.eps');
