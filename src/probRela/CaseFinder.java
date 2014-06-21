@@ -21,6 +21,7 @@ public class CaseFinder {
 	static double event_space_exp_para_c = 1.5;	// bad choice 0.1, 10, 1.5
 	static double alpha = 0.0011284;
 	static double beta = 0.046567;
+	static int numUser_forEntro;
 	
 	
 	int K;
@@ -609,9 +610,9 @@ public class CaseFinder {
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
 		if (entroIDorDist) {
-			locationEntropy = Tracker.readLocationEntropyIDbased(numUser, true);
+			locationEntropy = Tracker.readLocationEntropyIDbased(numUser_forEntro, true);
 		} else {
-			GPSEntropy = Tracker.readLocationEntropyGPSbased(numUser, false);
+			GPSEntropy = Tracker.readLocationEntropyGPSbased(numUser_forEntro, false);
 		}
 		
 		int aind = 0;
@@ -961,7 +962,7 @@ public class CaseFinder {
 		try {
 			User.findFrequentUsersTopK(numUser);
 			BufferedReader fin = new BufferedReader(new FileReader("data/topk_freqgt1-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u%d-c%.3f.txt", numUser, event_time_exp_para_c)));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-leu%d-c%.3f.txt", numUser_forEntro, event_time_exp_para_c)));
 			String l = null;
 			double[] locidm = null;
 			
@@ -1124,9 +1125,11 @@ public class CaseFinder {
 //		for (int i = 1; i < 11; i++ )
 //		CaseFinder.event_time_exp_para_c = 0.2;
 //		User.recSampleRate = 1;
-//		int[] userN = new int[] { 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000 };
-//		for (int i = 0; i < userN.length; i++)
+		int[] userN = new int[] { 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000 };
+		for (int i = 0; i < userN.length; i++) {
+			numUser_forEntro = userN[i];
 			writeOutDifferentMeasures(User.para_c, 5000);
+		}
 		
 		
 //		locationDistancePowerLaw(2241);
