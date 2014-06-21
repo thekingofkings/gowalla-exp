@@ -680,7 +680,7 @@ public class CaseFinder {
 		HashMap<Long, Double> locationEntropy = null;
 		HashMap<String, Double> GPSEntropy = null;
 		if (entroIDorDist) {
-			locationEntropy = Tracker.readLocationEntropyIDbased(numUser_forEntro, true);
+			locationEntropy = Tracker.readLocationEntropyIDbased(numUser_forEntro, false);
 		} else {
 			GPSEntropy = Tracker.readLocationEntropyGPSbased(numUser_forEntro, false);
 		}
@@ -1031,7 +1031,7 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			User.findFrequentUsersTopK(numUser);
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freq-5000.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("data/topk_freq-5000.txt"));
 			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-leu%d-c%.3f.txt", numUser_forEntro, event_time_exp_para_c)));
 			
 			String l = null;

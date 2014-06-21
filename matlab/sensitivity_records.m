@@ -1,5 +1,5 @@
 
-files = ls('../data_sensitivity/distance-d30-u5000-*');
+files = ls('../data_sensit_recs/distance-d30-u5000-*');
     
 figure();
 hold on;
@@ -13,10 +13,10 @@ colors = [ [0, 0, 0.8]; [0.3, 0.6, 0.9]; ...
     [143,188,143]/255; [0,128,128]/255];
 color_ind = 1;
 g = zeros(1, size(files,1));
-auc = zeros(size(files, 1)+1, 3);
+auc = zeros(size(files, 1)+1, 4);
 for ind = 1:size(files,1)
     
-    data = importdata(['../data_sensitivity/', files(ind,:)]);
+    data = importdata(['../data_sensit_recs/', files(ind,:)]);
     [~, i] = sort(data(:,6));
     data = data(i, :);  
 
@@ -51,6 +51,8 @@ for ind = 1:size(files,1)
     auc(ind+1,2) = trapz(rec, pre);
     [pre, rec, l(3)] = precisionRecallPlot( pbg, friflag, 'linestyle', '--', 'color', colors(color_ind,:) );
     auc(ind+1,3) = trapz(rec, pre);
+    [pre, rec, l(4)] = precisionRecallPlot( locen, friflag, 'linestyle', '--', 'color', colors(color_ind,:) );
+    auc(ind+1,4) = trapz(rec, pre);
     color_ind = color_ind + 1;
 
     g(ind) = hggroup;
@@ -67,8 +69,8 @@ end
         'Freq/PBG/PGT 80%', 'Freq/PBG/PGT 100%'}, 'location', 'northeast');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
-    print('sensitivity-recs.eps', '-dpsc');
-    system('epstopdf sensitivity-recs.eps');
+%     print('sensitivity-recs.eps', '-dpsc');
+%     system('epstopdf sensitivity-recs.eps');
 %     saveas(gcf, ['dist-wsum-d30-u5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 
@@ -76,8 +78,10 @@ end
 frequency = auc(:,1);
 pbg = auc(:,2);
 pbg_locen_td = auc(:,3);
+locenAUC = auc(:,4);
 x = 0:51.2:512.75;
 x = round(x);
+
 
 figure;
 hold on;
@@ -86,8 +90,13 @@ box on;
 plot(x, frequency, '-', 'color', [200, 0, 0] / 255, 'linewidth', 3);
 plot(x, pbg, '--', 'color', [0.3, 0.6, 0.9], 'linewidth', 3);
 plot(x, pbg_locen_td, '-.', 'color', [0, 100, 0] / 255, 'linewidth', 3);
-set(gca, 'linewidth', 2, 'fontsize', 18);
-xlabel('Average #check-ins', 'fontsize', 20);
+% plot(x, locenAUC, '-.', 'color', [100, 100, 0] / 255, 'linewidth', 3);
+set(gca, 'linewidth', 2, 'fontsize', 18, 'xtick', x(3:2:11), 'xticklabel',...
+    {'20%', '40%', '60%', '80%', '100%'});
+labX = x(3:2:11) - 20;
+labY = 0.03 * ones(size(labX));
+text(labX, labY, num2cell(x(3:2:11)), 'fontsize', 20);
+xlabel('Average #check-ins (sample rate)', 'fontsize', 20);
 ylabel('AUC', 'fontsize', 20);
 legend({'Frequency', 'Personal', 'Per+Glo+Tem'}, 'location', 'northwest');
 print('sensitivity-recs.eps', '-dpsc');

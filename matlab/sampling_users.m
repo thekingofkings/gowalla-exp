@@ -1,4 +1,13 @@
-files = ls('../data_sensitivity/*distance-d30-u*-c0.200.txt');
+files = ls('../data_sensit_user/distance-d30-leu*-c0.200 (3).txt');
+
+% sort the files by the number of users
+numUser = zeros(size(files,1), 1);
+for i = 1:size(files,1)
+    tmp = textscan(files(i,:), 'distance-d30-leu%d-c0.200.txt');
+    numUser(i) = tmp{1};
+end
+[~, ind] = sort(numUser, 'ascend');
+files = files(ind, :);
 
 figure();
 hold on;
@@ -8,7 +17,7 @@ styles = {'-.', '--', '-'};
 
 auc = zeros(size(files, 1), 3);
 for i = 1:size(files,1)
-    dml5 = importdata(['../data_sensitivity/', files(i,:)]);
+    dml5 = importdata(['../data_sensit_user/', files(i,:)]);
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
@@ -34,6 +43,7 @@ for i = 1:size(files,1)
 %     prec_rec( locf5, dl5, 'plotROC', 0, 'holdFigure', 1, 'style', 'c--');
     % My own precision-recall plot function    
 
+
     [pre, rec] = precisionRecallPlot( freq, frilabel, 'linestyle', styles{1}, 'color', [0+i * 0.1, 0.3, 0.3] );
     auc(i, 1) = trapz(rec, pre);
     
@@ -43,8 +53,7 @@ for i = 1:size(files,1)
     [pre, rec] = precisionRecallPlot( pbg_locen_td, frilabel, 'linestyle', styles{3}, 'color', [0+i * 0.1, 0.3, 0.3]);
     auc(i, 3) = trapz(rec, pre);
 
-%     title(num2str(condition));
-    
+    title(files(i,:));
 %     axis([0,1,0.5,1]);
 end
     
