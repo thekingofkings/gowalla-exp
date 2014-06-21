@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.TreeMap;
 
 
+
 public class CaseFinder {
 	public static double distance_threshold = 0.03;	 // in km 
 
@@ -170,15 +171,77 @@ public class CaseFinder {
 	}
 
 	
+	/**
+	 * Making a multithreaded boost
+	 */
+	
+	private class MeetingEventFinderMT implements Runnable {
+		// calculate the meeting event of user [lb, ub]
+		int startID;
+		int endID;
+		CaseFinder context;
+		boolean paras;
+		
+		public MeetingEventFinderMT(CaseFinder cf, int lb, int ub, boolean IDorDist) {
+			startID = lb;
+			endID = ub;
+			context = cf;
+			paras = IDorDist;
+		}
+
+		@Override
+		public void run() {
+			System.out.format("Thread starts with user range [%d,  %d]", startID, endID);
+			long t1 = System.currentTimeMillis();
+			context.allPairMeetingFreq(paras, startID, endID);
+			long t2 = System.currentTimeMillis();
+			System.out.format("Thread [%d, %d] finished in %d seconds. About to join%n", startID, endID, (t2-t1)/1000);
+		}
+	}
+
+	/**
+	 * Multithreading calculation for all pair meeting frequency
+	 * @param IDorDist	true -- ID / false -- distance
+	 * @param Nthds		Number of threads
+	 */
+	public void parallel_allPairMeetingFreq(boolean IDorDist, int Nthds) {
+		long t1 = System.currentTimeMillis();
+		LinkedList<Thread> thrds = new LinkedList<>();
+		int nblock = 0;
+		for (int i = 0; i < Nthds; i++)
+			nblock += i;
+		int blocksize = K / nblock + 1;
+		
+		int beginInd = 0;
+		for (int i = 0; i < Nthds; i++) {
+			Thread t = new Thread(new MeetingEventFinderMT(this, beginInd, Math.min(K, blocksize * i + beginInd), IDorDist));
+			t.start();
+			thrds.add(t);
+			beginInd += blocksize * i;
+		}
+		
+		for (Thread t : thrds)
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				System.out.println("Thread is interrupted");
+				e.printStackTrace();
+			}
+		long t2 = System.currentTimeMillis();
+		System.out.format("parallel_allPairMeetingFreq finished in %d seconds.%n", (t2-t1)/1000);
+	}
+	
+	
+	
 	
 	/**
 	 * Calculate the meeting frequency of each user pair
 	 * For the non-friends pair, we will focus on their meeting frequency
 	 */
-	public void allPairMeetingFreq() {
+	public void allPairMeetingFreq(boolean IDorDist, int startID, int endID) {
 		long t_start = System.currentTimeMillis();
 		System.out.println("allPairMeetingFreq starts");
-		for (int i = 0; i < K; i++) {
+		for (int i = startID; i < endID; i++) {
 			for (int j = i+1; j < K; j++) {
 				User ua = User.allUserSet.get(topKUser.get(i));
 				User ub = User.allUserSet.get(topKUser.get(j));
@@ -197,7 +260,14 @@ public class CaseFinder {
 						aind++;
 						continue;
 					} else {
-						if (ra.locID == rb.locID ) {
+						// judge the meeting event by different criteria
+						boolean isMeeting = false;
+						if (IDorDist) {
+							isMeeting = (ra.locID == rb.locID);
+						} else {
+							isMeeting = (ra.distanceTo(rb) < CaseFinder.distance_threshold);
+						}
+						if (isMeeting ) {
 							int first = (i <= j) ? i : j;
 							int second = (i > j) ? i : j;
 							if (meetFreq.containsKey(first)) {
@@ -219,7 +289,7 @@ public class CaseFinder {
 			}
 			
 			// monitor the process
-			System.out.println(String.format("Process - allPairMeetingFreq finished %d out of %d", i, K));
+//			System.out.println(String.format("Process - allPairMeetingFreq. User %d finished; totoal: %d", i, K));
 		}
 		long t_end = System.currentTimeMillis();
 		System.out.println(String.format("Finish in %d seconds", (t_end - t_start)/1000));
@@ -232,7 +302,7 @@ public class CaseFinder {
 	 */
 	public void writeTopKFreq() {
 		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_freq.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter("data/topk_freq.txt"));
 			for (int i : meetFreq.keySet()) {
 				for (int j : meetFreq.get(i).keySet()) {
 					// write out id_1, id_2, meeting frequency, distance
@@ -641,7 +711,7 @@ public class CaseFinder {
 					isMeeting = (ra.distanceTo(rb) < CaseFinder.distance_threshold);
 				}
 				
-				if ( isMeeting && ra.timestamp - lastMeet >= 3600) {
+				if ( isMeeting ) {
 					freq ++;
 					double prob = 0;
 					/** different methods to calculate rho **/
@@ -960,7 +1030,7 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			User.findFrequentUsersTopK(numUser);
-			BufferedReader fin = new BufferedReader(new FileReader("data/topk_freqgt1-5000.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader("topk_freq.txt"));
 			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u%d-c%.3f.txt", numUser, event_time_exp_para_c)));
 			String l = null;
 			double[] locidm = null;
@@ -1085,7 +1155,7 @@ public class CaseFinder {
 	public static void main(String argv[]) {
 //		CaseFinder cf = new CaseFinder(107092);
 //		cf.locationDistancePowerLaw();
-//		cf.allPairMeetingFreq();
+//		cf.parallel_allPairMeetingFreq(false, 36);
 //		cf.writeTopKFreq();
 		
 //		cf.remoteFriends();
@@ -1126,7 +1196,7 @@ public class CaseFinder {
 //		User.recSampleRate = 1;
 //		int[] userN = new int[] { 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000 };
 //		for (int i = 0; i < userN.length; i++)
-			writeOutDifferentMeasures(User.para_c, 5000);
+			writeOutDifferentMeasures(User.para_c, 107092);
 		
 		
 //		locationDistancePowerLaw(2241);
