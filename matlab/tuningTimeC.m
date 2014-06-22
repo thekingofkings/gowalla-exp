@@ -1,4 +1,4 @@
-flist = ls('../data_tunningTC/distance-d30-u5000c*-101s.txt');
+flist = ls('../data_tunningTC/distance-d30-u5000-tc*.txt');
 fn = size(flist,1);
 figure();
 hold on;
@@ -7,15 +7,15 @@ para_c = zeros(fn, 1);
 precisions = zeros(fn, 3);
 
 for c = 1:fn
-    para_c(c) = sscanf(flist(c,:), 'distance-d30-u5000c%f-101s.txt');
+    para_c(c) = sscanf(flist(c,:), 'distance-d30-u5000-tc%f.txt');
     dml5 = importdata(['../data_tunningTC/', flist(c,:)]);
     dml5 = dml5(dml5(:,6) > 1, :);
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
-    locm5 = dml5(:,5);
+    locm5 = dml5(:,7);
     locf5 = dml5(:,6);
-    dl5 = dml5(:,7);
+    dl5 = dml5(:,9);
 
     precisions(c,:) =  precisionRecallPlot( locm5, dl5 );
 end
@@ -36,7 +36,7 @@ end
     ylabel('Precision', 'fontsize', 20);
     set(gca, 'linewidth', 2, 'fontsize', 18, 'xtick', [0.01, 0.1, 1, 10, 100], ...
         'linewidth', 2, 'xscale', 'log');
-    legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'southwest');
+    legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'best');
     set(gcf, 'PaperUnits', 'inches');
     print(['turnTimeC.eps'], '-dpsc');
     system(['epstopdf turnTimeC.eps']);

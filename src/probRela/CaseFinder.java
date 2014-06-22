@@ -17,6 +17,7 @@ import java.util.TreeMap;
 
 public class CaseFinder {
 	public static double distance_threshold = 0.03;	 // in km 
+	public static double temporal_threshold = 4;	// in hour
 
 	static double event_time_exp_para_c = 0.2;	// 0.5 is better than 1, when pairwise
 	static double event_space_exp_para_c = 1.5;	// bad choice 0.1, 10, 1.5
@@ -256,10 +257,10 @@ public class CaseFinder {
 					Record rb = ub.records.get(bind);
 
 					// 1. count the meeting frequency
-					if (ra.timestamp - rb.timestamp > 4 * 3600) {
+					if (ra.timestamp - rb.timestamp > temporal_threshold * 3600) {
 						bind++;
 						continue;
-					} else if (rb.timestamp - ra.timestamp > 4 * 3600) {
+					} else if (rb.timestamp - ra.timestamp > temporal_threshold * 3600) {
 						aind++;
 						continue;
 					} else {
@@ -305,7 +306,7 @@ public class CaseFinder {
 	 */
 	public void writeTopKFreq() {
 		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter("data/topk_freq.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/topk_freq-t%.2f-d%.2f.txt", temporal_threshold, distance_threshold)));
 			for (int i : meetFreq.keySet()) {
 				for (int j : meetFreq.get(i).keySet()) {
 					// write out id_1, id_2, meeting frequency, distance
@@ -504,10 +505,10 @@ public class CaseFinder {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
 			
-			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+			if (ra.timestamp - rb.timestamp > 3600 * temporal_threshold) {
 				bind ++;
 				continue;
-			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+			} else if (rb.timestamp - ra.timestamp > 3600 * temporal_threshold ) {
 				aind ++;
 				continue;
 			} else {
@@ -569,10 +570,10 @@ public class CaseFinder {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
 			
-			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+			if (ra.timestamp - rb.timestamp > 3600 * temporal_threshold) {
 				bind ++;
 				continue;
-			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+			} else if (rb.timestamp - ra.timestamp > 3600 * temporal_threshold ) {
 				aind ++;
 				continue;
 			} else {
@@ -605,10 +606,10 @@ public class CaseFinder {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
 			
-			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+			if (ra.timestamp - rb.timestamp > 3600 * temporal_threshold) {
 				bind ++;
 				continue;
-			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+			} else if (rb.timestamp - ra.timestamp > 3600 * temporal_threshold ) {
 				aind ++;
 				continue;
 			} else {
@@ -699,10 +700,10 @@ public class CaseFinder {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
 			
-			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+			if (ra.timestamp - rb.timestamp > 3600 * temporal_threshold) {
 				bind ++;
 				continue;
-			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+			} else if (rb.timestamp - ra.timestamp > 3600 * temporal_threshold ) {
 				aind ++;
 				continue;
 			} else {
@@ -897,10 +898,10 @@ public class CaseFinder {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
 			
-			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+			if (ra.timestamp - rb.timestamp > 3600 * temporal_threshold) {
 				bind ++;
 				continue;
-			} else if (rb.timestamp - ra.timestamp > 3600 * 4 ) {
+			} else if (rb.timestamp - ra.timestamp > 3600 * temporal_threshold ) {
 				aind ++;
 				continue;
 			} else {
@@ -1028,13 +1029,13 @@ public class CaseFinder {
 	/**
 	 * Calculate the distance based measure for all the top user pairs
 	 */
-	public static void writeOutDifferentMeasures(double para_c, int numUser) {
+	public static void writeOutDifferentMeasures(double para_c, int numUser, String finName, String foutName) {
 		System.out.println("==========================================\nStart writeOutDifferentMeasures");
 		long t_start = System.currentTimeMillis();
 		try {
 			User.findFrequentUsersTopK(numUser);
-			BufferedReader fin = new BufferedReader(new FileReader(String.format("data/topk_freq-%d.txt", numUser)));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u%d-us%.2f.txt", numUser, User.recSampleRate)));
+			BufferedReader fin = new BufferedReader(new FileReader(finName));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(foutName));
 			
 			String l = null;
 			double[] locidm = null;
@@ -1068,6 +1069,13 @@ public class CaseFinder {
 	}
 	
 	
+	public static void writeOutDifferentMeasures(double para_c, int numUser) {
+		String fin = String.format("data/topk_freq-%d.txt", numUser);
+		String fout = String.format("data/distance-d30-u%d-c%.2f.txt", numUser, event_time_exp_para_c);
+		writeOutDifferentMeasures(para_c, numUser, fin, fout);
+	}
+	
+	
 	/**
 	 * Calculate the weight for each meeting event
 	 * @param ua	user a
@@ -1085,10 +1093,10 @@ public class CaseFinder {
 			Record ra = ua.records.get(aind);
 			Record rb = ub.records.get(bind);
 			
-			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+			if (ra.timestamp - rb.timestamp > 3600 * temporal_threshold) {
 				bind ++;
 				continue;
-			} else if (rb.timestamp - ra.timestamp > 3600 * 4) {
+			} else if (rb.timestamp - ra.timestamp > 3600 * temporal_threshold) {
 				aind ++;
 				continue;
 			} else {
@@ -1157,8 +1165,10 @@ public class CaseFinder {
 	
 	
 	public static void main(String argv[]) {
-//		CaseFinder cf = new CaseFinder(107092);
+//		CaseFinder cf = new CaseFinder(5000);
 //		cf.locationDistancePowerLaw();
+//		temporal_threshold = 8;		// in hour
+//		distance_threshold = 0.2;	// in km
 //		cf.parallel_allPairMeetingFreq(false, 36);
 //		cf.writeTopKFreq();
 		
@@ -1199,8 +1209,9 @@ public class CaseFinder {
 //		CaseFinder.event_time_exp_para_c = 0.2;
 //		User.recSampleRate = 1;
 
-		sensitivity_numChecksPerUser();
-//		writeOutDifferentMeasures(User.para_c, 5000);
+//		tuning_TimeC();
+		writeOutDifferentMeasures(User.para_c, 5000);
+//		tuning_meetingEvent_TemporalThreshold();
 		
 //		locationDistancePowerLaw(2241);
 	}
@@ -1226,10 +1237,47 @@ public class CaseFinder {
 	static void sensitivity_numChecksPerUser() {
 		for (int i = 10; i <= 10; i++) {
 			User.recSampleRate = 0.1 * i;
-			numUser_forEntro = 5000;
+			// numUser_forEntro = 5000;   the default setting
 			writeOutDifferentMeasures(User.para_c, 5000);
 		}
 	}
 
+	
+	static void tuning_TimeC() {
+		double[] varyC = new double[] { 0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 3, 10 };
+		for (int i = 0; i < varyC.length; i++ ) {
+			event_time_exp_para_c = varyC[i];
+			// numUser_forEntro = 5000;   the default setting
+			writeOutDifferentMeasures(User.para_c, 5000);
+		}
+	}
+	
+	
+	static void tuning_meetingEvent_DistThreshold() {
+		temporal_threshold = 4;		// in hour
+		// numUser_forEntro = 5000;   the default setting
+		int numUser = 5000;
+		double[] dists = new double[] {0.001, 0.01, 0.02, 0.03, 0.05, 0.1, 0.15, 0.2};
+		for (int i = 0; i < 1; i++) {
+			distance_threshold = dists[i];	// in km
+			String meetingPairs = "data/topk_freq-t8.00-d0.20.txt";
+			String foutName = String.format("data/meDelta-u%d-d%.3f-t%.2f.txt", numUser, distance_threshold, temporal_threshold);
+			writeOutDifferentMeasures(User.para_c, numUser, meetingPairs, foutName);
+		}
+	}
+	
+	
+	static void tuning_meetingEvent_TemporalThreshold() {
+		distance_threshold = 0.03;		// in hour
+		// numUser_forEntro = 5000;   the default setting
+		int numUser = 5000;
+		double[] dists = new double[] {0.5, 1, 8};  // 1.5, 2, 3, 4, 5, 6, 7
+		for (int i = 0; i < dists.length; i++) {
+			temporal_threshold = dists[i];	// in km
+			String meetingPairs = "data/topk_freq-t8.00-d0.20.txt";
+			String foutName = String.format("data/meTau-u%d-d%.2f-t%.2f.txt", numUser, distance_threshold, temporal_threshold);
+			writeOutDifferentMeasures(User.para_c, numUser, meetingPairs, foutName);
+		}
+	}
 
 }

@@ -2,6 +2,7 @@ package probRela;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -148,12 +149,11 @@ public class Tracker {
 	/**
 	 * write out the possible co-locations for each pair
 	 */
-	@SuppressWarnings("unused")
-	private static void writeOutPairColocations() {
+	private static void writeOutPairColocations( int numUser ) {
 		System.out.println("Start writeOutPairColocations.");
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader("topk_freqgt1-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter("topk_colocations-5000.txt"));
+			BufferedReader fin = new BufferedReader(new FileReader(String.format("data/topk_freq-%d.txt", numUser)));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/topk_colocations-%d.txt", numUser)));
 			String l = null;
 			while ( (l=fin.readLine()) != null ) {
 				String[] ls = l.split("\\s+");
@@ -222,10 +222,10 @@ public class Tracker {
 			if (sum > 1)
 				if (sum != coloc.size()) {
 					c1 ++;
-					avg_freq2 += sum;
+					avg_freq1 += sum;
 				} else {
 					c2 ++;
-					avg_freq1 += sum;
+					avg_freq2 += sum;
 				}
 			renyiDiversity.add(divs);
 		}
@@ -258,15 +258,15 @@ public class Tracker {
 			Record rb = rbs.get(bind);
 			
 			// count the frequency
-			if (ra.timestamp - rb.timestamp > 3600 * 4) {
+			if (ra.timestamp - rb.timestamp > 3600 * CaseFinder.temporal_threshold) {
 				bind ++;
 				continue;
-			} else if (rb.timestamp - ra.timestamp > 3600 * 4) {
+			} else if (rb.timestamp - ra.timestamp > 3600 * CaseFinder.temporal_threshold) {
 				aind ++;
 				continue;
 			} else {
 //				if (ra.locID == rb.locID && ra.timestamp  - last_Meet >= 3600) {
-				if (ra.distanceTo(rb) < CaseFinder.distance_threshold && ra.timestamp - last_Meet >= 3600 ) {
+				if (ra.distanceTo(rb) < CaseFinder.distance_threshold && ra.timestamp - last_Meet > 3600 ) {
 					if (loc_cnts.containsKey(ra.locID)) {
 						int f = loc_cnts.get(ra.locID);
 						loc_cnts.put(ra.locID, f+1);
@@ -297,10 +297,13 @@ public class Tracker {
 	 */
 	private static void initialTopKPair(int topk) {
 		System.out.println("Start initialTopKPair.");
+		BufferedReader fin, fin2;
+		String userList = String.format("data/topk_freq-%d.txt", topk);
+		String colocationList = String.format("data/topk_colocations-%d.txt", topk);
 		try {
-			BufferedReader fin = new BufferedReader(new FileReader(String.format("topk_freqgt1-%d.txt", topk)));
+			fin = new BufferedReader(new FileReader(userList));
 			String l = null;
-			BufferedReader fin2 = new BufferedReader(new FileReader(String.format("topk_colocations-%d.txt", topk)));
+			fin2 = new BufferedReader(new FileReader(colocationList));
 			String l2 = null;
 			int c1 = 0;
 			int c2 = 0;
@@ -331,7 +334,19 @@ public class Tracker {
 			}
 			fin.close();
 			fin2.close();
-		} catch (Exception e) {
+		} catch (FileNotFoundException e) {
+			File ulf = new File(userList);
+			if (!ulf.isFile()) {
+				// user list file does not exist
+				System.out.format("File %s does not exist.", userList);
+			}
+			File clf = new File(colocationList);
+			if (!clf.isFile()) {	
+				// co-location files does not exist
+				System.out.format("File %s does not exist. Generate a new one ...%n", colocationList);
+				writeOutPairColocations(topk);
+			}
+		}catch (Exception e) {
 			e.printStackTrace();
 		}
 		System.out.println("Process initialTopKPair ends.");
@@ -351,7 +366,7 @@ public class Tracker {
 		 * After we factor out the location entropy calculation, 
 		 * now the execution time in HP is 4s.
 		 */
-		locationEntropy = readLocationEntropyIDbased(5000, true);
+		locationEntropy = readLocationEntropyIDbased(5000, false);
 		for (int i = 0; i < FrequentPair.size(); i++) {
 			int uaid = FrequentPair.get(i)[0];
 			int ubid = FrequentPair.get(i)[1];
@@ -366,10 +381,15 @@ public class Tracker {
 					frequen += f;
 				frequency.add(frequen);
 				
+				
+				
 				// 2. calculate location entropy
 				for (long locid : coloc.keySet()) {
+					double lce = 0;
+					if (locationEntropy.containsKey(locid))
+						lce = locationEntropy.get(locid);
 					// the locationEntropy should contain this locid Key, otherwise we should use 0 as its entropy
-					weightedFrequency += coloc.get(locid) * Math.exp(- locationEntropy.get(locid));
+					weightedFrequency += coloc.get(locid) * Math.exp(- lce);
 				}
 				weightedFreq.add(weightedFrequency);
 //			}
@@ -386,12 +406,12 @@ public class Tracker {
 
 	
 	
-	private static void writePairMeasure() {
+	private static void writePairMeasure(int numUser) {
 		System.out.println("Start writePairMeasure");
 		System.out.println(String.format("%d %d %d %d", renyiDiversity.size(), weightedFreq.size(), frequency.size(), FrequentPair.size()));
 		long t_start = System.currentTimeMillis();
 		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter("sigmod13.txt"));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("sigmod13-u%d.txt", numUser)));
 			for (int i = 0; i < FrequentPair.size(); i++) {
 				int uaid = FrequentPair.get(i)[0];
 				int ubid = FrequentPair.get(i)[1];
@@ -1343,11 +1363,12 @@ public class Tracker {
 	
 	public static void evaluateSIGMOD() {
 		// initialize top users
-		initializeUsers(5000);
-		initialTopKPair(5000);
+		int numU = 5000;
+		initializeUsers(numU);
+		initialTopKPair(numU);
 		RenyiEntropyDiversity();
 		weightedFrequency();
-		writePairMeasure();
+		writePairMeasure(numU);
 
 	}
 

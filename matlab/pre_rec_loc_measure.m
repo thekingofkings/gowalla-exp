@@ -1,8 +1,8 @@
 
-dml6 = importdata('../data/distance-d30-u5000-c0.200.txt');
+dml6 = importdata('../data_sensit_user/distance-d30-leu5000-c0.200.txt');
 % dml6 = importdata('../data_sample_user/distance-d30-u5000-c0.200.txt');
     
-for condition = 0:3;
+for condition = 0;
     dml6 = dml6(dml6(:,6) > condition, :);
     [~, ind] = sort(dml6(:,8), 'descend');
     dml6 = dml6(ind, :);  
@@ -57,8 +57,8 @@ for condition = 0:3;
     legend({'Frequency', 'Personal', 'Global', 'Temp Depen', 'Per+Glo', 'Per+Glo+Tem'}, 'location', 'southwest');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
-    print(['pr-', num2str(condition), 'c5000u.eps'], '-dpsc');
-    system(['epstopdf pr-', num2str(condition), 'c5000u.eps']);
+%     print(['pr-', num2str(condition), 'c5000u.eps'], '-dpsc');
+%     system(['epstopdf pr-', num2str(condition), 'c5000u.eps']);
 
 %     print(['pr-',num2str(condition),'.jpg'], '-djpeg', '-r40');
 %     saveas(gcf, ['dist-wsum-d30-u5000fgt',num2str(condition),'.png']);
