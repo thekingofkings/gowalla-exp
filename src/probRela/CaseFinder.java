@@ -1224,7 +1224,7 @@ public class CaseFinder {
 	 * Randomly sample certain portion of the check-ins of top 5000 users.
 	 */
 	static void sensitivity_numChecksPerUser() {
-		for (int i = 0; i <= 10; i++) {
+		for (int i = 10; i <= 10; i++) {
 			User.recSampleRate = 0.1 * i;
 			numUser_forEntro = 5000;
 			writeOutDifferentMeasures(User.para_c, 5000);

@@ -37,9 +37,9 @@ for ind = 1:size(files,1)
 
     pbg_locen = data(:,3);
     locen = data(:,4);
-    pbg_locen_td = data(:,5);
+    pbg = data(:,5);
     freq = data(:,6);
-    pbg = data(:,7);
+    pbg_locen_td = data(:,7);
     td = data(:,8);
     friflag = data(:,9);
 
@@ -60,9 +60,9 @@ for ind = 1:size(files,1)
 %     precisionRecallPlot( locen, friflag, 'linestyle', '--', 'color', [0, 0.75, 0] );
 %     precisionRecallPlot( td, friflag, 'linestyle', '--', 'color', [255, 215, 0] / 255 );
     
-    [pre, rec, l(2)] = precisionRecallPlot( pbg_locen, friflag, 'linestyle', ':', 'color', colors(color_ind,:) );
+    [pre, rec, l(2)] = precisionRecallPlot( pbg, friflag, 'linestyle', ':', 'color', colors(color_ind,:) );
     auc(ind+1,2) = trapz(rec, pre);
-    [pre, rec, l(3)] = precisionRecallPlot( pbg, friflag, 'linestyle', '--', 'color', colors(color_ind,:) );
+    [pre, rec, l(3)] = precisionRecallPlot( pbg_locen_td, friflag, 'linestyle', '--', 'color', colors(color_ind,:) );
     auc(ind+1,3) = trapz(rec, pre);
     [pre, rec, l(4)] = precisionRecallPlot( locen, friflag, 'linestyle', '--', 'color', colors(color_ind,:) );
     auc(ind+1,4) = trapz(rec, pre);
