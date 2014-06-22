@@ -14,9 +14,9 @@ auc = zeros(size(files,1), 7);
     
 figure();
 hold on;
-for i = 2
-%     data = importdata(['../data_sample_user/', files(i,:)]);
-    data = importdata('../data_sensit_recs/distance-d30-u5000-us1.00.txt');
+for i = 1:size(files,1)
+    data = importdata(['../data_sample_user/', files(i,:)]);
+    
     pbg_locen = data(:,3);
     locen = data(:,4);
     pbg = data(:,5);
