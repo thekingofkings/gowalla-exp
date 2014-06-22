@@ -14,7 +14,7 @@ numUser = 5000
 dist_all_fn = 'distance-d30-u107092-c0.200.txt'
 dist_out_fn = 'distance-d30-u{0}-c0.200.txt'.format(numUser)
 
-topk_freq_all_fn = 'topk_freq_all.txt'
+topk_freq_all_fn = 'topk_freq-107092gt1.txt'
 topk_freq_out_fn = 'topk_freq-{0}.txt'.format(numUser)
 
 users = set()

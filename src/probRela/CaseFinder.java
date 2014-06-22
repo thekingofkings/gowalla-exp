@@ -22,7 +22,7 @@ public class CaseFinder {
 	static double event_space_exp_para_c = 1.5;	// bad choice 0.1, 10, 1.5
 	static double alpha = 0.0011284;
 	static double beta = 0.046567;
-	static int numUser_forEntro;
+	static int numUser_forEntro = 5000;
 	
 	
 	int K;
@@ -238,6 +238,8 @@ public class CaseFinder {
 	/**
 	 * Calculate the meeting frequency of each user pair
 	 * For the non-friends pair, we will focus on their meeting frequency
+	 * 
+	 * @param IDorDist -- true ID / false distance 30m
 	 */
 	public void allPairMeetingFreq(boolean IDorDist, int startID, int endID) {
 		long t_start = System.currentTimeMillis();
@@ -712,7 +714,7 @@ public class CaseFinder {
 					isMeeting = (ra.distanceTo(rb) < CaseFinder.distance_threshold);
 				}
 				
-				if ( isMeeting ) {
+				if ( isMeeting && (ra.timestamp - lastMeet > 3600) ) {
 					freq ++;
 					double prob = 0;
 					/** different methods to calculate rho **/
@@ -1031,8 +1033,8 @@ public class CaseFinder {
 		long t_start = System.currentTimeMillis();
 		try {
 			User.findFrequentUsersTopK(numUser);
-			BufferedReader fin = new BufferedReader(new FileReader("data/topk_freq-5000.txt"));
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-leu%d-c%.3f.txt", numUser_forEntro, event_time_exp_para_c)));
+			BufferedReader fin = new BufferedReader(new FileReader(String.format("data/topk_freq-%d.txt", numUser)));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/distance-d30-u%d-us%.2f.txt", numUser, User.recSampleRate)));
 			
 			String l = null;
 			double[] locidm = null;
@@ -1197,14 +1199,36 @@ public class CaseFinder {
 //		CaseFinder.event_time_exp_para_c = 0.2;
 //		User.recSampleRate = 1;
 
-		int[] userN = new int[] { 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000 };
+		sensitivity_numChecksPerUser();
+//		writeOutDifferentMeasures(User.para_c, 5000);
+		
+//		locationDistancePowerLaw(2241);
+	}
+	
+	
+	/**
+	 * We randomly sample K users for location entropy estimation.
+	 * The simulaiton is done on top 5000 users.
+	 * 
+	 * Remember to change the parameter of readLocationEntroyIDbased into false, therefore we do random sampling.
+	 */
+	static void sensitivity_numUser_sampleLocationEntro() {
+		int[] userN = new int[] { 100, 500, 1000, 2000, 3000, 4000, 5000, 10000, 20000};
 		for (int i = 0; i < userN.length; i++) {
 			numUser_forEntro = userN[i];
 			writeOutDifferentMeasures(User.para_c, 5000);
 		}
+	}
 	
-		
-//		locationDistancePowerLaw(2241);
+	/**
+	 * Randomly sample certain portion of the check-ins of top 5000 users.
+	 */
+	static void sensitivity_numChecksPerUser() {
+		for (int i = 0; i <= 10; i++) {
+			User.recSampleRate = 0.1 * i;
+			numUser_forEntro = 5000;
+			writeOutDifferentMeasures(User.para_c, 5000);
+		}
 	}
 
 

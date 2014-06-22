@@ -1,4 +1,4 @@
-files = ls('../data_sensit_user/distance-d30-leu*-c0.200 (3).txt');
+files = ls('../data_sensit_user/distance-d30-leu*-c0.200.txt');
 
 % sort the files by the number of users
 numUser = zeros(size(files,1), 1);
@@ -76,7 +76,7 @@ end
 frequency = auc(:,1);
 locen = auc(:,2);
 pbg_locen_td = auc(:,3);
-x = [100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000];
+x = [100, 500, 1000, 2000, 3000, 4000, 5000, 10000, 20000];
 
 figure;
 hold on;

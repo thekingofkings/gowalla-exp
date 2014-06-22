@@ -1,6 +1,18 @@
 
-files = ls('../data_sensit_recs/distance-d30-u5000-*');
+files = ls('../data_sensit_recs/distance-d30-u5000-us*.txt');
     
+
+% sort the files by the number of users
+numUser = zeros(size(files,1), 1);
+for i = 1:size(files,1)
+    tmp = textscan(files(i,:), 'distance-d30-u5000-us%f.txt');
+    numUser(i) = tmp{1};
+end
+[~, ind] = sort(numUser, 'ascend');
+files = files(ind, :);
+
+
+
 figure();
 hold on;
 box on;
@@ -17,6 +29,7 @@ auc = zeros(size(files, 1)+1, 4);
 for ind = 1:size(files,1)
     
     data = importdata(['../data_sensit_recs/', files(ind,:)]);
+    data = data(data(:,6)>0,:);
     [~, i] = sort(data(:,6));
     data = data(i, :);  
 
@@ -98,6 +111,6 @@ labY = 0.03 * ones(size(labX));
 text(labX, labY, num2cell(x(3:2:11)), 'fontsize', 20);
 xlabel('Average #check-ins (sample rate)', 'fontsize', 20);
 ylabel('AUC', 'fontsize', 20);
-legend({'Frequency', 'Personal', 'Per+Glo+Tem'}, 'location', 'northwest');
+legend({'Frequency', 'Personal', 'Per+Glo+Tem'}, 'location', [0.6, 0.3, 0.1, 0.1]);
 print('sensitivity-recs.eps', '-dpsc');
 system('epstopdf sensitivity-recs.eps');

@@ -154,7 +154,9 @@ public class User {
 	 * Calculate the active user from all users.
 	 */
 	public static void findFrequentUsersTopK( int k ) {
+		System.out.format("Initiate %d user again.%n", k);
 		frequentUserSet.clear();
+		allUserSet.clear();
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader("../../dataset/Gowalla/userCount.txt"));
 			String l = null;

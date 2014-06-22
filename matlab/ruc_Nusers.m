@@ -1,8 +1,8 @@
-files = ls('../data_sample_user/distance-*');
+files = ls('../data_sample_user/distance-d30-u*-c0.200 (2).txt');
 
 numUser = zeros(size(files,1), 1);
 for i = 1:size(files,1)
-    tmp = textscan(files(i,:), 'distance-d30-u%d-c0.200.txt');
+    tmp = textscan(files(i,:), 'distance-d30-u%d-c0.200 (2).txt');
     numUser(i) = tmp{1};
 end
 
@@ -47,7 +47,7 @@ f = figure;
 bar(auc, 1);
 xlabel('# Users', 'fontsize', 20);
 ylabel('AUC', 'fontsize', 20);
-axis([0, 5, 0, 0.8]);
+axis([0, 5, 0, 0.9]);
 set(gca, 'linewidth', 2, 'fontsize', 18, 'xticklabel', {1000,  5000,  50000, '107092(all)'});
 legend({'Random Guess', 'Frequency', 'Personal', 'Global', 'Temp Depen', 'Per+Glo', 'Per+Glo+Tem'}, ...
     'location', 'northeast', 'fontsize', 16);
