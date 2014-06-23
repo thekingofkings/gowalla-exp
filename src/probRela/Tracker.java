@@ -411,7 +411,7 @@ public class Tracker {
 		System.out.println(String.format("%d %d %d %d", renyiDiversity.size(), weightedFreq.size(), frequency.size(), FrequentPair.size()));
 		long t_start = System.currentTimeMillis();
 		try {
-			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("sigmod13-u%d.txt", numUser)));
+			BufferedWriter fout = new BufferedWriter(new FileWriter(String.format("data/sigmod13-u%d.txt", numUser)));
 			for (int i = 0; i < FrequentPair.size(); i++) {
 				int uaid = FrequentPair.get(i)[0];
 				int ubid = FrequentPair.get(i)[1];
@@ -956,7 +956,7 @@ public class Tracker {
 			for (Record r1 : raco.get(loc_id)) {
 				for (Record r2 : rbco.get(loc_id)) {
 					// We identify the colocating event with a 4-hour time window
-					if (r1.timestamp - r2.timestamp <= 3600 * 4)
+					if (r1.timestamp - r2.timestamp <= 3600 * CaseFinder.temporal_threshold)
 						interest += - Math.log( (double) raco.get(loc_id).size() / ra.size()) 
 							- Math.log( (double) rbco.get(loc_id).size() / rb.size() );
 				}
@@ -1364,6 +1364,7 @@ public class Tracker {
 	public static void evaluateSIGMOD() {
 		// initialize top users
 		int numU = 5000;
+		CaseFinder.temporal_threshold = 1;
 		initializeUsers(numU);
 		initialTopKPair(numU);
 		RenyiEntropyDiversity();

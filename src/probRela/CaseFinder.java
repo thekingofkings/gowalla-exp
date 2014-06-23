@@ -15,6 +15,7 @@ import java.util.TreeMap;
 
 
 
+
 public class CaseFinder {
 	public static double distance_threshold = 0.03;	 // in km 
 	public static double temporal_threshold = 4;	// in hour
@@ -1209,8 +1210,9 @@ public class CaseFinder {
 //		CaseFinder.event_time_exp_para_c = 0.2;
 //		User.recSampleRate = 1;
 
+		sampleTotalUsers();
 //		tuning_TimeC();
-		writeOutDifferentMeasures(User.para_c, 5000);
+//		writeOutDifferentMeasures(User.para_c, 5000);
 //		tuning_meetingEvent_TemporalThreshold();
 		
 //		locationDistancePowerLaw(2241);
@@ -1244,11 +1246,31 @@ public class CaseFinder {
 
 	
 	static void tuning_TimeC() {
+		temporal_threshold = 1;
+		distance_threshold = 0.03;
+		int numUser = 5000;
+		// numUser_forEntro = 5000;   the default setting
 		double[] varyC = new double[] { 0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 3, 10 };
 		for (int i = 0; i < varyC.length; i++ ) {
 			event_time_exp_para_c = varyC[i];
-			// numUser_forEntro = 5000;   the default setting
-			writeOutDifferentMeasures(User.para_c, 5000);
+			String finN = "data/topk_freq-5000.txt";
+			String foutN = String.format("data/tuneTC-u%d-t%.3f-c%.3f.txt", numUser, temporal_threshold, event_time_exp_para_c);
+			writeOutDifferentMeasures(User.para_c, numUser, finN, foutN);
+		}
+	}
+	
+	
+	static void tuning_DistC() {
+		temporal_threshold = 1;
+		distance_threshold = 0.03;
+		int numUser = 5000;
+		// numUser_forEntro = 5000;   the default setting
+		double[] varyC = new double[] { 0.01, 0.1, 0.5, 1, 1.5, 2, 3, 5, 10, 50 , 100};
+		for (int i = 0; i < varyC.length; i++ ) {
+			User.para_c = varyC[i];
+			String finN = "data/topk_freq-5000.txt";
+			String foutN = String.format("data/tuneDC-u%d-t%.3f-c%.3f.txt", numUser, temporal_threshold, User.para_c);
+			writeOutDifferentMeasures(User.para_c, numUser, finN, foutN);
 		}
 	}
 	
@@ -1280,4 +1302,19 @@ public class CaseFinder {
 		}
 	}
 
+	
+	/**
+	 * Sample total users
+	 */
+	static void sampleTotalUsers() {
+		temporal_threshold = 1;
+		distance_threshold = 0.03;
+		int[] numUsers = new int[] {1000, 5000, 15000, 107092};
+		
+		String finN = "data/topk_freq-107092gt1.txt";
+		for (int i = 3; i < numUsers.length; i++) {
+			String foutN = String.format("data/stu-u%d.txt", numUsers[i]);
+			writeOutDifferentMeasures(User.para_c, numUsers[i], finN, foutN);
+		}
+	}
 }

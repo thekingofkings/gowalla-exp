@@ -14,7 +14,7 @@ for c = 1:fn
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
-    locm5 = dml5(:,6);
+    locm5 = dml5(:,7);
     freq = dml5(:,6);
     avg_freq(c) = mean(freq);
   
@@ -41,5 +41,6 @@ end
     set(gca, 'linewidth', 2, 'fontsize', 18, 'linewidth', 2);
     legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'best');
     set(gcf, 'PaperUnits', 'inches');
-    print('meeting-distThreshold.eps', '-dpsc');
-    system('epstopdf meeting-distThreshold.eps');
+%     print('meeting-distThreshold.eps', '-dpsc');
+%     system('epstopdf meeting-distThreshold.eps');
+    saveas( gcf, 'meeting-distThreshold.jpg');

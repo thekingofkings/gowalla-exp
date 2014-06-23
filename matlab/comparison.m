@@ -4,7 +4,7 @@ alpha = 0.6;
 beta = 0.4;
 % load sigmod results
 % ua, ub, co-location entropy, weighted frequency, frequency, friend label
-sigmod = importdata('../data/sigmod13-u5000.txt');
+sigmod = importdata('../data/sigmod13-u5000-1hour.txt');
 sigmod = sigmod(sigmod(:,5) > condition,:); % meeting frequency > condition
 sigmod_diversity = sigmod(:,3);
 sigmod_weightFreq = sigmod(:,4);
@@ -29,7 +29,7 @@ sigmod_label = sigmod(:,6);
 % load our results
 % ua, ub, combination, weighted frequency, personal, 
 % frequency, frind label
-we = importdata('../data_sample_user/distance-d30-u5000-c0.200 (2).txt');
+we = importdata('../data_tunningTC/tuneTC-u5000-t1.000-c0.200.txt');
 we = we(we(:,6) > condition, :);    % meeting frequency > condition
 we_score = we(:,7);
 we_label = we(:,9);
@@ -59,10 +59,10 @@ set(gca, 'linewidth', 2, 'fontsize', 20);
 xlabel('Recall', 'fontsize', 20);
 ylabel('Precision', 'fontsize', 20);
 legend({'Meeting Frequency', 'Weighted Frequency', 'Location Diversity', ...
-    'EBM', 'Our Method'}, 'location', 'northeast');
-print('compare.eps', '-dpsc');
-system('epstopdf compare.eps');
-
+    'EBM', 'Our Method'}, 'location', 'southwest');
+% print('compare.eps', '-dpsc');
+% system('epstopdf compare.eps');
+saveas(gcf, 'compare.png');
 
 
 

@@ -1,5 +1,7 @@
-flist = ls('../data_tunningTC/distance-d30-u5000-tc*.txt');
+flist = ls('../data_tunningTC/tuneTC-u5000-t1.000-c*.txt');
 fn = size(flist,1);
+freq_condition = 1;
+
 figure();
 hold on;
 
@@ -7,9 +9,9 @@ para_c = zeros(fn, 1);
 precisions = zeros(fn, 3);
 
 for c = 1:fn
-    para_c(c) = sscanf(flist(c,:), 'distance-d30-u5000-tc%f.txt');
+    para_c(c) = sscanf(flist(c,:), 'tuneTC-u5000-t1.000-c%f.txt');
     dml5 = importdata(['../data_tunningTC/', flist(c,:)]);
-    dml5 = dml5(dml5(:,6) > 1, :);
+    dml5 = dml5(dml5(:,6) > freq_condition, :);
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
@@ -38,5 +40,6 @@ end
         'linewidth', 2, 'xscale', 'log');
     legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'best');
     set(gcf, 'PaperUnits', 'inches');
-    print(['turnTimeC.eps'], '-dpsc');
-    system(['epstopdf turnTimeC.eps']);
+%     print('tuneTimeC.eps', '-dpsc');
+%     system('epstopdf tuneTimeC.eps');
+    saveas(gcf, 'tuneTimeC.jpg');

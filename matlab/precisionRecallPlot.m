@@ -1,4 +1,4 @@
-function [precT, reclT, line] = precisionRecallPlot( score, label, varargin )
+function [precT, reclT, line, prec, recl] = precisionRecallPlot( score, label, varargin )
 
     [prec, recl] = precisionRecall( score, label );
     if nargin > 2
