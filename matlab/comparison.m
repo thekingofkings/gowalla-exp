@@ -1,10 +1,22 @@
 condition = 0;
+tau = 1;
+
+if tau == 1
+% use 1 hour results
+    sigmod = importdata('../data/sigmod13-u5000-1hour.txt');
+    we = importdata('../data_tunningTC/tuneTC-u5000-t1.000-c0.200.txt');
+elseif tau == 4
+% use 4 hour results
+    sigmod = importdata('../data/sigmod13-u5000.txt');
+    we = importdata('../data_tunningTC/distance-d30-u5000-tc0.20.txt');
+end
+
 
 alpha = 0.6;
 beta = 0.4;
 % load sigmod results
 % ua, ub, co-location entropy, weighted frequency, frequency, friend label
-sigmod = importdata('../data/sigmod13-u5000-1hour.txt');
+
 sigmod = sigmod(sigmod(:,5) > condition,:); % meeting frequency > condition
 sigmod_diversity = sigmod(:,3);
 sigmod_weightFreq = sigmod(:,4);
@@ -29,7 +41,6 @@ sigmod_label = sigmod(:,6);
 % load our results
 % ua, ub, combination, weighted frequency, personal, 
 % frequency, frind label
-we = importdata('../data_tunningTC/tuneTC-u5000-t1.000-c0.200.txt');
 we = we(we(:,6) > condition, :);    % meeting frequency > condition
 we_score = we(:,7);
 we_label = we(:,9);
@@ -39,7 +50,7 @@ hold on;
 box on;
 grid on;
 set(0, 'defaultlinelinewidth', 3');
-precisionRecallPlot(sigmod_freq, sigmod_label, 'linestyle', '-.', 'color',  [0, 0, 0.8]);
+precisionRecallPlot(sigmod_freq, sigmod_label, 'linestyle', '-', 'color',  [0, 0, 0.8]);
 
 % precisionRecallPlot(we(:,4), we_label, 'y--');
 precisionRecallPlot(sigmod_weightFreq, sigmod_label, 'color', [0, 0.5, 0], ...
@@ -60,9 +71,9 @@ xlabel('Recall', 'fontsize', 20);
 ylabel('Precision', 'fontsize', 20);
 legend({'Meeting Frequency', 'Weighted Frequency', 'Location Diversity', ...
     'EBM', 'Our Method'}, 'location', 'southwest');
-% print('compare.eps', '-dpsc');
-% system('epstopdf compare.eps');
-saveas(gcf, 'compare.png');
+print('compare.eps', '-dpsc');
+system('epstopdf compare.eps');
+% saveas(gcf, 'compare.png');
 
 
 

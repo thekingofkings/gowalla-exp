@@ -61,8 +61,9 @@ plotBarStackGroups(stackedGroup, {'Freq=2', 'Freq=5', 'Freq=10'});
 box on;
 % xlabel('Time between adjacent meeting (day)', 'fontsize', 20);
 % ylabel('Count', 'fontsize', 20);
-axis([0,4, 0, 1.5])
-set(gca, 'linewidth', 2, 'fontsize', 18);
-legend({'meeting gap <1 day', 'meeting gap 1-10 days', 'meeting gap >10 days'}, 'location', 'north', 'fontsize', 16);
+axis([0,4, 0, 1.4])
+set(gca, 'linewidth', 3, 'fontsize', 20);
+legend({'Meeting time gap <1 day', 'Meeting time gap 1-10 days', ...
+    'Meeting time gap >10 days'}, 'location', 'north', 'fontsize', 20);
 print('gw-dtHist.eps', '-dpsc');
 system('epstopdf gw-dtHist.eps');

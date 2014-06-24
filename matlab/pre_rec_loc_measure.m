@@ -1,8 +1,14 @@
+tau = 1;
 
-dml6 = importdata('../data_tunningDC/tuneDC-u5000-t1.000-c1.500.txt');
-% dml6 = importdata('../data_sample_user/distance-d30-u5000-c0.200.txt');
+if tau == 1
+    % use 1 hour results
+    dml6 = importdata('../data_tunningDC/tuneDC-u5000-t1.000-c1.500.txt');
+elseif tau == 4
+    % use 4 hour results
+    dml6 = importdata('../data_tunningTC/distance-d30-u5000-tc0.20.txt');
+end
     
-for condition = 0:3;
+for condition = 0;
     dml6 = dml6(dml6(:,6) > condition, :);
     [~, ind] = sort(dml6(:,8), 'descend');
     dml6 = dml6(ind, :);  
@@ -53,14 +59,14 @@ for condition = 0:3;
     xlabel('Recall', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);
     axis([0,1,0,1]);
-    set(gca, 'linewidth', 2, 'fontsize', 18);
-    legend({'Frequency', 'Personal', 'Global', 'Temp Depen', 'Per+Glo', 'Per+Glo+Tem'}, 'location', 'southwest');
+    set(gca, 'linewidth', 3, 'fontsize', 20);
+    legend({'Frequency', 'Personal', 'Global', 'Temporal', 'Per+Glo', ...
+        'Per+Glo+Temp'}, 'location', 'northeast');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
-%     print(['pr-', num2str(condition), 'c5000u.eps'], '-dpsc');
-%     system(['epstopdf pr-', num2str(condition), 'c5000u.eps']);
-
-%     print(['pr-',num2str(condition),'.jpg'], '-djpeg', '-r40');
-    saveas(gcf, ['pr-',num2str(condition),'.png']);
+    print(['pr-', num2str(condition), 'c5000u.eps'], '-dpsc');
+    system(['epstopdf pr-', num2str(condition), 'c5000u.eps']);
+%     saveas(gcf, ['pr-',num2str(condition),'.png']);
+    
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
 end

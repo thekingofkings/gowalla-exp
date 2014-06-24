@@ -4,6 +4,9 @@ color = char('r--', 'g--', 'b--', 'k--', 'y-', 'g-', 'c-', 'm-', 'r-', 'g:', 'b-
 
 flist = ls('../data_tunningDC/tuneDC-u5000-t1.000-c*.txt');
 fn = size(flist,1);
+freq_condition = 1;
+
+
 figure();
 hold on;
 
@@ -13,7 +16,7 @@ precisions = zeros(fn, 3);
 for c = 1:fn
     para_c(c) = sscanf(flist(c,:), 'tuneDC-u5000-t1.000-c%f.txt');
     dml5 = importdata(['../data_tunningDC/', flist(c,:)]);
-    dml5 = dml5(dml5(:,6) > 0, :);
+    dml5 = dml5(dml5(:,6) > freq_condition, :);
     [~, ind] = sort(dml5(:,6));
     dml5 = dml5(ind, :);
 
@@ -33,15 +36,15 @@ end
     plot(para_c, precisions(:,3), 'v--', 'color', [0.3, 0.7, 0.3]);
     box on;
     grid on;
-%     axis([0,1,0.5,1]);
+    axis([0,100,0.1,1.01]);
     hline = findobj(gcf, 'type', 'line');
     set(hline, 'linewidth', 3, 'markersize', 14);
     xlabel('Distance Parameter $C_d$', 'interpreter', 'latex', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);
-    set(gca, 'linewidth', 2, 'fontsize', 18, 'xtick', [0.01, 0.1, 1, 10, 100], ...
-        'linewidth', 2, 'xscale', 'log');
-    legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'northwest');
+    set(gca, 'linewidth', 3, 'fontsize', 20, 'xtick', [0.01, 0.1, 1, 10, 100], ...
+        'xscale', 'log');
+    legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'southeast');
     set(gcf, 'PaperUnits', 'inches');
-%     print('turnDistC.eps', '-dpsc');
-%     system('epstopdf turnDistC.eps');
-    saveas(gcf, 'tuneDistC.jpg');
+    print('tuneDistC.eps', '-dpsc');
+    system('epstopdf tuneDistC.eps');
+%     saveas(gcf, 'tuneDistC.jpg');

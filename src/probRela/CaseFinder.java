@@ -769,7 +769,7 @@ public class CaseFinder {
 		double pbg_lcen_td = 0;
 		
 		double min_prob = Double.MAX_VALUE;
-		double measure_sum = 0;
+		double pbg_sum = 0;
 		double avg_entro = 0;
 		double avg_le = 0;
 		double avg_pbg = 0;
@@ -778,12 +778,15 @@ public class CaseFinder {
 			if ( min_prob > m )
 				min_prob = m;
 		
+		for (double m : mw_pbg) {
+			pbg_sum += m;
+		}
+		
 		// calculate personal background
 		if (weightMethod == "min") {
 			personBg =  - Math.log10(min_prob) * probs.size();
 		} else if (weightMethod == "sum") {
-			for (double m : mw_pbg)
-				personBg += m;
+			personBg = pbg_sum;
 		}
 
 		// calculate location entropy
@@ -797,10 +800,8 @@ public class CaseFinder {
 			for (double m : entros)
 				avg_entro += m;
 			avg_entro /= entros.size();
-			for (double m : mw_pbg) {
-				measure_sum += m;
-			}
-			avg_pbg = measure_sum / mw_pbg.size();
+			
+			avg_pbg = pbg_sum / mw_pbg.size();
 			if (combMethod == "min") {
 				pbg_lcen = - Math.log10(min_prob) * loc_entro;
 			} else if (combMethod == "prod") {
@@ -819,6 +820,7 @@ public class CaseFinder {
 			if (meetingEvent.size() == 1) {
 				pbg_lcen = mw_pbg_le.get(0);
 				temp_dep = 1;
+				avg_pbg = personBg;
 				pbg_lcen_td = pbg_lcen;
 			} else if (meetingEvent.size() > 1) {
 				for (int i = 0; i < meetingEvent.size(); i++) {
@@ -866,7 +868,7 @@ public class CaseFinder {
 		rt[2] = pbg_lcen;
 		rt[3] = loc_entro;
 		rt[4] = pbg_lcen_td;
-		rt[5] = temp_dep;
+		rt[5] = temp_dep; 	//	pbg_sum;
 		
 		return rt;
 	}
@@ -974,22 +976,31 @@ public class CaseFinder {
 		
 		// aggregate the measure
 		// location entropy
-		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropyIDbased(5000);
+		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropyIDbased(5000, false);
 		double M = Double.MAX_VALUE;
-		double entro = 0;
-		for (double[] a : coloEnt) {
-			if ( M > a[0] * a[1]) 
-				M = a[0] * a[1];
-//			System.out.println(locationEntropy.get((long) a[4]));
-			entro += Math.exp(- locationEntropy.get((long) a[4]));
-		}
-		double minMeasure = - Math.log10(M) * coloEnt.size();
+		double location_factor = 0;
 		
 		//  calculate the temporal correlation
 		double minTC = 0;
 		double td = 0;
 		for (int i = 0; i < coloEnt.size(); i++) {
 			double[] a = coloEnt.get(i);
+			
+			// find the minimum rho
+			if ( M > a[0] * a[1] )
+				M = a[0] * a[1];
+			
+			// get the location entropy
+			long locID = (long) a[4];
+			double locen = 0;
+			if (locationEntropy.containsKey(locID))
+				locen = Math.exp(- locationEntropy.get((long) a[4]));
+			else
+				locen = 1;
+			location_factor += locen;
+			
+			
+			// calculate the temporal measure
 			double[] b = null;
 			double w = 1;
 			if (i != 0) {
@@ -1000,8 +1011,11 @@ public class CaseFinder {
 			}
 			td += w;
 			a[9] = w;
-			minTC += w * (- Math.log10(M)) / (coloEnt.size() - 1);
+			minTC += w * locen;	// we multiply the personal background later
 		}
+
+		double minMeasure = - Math.log10(M) * coloEnt.size();
+		minTC *= - Math.log10(M);
 		
 		
 
@@ -1015,7 +1029,7 @@ public class CaseFinder {
 				System.out.println(String.format("%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t\t%g\t%g\t%9$tF %9$tT\t\t%10$tF %10$tT", a[0], a[1], a[2], 
 						a[3], a[4], a[5], a[6], a[9], cal1, cal2));
 			}
-			System.out.println(String.format("User pair %d and %d has min personal measure %g, global measure %g, overall measure %g, temporal dep %g", uaid, ubid, minMeasure, entro, minTC, td));
+			System.out.println(String.format("User pair %d and %d has min personal measure %g, global measure %g, overall measure %g, temporal dep %g", uaid, ubid, minMeasure, location_factor, minTC, td));
 		}
 		double[] rt = {minMeasure, (double) coloEnt.size()};
 		return rt;
@@ -1196,8 +1210,8 @@ public class CaseFinder {
 //		}
 //		
 		
-
-//		distanceBasedSumLogMeasure(776   ,       535,true);
+		CaseFinder.temporal_threshold = 1;
+		distanceBasedSumLogMeasure(6248, 4609, true);
 //		distanceBasedSumLogMeasure(350 , 6138 ,true);
 //		distanceBasedSumLogMeasure(39746, 39584, true);
 		
@@ -1210,12 +1224,21 @@ public class CaseFinder {
 //		CaseFinder.event_time_exp_para_c = 0.2;
 //		User.recSampleRate = 1;
 
-		sampleTotalUsers();
+//		CDFofDifferentMeasure();
+//		sensitivity_numUser_sampleLocationEntro();
 //		tuning_TimeC();
 //		writeOutDifferentMeasures(User.para_c, 5000);
 //		tuning_meetingEvent_TemporalThreshold();
 		
 //		locationDistancePowerLaw(2241);
+	}
+	
+	static void CDFofDifferentMeasure() {
+		CaseFinder.temporal_threshold = 1;
+		int numUser = 5000;
+		String finN = String.format("data/topk_freq-%d.txt", numUser);
+		String fout = String.format("data/CDF-measures-t%d.txt", numUser);
+		writeOutDifferentMeasures(User.para_c, numUser, finN, fout);	// we modify the output of PAIRWISE.. function
 	}
 	
 	
@@ -1226,10 +1249,14 @@ public class CaseFinder {
 	 * Remember to change the parameter of readLocationEntroyIDbased into false, therefore we do random sampling.
 	 */
 	static void sensitivity_numUser_sampleLocationEntro() {
-		int[] userN = new int[] { 100, 500, 1000, 2000, 3000, 4000, 5000, 10000, 20000};
+		CaseFinder.temporal_threshold = 1;
+		int numUser = 5000;
+		String finN = String.format("data/topk_freq-%d.txt", numUser);
+		int[] userN = new int[] { 100, 500, 5000};
 		for (int i = 0; i < userN.length; i++) {
 			numUser_forEntro = userN[i];
-			writeOutDifferentMeasures(User.para_c, 5000);
+			String foutN = String.format("data/sle-u%d.txt", numUser_forEntro);
+			writeOutDifferentMeasures(User.para_c, numUser, finN, foutN);
 		}
 	}
 	
@@ -1237,10 +1264,14 @@ public class CaseFinder {
 	 * Randomly sample certain portion of the check-ins of top 5000 users.
 	 */
 	static void sensitivity_numChecksPerUser() {
-		for (int i = 10; i <= 10; i++) {
+		CaseFinder.temporal_threshold = 1;
+		int numUser = 5000;
+		String finN = String.format("data/topk_freq-%d.txt", numUser);
+		for (int i = 1; i <= 10; i++) {
 			User.recSampleRate = 0.1 * i;
+			String foutN = String.format("data/sc-%.2f.txt", User.recSampleRate);
 			// numUser_forEntro = 5000;   the default setting
-			writeOutDifferentMeasures(User.para_c, 5000);
+			writeOutDifferentMeasures(User.para_c, numUser, finN, foutN);
 		}
 	}
 

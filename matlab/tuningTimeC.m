@@ -1,4 +1,11 @@
-flist = ls('../data_tunningTC/tuneTC-u5000-t1.000-c*.txt');
+tau = 1;
+
+if tau == 1
+    flist = ls('../data_tunningTC/tuneTC-u5000-t1.000-c*.txt');
+elseif tau == 4
+    flist = ls('../data_tunningTC/distance-d30-u5000-tc*.txt');
+end
+
 fn = size(flist,1);
 freq_condition = 1;
 
@@ -31,15 +38,15 @@ end
     plot(para_c, precisions(:,3), 'v--', 'color', [0.3, 0.7, 0.3]);
     box on;
     grid on;
-%     axis([0,1,0.5,1]);
+    axis([0,10,0.5,1]);
     hline = findobj(gcf, 'type', 'line');
     set(hline, 'linewidth', 3, 'markersize', 14);
     xlabel('Temporal Parameter $C_t$', 'fontsize', 20, 'interpreter' ,'latex');
     ylabel('Precision', 'fontsize', 20);
-    set(gca, 'linewidth', 2, 'fontsize', 18, 'xtick', [0.01, 0.1, 1, 10, 100], ...
-        'linewidth', 2, 'xscale', 'log');
-    legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'best');
+    set(gca, 'linewidth', 3, 'fontsize', 20, 'xtick', [0.01, 0.1, 1, 10, 100], ...
+        'xscale', 'log');
+    legend({'Recall 0.3', 'Recall 0.5', 'Recall 0.7'}, 'location', 'southeast');
     set(gcf, 'PaperUnits', 'inches');
-%     print('tuneTimeC.eps', '-dpsc');
-%     system('epstopdf tuneTimeC.eps');
-    saveas(gcf, 'tuneTimeC.jpg');
+    print('tuneTimeC.eps', '-dpsc');
+    system('epstopdf tuneTimeC.eps');
+%     saveas(gcf, 'tuneTimeC.jpg');

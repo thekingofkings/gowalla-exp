@@ -1,4 +1,15 @@
-files = ls('../data_sample_user/stu-u*.txt');
+tau = 1;
+
+if tau == 1
+    % use 1 hour results
+    files = ls('../data_sample_user/stu-u*.txt');
+elseif tau == 4
+    % use 4 hour results
+    files = ls('../data_sample_user/distance-d30-u*-c0.200 (2).txt');
+end
+
+
+
 
 numUser = zeros(size(files,1), 1);
 for i = 1:size(files,1)
@@ -48,10 +59,10 @@ f = figure;
 bar(auc, 1);
 xlabel('# Users', 'fontsize', 20);
 ylabel('AUC', 'fontsize', 20);
-axis([0, 5, 0, 1.2]);
-set(gca, 'linewidth', 2, 'fontsize', 18, 'xticklabel', {1000,  5000,  50000, '107092(all)'});
-legend({'Random Guess', 'Frequency', 'Personal', 'Global', 'Temp Depen', 'Per+Glo', 'Per+Glo+Tem'}, ...
-    'location', 'northeast', 'fontsize', 16);
-% print('GWruc-nusers.eps', '-dpsc');
-% system('epstopdf GWruc-nusers.eps');
-saveas(gcf, 'GWruc-nusers.png');
+axis([0, 5, 0, 1.3]);
+set(gca, 'linewidth', 3, 'fontsize', 20, 'xticklabel', {1000,  5000,  50000, '107092(all)'});
+legend({'Random Guess', 'Frequency', 'Personal', 'Global', 'Temporal', 'Per+Glo', 'Per+Glo+Temp'}, ...
+    'location', 'northeast', 'fontsize', 20);
+print('GWruc-nusers.eps', '-dpsc');
+system('epstopdf GWruc-nusers.eps');
+% saveas(gcf, 'GWruc-nusers.png');

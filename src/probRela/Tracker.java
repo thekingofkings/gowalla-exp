@@ -192,42 +192,48 @@ public class Tracker {
 		long t_start = System.currentTimeMillis();
 		int c1 = 0, c2 = 0;
 		double avg_freq1 = 0, avg_freq2 = 0;
-		for (int i = 0; i < FrequentPair.size(); i++) {
-			int uaid = FrequentPair.get(i)[0];
-			int ubid = FrequentPair.get(i)[1];
-			// 1. calculate the number of co-occurrence on each co-locating places
-			HashMap<Long, Integer> coloc = coLocationFreq (uaid, ubid);
-			
-			int sum = 0;
-			for (int f : coloc.values()) {
-				sum += f;
-			}
-
-			// 2. calculate the probability of co-occurrence
-			double[] prob = new double[coloc.size()];
-			int ind = 0;
-			for (int f : coloc.values()) {
-				prob[ind] = (double) f / sum;
-				ind ++;
-			}
-			
-			// 3. calculate the Renyi Entropy (q = 0.1)
-			double renyiEntropy = 0;
-			for (int j = 0; j < coloc.size(); j++) {
-				renyiEntropy += Math.pow(prob[j], 0.1);
-			}
-			renyiEntropy = Math.log(renyiEntropy) / 0.9;
-			// 4. calculate diversity
-			double divs = Math.exp(renyiEntropy);
-			if (sum > 1)
-				if (sum != coloc.size()) {
-					c1 ++;
-					avg_freq1 += sum;
-				} else {
-					c2 ++;
-					avg_freq2 += sum;
+		
+		try (BufferedWriter fout = new BufferedWriter(new FileWriter("data/colocation-diversity"))) {
+			for (int i = 0; i < FrequentPair.size(); i++) {
+				int uaid = FrequentPair.get(i)[0];
+				int ubid = FrequentPair.get(i)[1];
+				// 1. calculate the number of co-occurrence on each co-locating places
+				HashMap<Long, Integer> coloc = coLocationFreq (uaid, ubid);
+				
+				int sum = 0;
+				for (int f : coloc.values()) {
+					sum += f;
 				}
-			renyiDiversity.add(divs);
+	
+				// 2. calculate the probability of co-occurrence
+				double[] prob = new double[coloc.size()];
+				int ind = 0;
+				for (int f : coloc.values()) {
+					prob[ind] = (double) f / sum;
+					ind ++;
+				}
+				
+				// 3. calculate the Renyi Entropy (q = 0.1)
+				double renyiEntropy = 0;
+				for (int j = 0; j < coloc.size(); j++) {
+					renyiEntropy += Math.pow(prob[j], 0.1);
+				}
+				renyiEntropy = Math.log(renyiEntropy) / 0.9;
+				// 4. calculate diversity
+				double divs = Math.exp(renyiEntropy);
+				if (sum > 1)
+					if (sum != coloc.size()) {
+						c1 ++;
+						avg_freq1 += sum;
+					} else {
+						c2 ++;
+						avg_freq2 += sum;
+					}
+				fout.write(String.format("%d\t%d\t%d%n", sum, coloc.size(), FrequentPair.get(i)[2]));
+				renyiDiversity.add(divs);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		System.out.println(String.format("uniform: %d pair, %g\t non-unif %d pairs, %g", c2, avg_freq2 / (double)c2, c1, avg_freq1 / (double) c1));
 		long t_end = System.currentTimeMillis();
@@ -1358,7 +1364,11 @@ public class Tracker {
 //		for (int i = 1; i < 10; i += 1)
 //			writeLocationEntropy(5000, true, 2);
 		
-		evaluateSIGMOD();
+//		evaluateSIGMOD();
+		int usrCnt = 5000;
+		initializeUsers(usrCnt);
+		initialTopKPair(usrCnt);
+		RenyiEntropyDiversity();
 	}
 	
 	public static void evaluateSIGMOD() {

@@ -1,12 +1,18 @@
-files = ls('../data_sensit_user/distance-d30-leu*-c0.200.txt');
+tau = 1;
+
+if tau == 1
+    files = ls('../data_sensit_user/sle-*.txt');
+elseif tau == 4
+    files = ls('../data_sensit_user/distance-d30-leu*-c0.200.txt');
+end
 
 % sort the files by the number of users
 numUser = zeros(size(files,1), 1);
 for i = 1:size(files,1)
-    tmp = textscan(files(i,:), 'distance-d30-leu%d-c0.200.txt');
+    tmp = textscan(files(i,:), 'sle-u%f.txt');
     numUser(i) = tmp{1};
 end
-[~, ind] = sort(numUser, 'ascend');
+[~, ind] = sort(numUser, 'descend');
 files = files(ind, :);
 
 figure();
@@ -51,8 +57,8 @@ end
 
     xlabel('Recall', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);
-    set(gca, 'linewidth', 2, 'fontsize', 18);
-    legend({'5000 users', '500 users','100 users', 'Frequency'}, 'location', 'best');
+    set(gca, 'linewidth', 3, 'fontsize', 20);
+    legend({'5000 users', '500 users','100 users', 'Frequency'}, 'location', 'northeast');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
     print(['sampleEntro.eps'], '-dpsc');
