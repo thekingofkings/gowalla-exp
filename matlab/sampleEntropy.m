@@ -20,7 +20,7 @@ hold on;
 box on;
 grid on;
 styles = {'-.', '--', '-'};
-colors = {[0,191,255]/255, [50,205,50]/ 255, [0,100,0]/255};
+colors = {[220,20,60]/255, [144,238,144]/ 255, [0,0,139]/255};
 
 for i = 1:size(files,1)
     dml5 = importdata(['../data_sensit_user/', files(i,:)]);
@@ -50,10 +50,10 @@ for i = 1:size(files,1)
     precisionRecallPlot( locen, frilabel, 'linestyle', styles{i}, 'color', colors{i} );
  
 end
-
-    precisionRecallPlot( freq, frilabel, 'linestyle', ':', 'color', 'blue', 'linewidth', 5);   
+   
     hline = findobj(gcf, 'type', 'line');
     set(hline, 'linewidth', 3);
+    precisionRecallPlot( freq, frilabel, 'linestyle', ':', 'color', [0,100,0]/255, 'linewidth', 5);
 
     xlabel('Recall', 'fontsize', 20);
     ylabel('Precision', 'fontsize', 20);

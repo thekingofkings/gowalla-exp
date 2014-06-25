@@ -16,8 +16,8 @@ box on;
 grid on;
 xlabel('Rank of user', 'fontsize', 20);
 ylabel('#check-ins', 'fontsize', 20);
-set(gca, 'fontsize', 20, 'linewidth', 3, 'xticklabel', {0, 20000, 40000, 60000, 80000, 100000});
-axis([0,110000, 0, 2500]);
+set(gca, 'fontsize', 20, 'linewidth', 3, 'xticklabel', {0, 20000, 40000, 60000, 80000, 100000, 120000});
+% axis([0,110000, 0, 2500]);
 legend({'Ranked number of check-ins'}, 'location', 'northeast', ...
     'fontsize', 20);
 

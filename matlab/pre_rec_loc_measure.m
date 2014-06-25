@@ -45,7 +45,7 @@ for condition = 0;
     precisionRecallPlot( freq, friflag, 'linestyle', '-', 'color', [0, 0, 0.8] );
     precisionRecallPlot( pbg, friflag, 'r--' );
     precisionRecallPlot( locen, friflag, 'linestyle', '--', 'color', [0, 0.75, 0] );
-    precisionRecallPlot( td, friflag, 'linestyle', '--', 'color', [255, 215, 0] / 255 );
+    precisionRecallPlot( td, friflag, 'linestyle', '--', 'color', [255,165,0] / 255 );
     precisionRecallPlot( pbg_locen, friflag, 'linestyle', '-.', 'color', [0.3, 0.6, 0.9] );
     precisionRecallPlot( pbg_locen_td, friflag, 'linestyle', '-', 'color', [0.5, 0.4, 0.9] );
 

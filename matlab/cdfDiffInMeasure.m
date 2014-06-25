@@ -43,6 +43,12 @@ box on;
 grid on;
 l1 = cdfplot(fri_g2(:,1));
 l2 = cdfplot(nonfri_g2(:,1));
+x = [18.5, 18.50];
+y = [0.40, 0.95];
+plot(x, y, 'd', 'markersize', 9, 'linewidth', 3, 'color', [0.3, 0.9, 0.3]);
+text(x(1), y(1), '18.50, 40%', 'fontsize', 20);
+text(x(2), y(2), '18.50, 95%', 'fontsize', 20);
+
 set(l1, 'color', 'blue', 'linestyle', '-');
 set(l2, 'color', 'red', 'linestyle', '--');
 
@@ -74,6 +80,11 @@ l1 = cdfplot(fri_g3(:,1));
 l2 = cdfplot(nonfri_g3(:,1));
 set(l1, 'color', 'blue', 'linestyle', '-');
 set(l2, 'color', 'red', 'linestyle', '--');
+x = [5.0, 5];
+y = [0.20, 0.81];
+plot(x, y, 'd', 'markersize', 9, 'linewidth', 3, 'color', [0.3, 0.9, 0.3]);
+text(x(1), y(1), '5.00, 20%', 'fontsize', 20);
+text(x(2), y(2), '5.00, 81%', 'fontsize', 20);
 
 hline = findobj(gcf, 'type', 'line');
 set(hline, 'linewidth', 3);
@@ -84,7 +95,7 @@ ylabel('CDF', 'fontsize', 20);
 xlabel('$G_3(E_{ij})/|E_{ij}|$', 'fontsize', 24, 'interpreter', 'latex');
 set(gca,'xscale', 'log',  'fontsize', 20, 'linewidth', 3 ) %, ...
     %'xtick', [10^-3, 10^-2, 10^-1, 10^0, 10^1]);
-legend( {'Friend', 'Non-friend'}, 'location', 'southeast');
+legend( {'Friend', 'Non-friend'}, 'location', 'east');
 set(gcf,'PaperUnits', 'inches');
 print('g2.eps', '-dpsc');
 system('epstopdf g2.eps');
@@ -104,6 +115,11 @@ l1 = cdfplot(fri_g(:,1));
 l2 = cdfplot(nonfri_g(:,1));
 set(l1, 'color', 'blue', 'linestyle', '-');
 set(l2, 'color', 'red', 'linestyle', '--');
+x = [2.98, 2.98];
+y = [0.18, 0.90];
+plot(x, y, 'd', 'markersize', 9, 'linewidth', 3, 'color', [0.3, 0.9, 0.3]);
+text(x(1), y(1), '2.98, 18%', 'fontsize', 20);
+text(x(2), y(2), '2.98, 90%', 'fontsize', 20);
 
 hline = findobj(gcf, 'type', 'line');
 set(hline, 'linewidth', 3);
@@ -113,7 +129,7 @@ ylabel('CDF', 'fontsize', 20);
 xlabel('$G(E_{ij})/|E_{ij}|$', 'fontsize', 24, 'interpreter', 'latex');
 set(gca,  'fontsize', 20, 'linewidth', 3, 'xscale', 'log') %, ...
  %'xtick', [10^-3, 10^-2, 10^-1, 10^0, 10^1]);
-legend( {'Friend', 'Non-friend'}, 'location', 'southeast');
+legend( {'Friend', 'Non-friend'}, 'location', 'east');
 print('g3.eps', '-dpsc');
 system('epstopdf g3.eps');
 

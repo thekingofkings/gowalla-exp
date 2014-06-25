@@ -976,7 +976,7 @@ public class CaseFinder {
 		
 		// aggregate the measure
 		// location entropy
-		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropyIDbased(5000, false);
+		HashMap<Long, Double> locationEntropy = Tracker.readLocationEntropyIDbased(5000, true);
 		double M = Double.MAX_VALUE;
 		double location_factor = 0;
 		
@@ -1210,10 +1210,10 @@ public class CaseFinder {
 //		}
 //		
 		
-		CaseFinder.temporal_threshold = 1;
-		distanceBasedSumLogMeasure(6248, 4609, true);
-//		distanceBasedSumLogMeasure(350 , 6138 ,true);
-//		distanceBasedSumLogMeasure(39746, 39584, true);
+		CaseFinder.temporal_threshold = 4;
+		distanceBasedSumLogMeasure(267, 510, true);
+		distanceBasedSumLogMeasure(350 , 6138 ,true);
+		distanceBasedSumLogMeasure(39746, 39584, true);
 		
 //		for (int i = 0; i < 10; i++) {
 //			User.para_c = 10 + i * 10;

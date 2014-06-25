@@ -59,10 +59,11 @@ f = figure;
 bar(auc, 1);
 xlabel('# Users', 'fontsize', 20);
 ylabel('AUC', 'fontsize', 20);
-axis([0, 5, 0, 1.3]);
-set(gca, 'linewidth', 3, 'fontsize', 20, 'xticklabel', {1000,  5000,  50000, '107092(all)'});
+axis([0, 5, 0, 1.1]);
+set(gca, 'linewidth', 3, 'fontsize', 20, 'xticklabel', {1000,  5000,  50000, '107092(all)'},...
+    'yticklabel', {0:0.2:1, ''});
 legend({'Random Guess', 'Frequency', 'Personal', 'Global', 'Temporal', 'Per+Glo', 'Per+Glo+Temp'}, ...
-    'location', 'northeast', 'fontsize', 20);
+    'location', 'northeast', 'fontsize', 16);
 print('GWruc-nusers.eps', '-dpsc');
 system('epstopdf GWruc-nusers.eps');
 % saveas(gcf, 'GWruc-nusers.png');

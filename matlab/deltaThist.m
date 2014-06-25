@@ -62,8 +62,9 @@ box on;
 % xlabel('Time between adjacent meeting (day)', 'fontsize', 20);
 % ylabel('Count', 'fontsize', 20);
 axis([0,4, 0, 1.4])
-set(gca, 'linewidth', 3, 'fontsize', 20);
+text(2.45, 1.05, 'Friend  Nonfriend', 'fontsize', 20);
+set(gca, 'linewidth', 3, 'fontsize', 20, 'yticklabel', {0:0.2:1, ''});
 legend({'Meeting time gap <1 day', 'Meeting time gap 1-10 days', ...
-    'Meeting time gap >10 days'}, 'location', 'north', 'fontsize', 20);
+    'Meeting time gap >10 days'}, 'location', 'northwest', 'fontsize', 20);
 print('gw-dtHist.eps', '-dpsc');
 system('epstopdf gw-dtHist.eps');
