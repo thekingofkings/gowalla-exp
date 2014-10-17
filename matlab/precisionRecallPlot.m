@@ -1,6 +1,18 @@
-function [precT, reclT, line, prec, recl] = precisionRecallPlot( score, label, varargin )
+function [precT, reclT, line, prec, recl, cutof] = precisionRecallPlot( score, label, varargin )
+% precisionRecallPlot plot the precision-recall curve
+% Input:
+%   score -- the ranking measure
+%   label -- friendship label 0/1
+%   varargin -- other arguments controlling the plot
+% Output:
+%   precT -- precision values on given query 
+%   reclT -- given values of recall as the query
+%   line  -- the line object of plot
+%   prec  -- the precision used for plotting
+%   recl  -- the recall used for plotting
+%   cutof -- the cutoff score for the recall-precision calculation
 
-    [prec, recl] = precisionRecall( score, label );
+    [prec, recl, cutof] = precisionRecall( score, label );
     if nargin > 2
         line = plot( recl, prec, varargin{:} );
     end
@@ -20,7 +32,7 @@ function [precT, reclT, line, prec, recl] = precisionRecallPlot( score, label, v
     end
 
 
-    function [prec, recl] = precisionRecall( score, label )
+    function [prec, recl, cutoff] = precisionRecall( score, label )
 
         if length(score) ~= length(label)
             error('length of score and label does not match.')
@@ -44,16 +56,15 @@ function [precT, reclT, line, prec, recl] = precisionRecallPlot( score, label, v
 
         prec = zeros(1,1);
         recl = zeros(1,1);
+        cutoff = zeros(1,1);
 
         ind = 1;
-        prec(ind) = 1;
-        recl(ind) = 0;
-        ind = ind + 1;
         for i = 1:step:n
             d = data(1:i,:);
             npos = sum(d(:,2)==1);
             prec(ind) = npos / i;
             recl(ind) = npos / totalPos;
+            cutoff(ind) = d(end,1);
             ind = ind + 1;
         end
     end

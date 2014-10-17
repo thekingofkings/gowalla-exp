@@ -15,7 +15,7 @@ for condition = 0;
 
 %     sum(dml5(:,7)==1)
 %     sum(dml5(:,7)==0)
-    size(dml6)
+%     size(dml6)
 
     pbg_locen = dml6(:,3);
     locen = dml6(:,4);
@@ -47,8 +47,8 @@ for condition = 0;
     precisionRecallPlot( locen, friflag, 'linestyle', '--', 'color', [0, 0.75, 0] );
     precisionRecallPlot( td, friflag, 'linestyle', '--', 'color', [255,165,0] / 255 );
     precisionRecallPlot( pbg_locen, friflag, 'linestyle', '-.', 'color', [0.3, 0.6, 0.9] );
-    precisionRecallPlot( pbg_locen_td, friflag, 'linestyle', '-', 'color', [0.5, 0.4, 0.9] );
-
+    [~, ~, ~, prec, recl, cutoff] = precisionRecallPlot( pbg_locen_td, friflag, 'linestyle', '-', 'color', [0.5, 0.4, 0.9] );
+    save('prec-rec-cutof.mat', 'prec', 'recl', 'cutoff');
 
 %     title(num2str(condition));
     box on;
@@ -69,4 +69,15 @@ for condition = 0;
 %     saveas(gcf, ['pr-',num2str(condition),'.png']);
     
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
+
+
+    % plot the F1 measure w.r.t the cutoff score
+    F1 = prec .* recl;
+    f2 = figure();
+    hold on;
+    grid on;
+    plot(cutoff, F1);
+    set(gca, 'xscale', 'log');
+    [~, idx] = max(F1);
+    cutoff(idx), mean(freq)
 end
