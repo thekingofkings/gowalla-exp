@@ -61,7 +61,7 @@ end
     legend({'5000 users', '500 users','100 users', 'Frequency'}, 'location', 'northeast');
     %    'Location ID measure', 'Location ID frequency'}, 'fontsize', 16);
     set(gcf, 'PaperUnits', 'inches');
-    print(['sampleEntro.eps'], '-dpsc');
-    system(['epstopdf sampleEntro.eps']);
+    print('sampleEntro.eps', '-dpsc');
+    system('epstopdf sampleEntro.eps');
 %     saveas(gcf, ['dist-wsum-d30-u5000fgt',num2str(condition),'.png']);
 %     saveas(gcf, ['freq-wfbu5000fgt',num2str(condition),'.fig']);
