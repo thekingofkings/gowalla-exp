@@ -59,7 +59,8 @@ precisionRecallPlot(sigmod_diversity, sigmod_label, 'color', [210,105,30]/255, .
     'linestyle', ':', 'linewidth', 5);  % co-location entropy
 % precisionRecallPlot(we(:,6), we_label, 'g--');
 precisionRecallPlot(sigmod_score, sigmod_label, 'linestyle', '--', 'color', [0.7 ,0,0] );
-precisionRecallPlot(we_score, we_label, 'linestyle', '-', 'color', [0.5, 0.4, 0.9]);
+[~, ~, ~, prec, recl, cutof, accu] = precisionRecallPlot(we_score, we_label, 'linestyle', '-', 'color', [0.5, 0.4, 0.9]);
+
 
 %======== check the consistency with previous figures ================
 % precisionRecallPlot(we(:,4), we_label, 'y--');
@@ -70,10 +71,20 @@ set(gca, 'linewidth', 2, 'fontsize', 20);
 xlabel('Recall', 'fontsize', 20);
 ylabel('Precision', 'fontsize', 20);
 legend({'Meeting Frequency', 'Weighted Frequency', 'Location Diversity', ...
-    'EBM', 'Our Method'}, 'location', 'southwest');
+    'EBM', 'PGT'}, 'location', 'southwest');
 print('compare.eps', '-dpsc');
 system('epstopdf compare.eps');
 % saveas(gcf, 'compare.png');
 
 
+F1 = prec .* recl;
+base = ones(1,100) * (1 -  sum(we_label) / length(we_label));
+f2 = figure();
+hold on;
+box on;
 
+plot(cutof, F1, 'b-');
+plot(cutof, accu, 'r-.');
+plot(cutof, base, 'g--');
+set(gca, 'xscale', 'log');
+save('prec-rec-cutof-gw.mat', 'prec', 'cutof', 'recl', 'accu', 'base');
