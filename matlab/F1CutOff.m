@@ -3,7 +3,7 @@ hold on;
 grid on;
 box on;
 set(gca, 'xscale', 'log');
-axis([0.01, 500, 0, 0.4]);
+axis([0.01, 500, 0, 0.7]);
 set(gca, 'linewidth', 3, 'fontsize', 20, 'xtick', [0.01, 0.1, 1, 10, 100]);
 
 f2 = figure();
@@ -16,7 +16,9 @@ set(gca, 'linewidth', 3, 'fontsize', 20, 'xtick', [0.01, 0.1, 1, 10, 100]);
 
 
 load('prec-rec-cutof-gw.mat');
-F1 = prec .* recl;
+F1 = 2 * ( prec .* recl ) ./ ( prec + recl);
+[mf, id] = max(F1);
+mf, cutof(id)
 
 figure(f1);
 plot(cutof, F1, 'linestyle', '-', 'color', [0, 0, 0.8]);
@@ -28,7 +30,9 @@ plot(cutof, base, 'linestyle', '--', 'color', [0.6, 0.5, 1]);
 
 
 load('prec-rec-cutof-bk.mat');
-F1 = prec .* recl;
+F1 = 2 * ( prec .* recl ) ./ ( prec + recl);
+[mf, id] = max(F1);
+mf, cutof(id)
 
 figure(f1);
 plot(cutof, F1, 'linestyle', '-.', 'color', [0.8 ,0,0]);
